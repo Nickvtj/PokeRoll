@@ -142,6 +142,114 @@ export interface Database {
         };
         Update: never;
       };
+      player_economy: {
+        Row: {
+          user_id: string;
+          coins: number;
+          xp: number;
+          level: number;
+          rank: number;
+          free_spins: number;
+          battle_wins: number;
+          total_battles: number;
+          click_games_played: number;
+          click_coins_today: number;
+          click_games_today: number;
+          last_click_game_date: string | null;
+          daily_streak: number;
+          last_login_date: string | null;
+          mission_progress: Record<string, number>;
+          missions_claimed: string[];
+          last_mission_date: string | null;
+          team: number[];
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          coins?: number;
+          xp?: number;
+          level?: number;
+          rank?: number;
+          free_spins?: number;
+          battle_wins?: number;
+          total_battles?: number;
+          click_games_played?: number;
+          click_coins_today?: number;
+          click_games_today?: number;
+          last_click_game_date?: string | null;
+          daily_streak?: number;
+          last_login_date?: string | null;
+          mission_progress?: Record<string, number>;
+          missions_claimed?: string[];
+          last_mission_date?: string | null;
+          team?: number[];
+          updated_at?: string;
+        };
+        Update: Partial<{
+          coins: number;
+          xp: number;
+          level: number;
+          rank: number;
+          free_spins: number;
+          battle_wins: number;
+          total_battles: number;
+          click_games_played: number;
+          click_coins_today: number;
+          click_games_today: number;
+          last_click_game_date: string | null;
+          daily_streak: number;
+          last_login_date: string | null;
+          mission_progress: Record<string, number>;
+          missions_claimed: string[];
+          last_mission_date: string | null;
+          team: number[];
+          updated_at: string;
+        }>;
+      };
+      battle_history: {
+        Row: {
+          id: string;
+          user_id: string;
+          won: boolean;
+          coins_earned: number;
+          xp_earned: number;
+          free_spin: boolean;
+          wave: number;
+          team_ids: number[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          won: boolean;
+          coins_earned: number;
+          xp_earned: number;
+          free_spin?: boolean;
+          wave?: number;
+          team_ids?: number[];
+          created_at?: string;
+        };
+        Update: never;
+      };
+      minigame_history: {
+        Row: {
+          id: string;
+          user_id: string;
+          score: number;
+          coins_earned: number;
+          max_combo: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          score: number;
+          coins_earned: number;
+          max_combo?: number;
+          created_at?: string;
+        };
+        Update: never;
+      };
     };
   };
 }

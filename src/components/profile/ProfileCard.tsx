@@ -8,11 +8,16 @@ import {
   Copy,
   Crown,
   Calendar,
+  Coins,
+  Star,
+  Swords,
 } from "lucide-react";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { TOTAL_POKEMON } from "@/data/pokemon";
 import { useGameStore } from "@/stores/game-store";
+import { useEconomyStore } from "@/stores/economy-store";
 import { formatNumber } from "@/lib/utils";
+import { XP_PER_LEVEL } from "@/data/economy-balance";
 
 export function ProfileCard() {
   const profile = useGameStore((s) => s.profile);
@@ -21,12 +26,39 @@ export function ProfileCard() {
   const getHighestRarity = useGameStore((s) => s.getHighestRarity);
   const getProgress = useGameStore((s) => s.getProgress);
 
+  const coins = useEconomyStore((s) => s.coins);
+  const level = useEconomyStore((s) => s.level);
+  const xp = useEconomyStore((s) => s.xp);
+  const rank = useEconomyStore((s) => s.rank);
+  const battleWins = useEconomyStore((s) => s.battleWins);
+  const freeSpins = useEconomyStore((s) => s.freeSpins);
+
   const highestRarity = getHighestRarity();
   const progress = getProgress();
   const unique = getUniqueCount();
   const duplicates = getDuplicateCount();
+  const xpInLevel = xp % XP_PER_LEVEL;
+  const xpPct = (xpInLevel / XP_PER_LEVEL) * 100;
 
   const stats = [
+    {
+      icon: Coins,
+      label: "Moedas",
+      value: formatNumber(coins),
+      color: "text-amber-400",
+    },
+    {
+      icon: Star,
+      label: "Nível / Rank",
+      value: `${level} / ${rank}`,
+      color: "text-purple-400",
+    },
+    {
+      icon: Swords,
+      label: "Vitórias",
+      value: formatNumber(battleWins),
+      color: "text-red-400",
+    },
     {
       icon: Disc3,
       label: "Total de Spins",
@@ -84,6 +116,54 @@ export function ProfileCard() {
             <RarityBadge rarity={highestRarity} size="md" />
           </div>
         )}
+
+        {freeSpins > 0 && (
+          <p className="text-sm text-cyan-400 font-semibold">
+            🎰 {freeSpins} spin{freeSpins > 1 ? "s" : ""} grátis
+          </p>
+        )}
+
+        {/* XP bar */}
+        <div className="max-w-xs mx-auto space-y-1">
+          <div className="flex justify-between text-xs text-white/40">
+            <span>XP</span>
+            <span>{xpInLevel}/{XP_PER_LEVEL}</span>
+          </div>
+          <div className="progress-bar h-2">
+            <motion.div
+              className="progress-fill bg-gradient-to-r from-purple-500 to-indigo-500"
+              initial={{ width: 0 }}
+              animate={{ width: `${xpPct}%` }}
+              transition={{ duration: 0.8 }}
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Barra de progresso do álbum */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="glass-card p-6 space-y-3"
+      >
+        <h3 className="font-bold flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-cyan-400" />
+          Álbum de Figurinhas
+        </h3>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-white/50">{unique} coletados</span>
+          <span className="font-bold text-cyan-400">{progress}%</span>
+          <span className="text-white/50">{TOTAL_POKEMON - unique} faltando</span>
+        </div>
+        <div className="progress-bar">
+          <motion.div
+            className="progress-fill"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+          />
+        </div>
       </motion.div>
 
       {/* Stats grid */}
@@ -102,31 +182,6 @@ export function ProfileCard() {
           </motion.div>
         ))}
       </div>
-
-      {/* Barra de progresso do álbum */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="glass-card p-6 space-y-3"
-      >
-        <h3 className="font-bold flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-cyan-400" />
-          Álbum de Figurinhas
-        </h3>
-        <div className="progress-bar">
-          <motion.div
-            className="progress-fill"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-          />
-        </div>
-        <div className="flex justify-between text-sm text-white/50">
-          <span>{unique} coletados</span>
-          <span>{TOTAL_POKEMON - unique} faltando</span>
-        </div>
-      </motion.div>
     </div>
   );
 }

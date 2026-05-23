@@ -2,9 +2,18 @@
 
 import { Loader2 } from "lucide-react";
 import { useGameInit } from "@/hooks/use-game-init";
+import { useEconomyStore } from "@/stores/economy-store";
+import { RewardPopup } from "@/components/ui/RewardPopup";
+import { RewardAnimation } from "@/components/ui/RewardAnimation";
+import { useEffect } from "react";
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const { isLoading } = useGameInit();
+  const initializeEconomy = useEconomyStore((s) => s.initializeEconomy);
+
+  useEffect(() => {
+    initializeEconomy();
+  }, [initializeEconomy]);
 
   if (isLoading) {
     return (
@@ -15,5 +24,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <RewardAnimation />
+      <RewardPopup />
+    </>
+  );
 }

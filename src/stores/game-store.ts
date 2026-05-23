@@ -112,6 +112,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { isSpinning, spinMultiplier } = get();
     if (isSpinning) return null;
 
+    // Economia: import dinâmico evita dependência circular
+    const { useEconomyStore } = await import("@/stores/economy-store");
+    const economy = useEconomyStore.getState();
+    if (!economy.canAffordSpin(spinMultiplier)) return null;
+    if (!economy.payForSpin(spinMultiplier)) return null;
+
     set({
       isSpinning: true,
       lastSpinResults: [],
@@ -131,12 +137,21 @@ export const useGameStore = create<GameState>((set, get) => ({
       results.push(result);
       sequences.push(generateSpinSequence(pokemon));
       collection = applyCollectionEntry(collection, pokemon.id);
+
+      if (result.isDuplicate) {
+        economy.convertDuplicate();
+      }
     }
 
     const newProfile = {
       ...get().profile,
       totalSpins: get().profile.totalSpins + spinMultiplier,
     };
+
+    economy.incrementMission("spins", spinMultiplier);
+    for (const r of results) {
+      if (r.isNew) economy.incrementMission("new_pokemon");
+    }
 
     set({
       collection,

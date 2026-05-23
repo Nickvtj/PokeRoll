@@ -2,11 +2,11 @@ import type { RarityConfig } from "@/types";
 
 /** Porcentagens configuráveis de drop por raridade (devem somar 100) */
 export const RARITY_CHANCES: Record<string, number> = {
-  common: 45,
-  uncommon: 30,
-  rare: 15,
-  epic: 8,
-  legendary: 2,
+  common: 52,
+  uncommon: 27,
+  rare: 14,
+  epic: 5,
+  legendary: 1,
 };
 
 export const RARITY_CONFIG: Record<string, RarityConfig> = {

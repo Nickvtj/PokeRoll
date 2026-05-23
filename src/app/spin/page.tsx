@@ -9,6 +9,7 @@ import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { RARITY_CONFIG, RARITY_ORDER } from "@/data/rarity";
 import { useGameStore } from "@/stores/game-store";
+import { useEconomyStore } from "@/stores/economy-store";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
 import { useConfetti } from "@/hooks/use-confetti";
 import type { SpinMultiplier } from "@/types";
@@ -30,16 +31,31 @@ export default function SpinPage() {
   const closeReveal = useGameStore((s) => s.closeReveal);
   const setSpinMultiplier = useGameStore((s) => s.setSpinMultiplier);
   const profile = useGameStore((s) => s.profile);
+  const canAffordSpin = useEconomyStore((s) => s.canAffordSpin);
+  const getSpinCost = useEconomyStore((s) => s.getSpinCost);
+  const freeSpins = useEconomyStore((s) => s.freeSpins);
+  const coins = useEconomyStore((s) => s.coins);
+
+  const spinCost = getSpinCost(spinMultiplier);
+  const hasFreeSpin = freeSpins >= spinMultiplier;
+  const canAfford = canAffordSpin(spinMultiplier);
+
+  const [noCoinsMsg, setNoCoinsMsg] = useState(false);
 
   const { playSpin, playNewPokemonWin, playDuplicate, playLegendary } = useSoundEffects();
   const { fireConfetti } = useConfetti();
 
   const handleSpin = useCallback(async () => {
     if (isSpinning) return;
+    if (!canAffordSpin(spinMultiplier)) {
+      setNoCoinsMsg(true);
+      setTimeout(() => setNoCoinsMsg(false), 3000);
+      return;
+    }
     lastSoundKeyRef.current = "";
     if (soundEnabled) void playSpin();
     await spin();
-  }, [isSpinning, spin, soundEnabled, playSpin]);
+  }, [isSpinning, spin, soundEnabled, playSpin, canAffordSpin, spinMultiplier]);
 
   const handleReelComplete = useCallback(() => {
     finishReelSpin();
@@ -108,7 +124,19 @@ export default function SpinPage() {
         <p className="text-white/50 text-sm">
           Spins realizados:{" "}
           <span className="text-indigo-400 font-semibold">{profile.totalSpins}</span>
+          {" · "}
+          <span className="text-amber-400">{coins} moedas</span>
         </p>
+
+        {noCoinsMsg && (
+          <motion.p
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-red-400 text-sm font-semibold"
+          >
+            Moedas insuficientes! Jogue batalhas ou o minigame para ganhar 🪙
+          </motion.p>
+        )}
 
         {/* Seletor 1x / 2x / 3x */}
         <div className="flex items-center justify-center gap-2">
@@ -161,16 +189,30 @@ export default function SpinPage() {
           variant="gold"
           size="xl"
           onClick={handleSpin}
-          disabled={isSpinning}
+          disabled={isSpinning || !canAfford}
           loading={isSpinning}
           icon={!isSpinning ? <Disc3 className="w-6 h-6" /> : undefined}
-          className="w-full max-w-xs"
+          className="w-full max-w-sm flex-col !gap-1 !py-4"
         >
-          {isSpinning
-            ? "GIRANDO..."
-            : spinMultiplier === 1
-              ? "SPIN!"
-              : `SPIN ${spinMultiplier}x!`}
+          {isSpinning ? (
+            "GIRANDO..."
+          ) : hasFreeSpin ? (
+            <span className="flex flex-col items-center leading-tight">
+              <span>GIRAR GRÁTIS</span>
+              <span className="text-xs font-normal opacity-80">
+                {freeSpins} spin{freeSpins > 1 ? "s" : ""} restante{freeSpins > 1 ? "s" : ""}
+              </span>
+            </span>
+          ) : (
+            <span className="flex flex-col items-center leading-tight">
+              <span>GIRAR {spinMultiplier > 1 ? `${spinMultiplier}x` : ""}</span>
+              <span className={cn("text-sm font-bold", canAfford ? "opacity-90" : "text-red-200")}>
+                {canAfford
+                  ? `Custa ${spinCost} moedas`
+                  : `Precisa de ${spinCost} moedas`}
+              </span>
+            </span>
+          )}
         </AnimatedButton>
 
         <button
