@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, Disc3, BookOpen, User, Sparkles } from "lucide-react";
+import { Home, Disc3, BookOpen, User } from "lucide-react";
+import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/stores/game-store";
 
@@ -24,7 +25,7 @@ export function Navbar() {
       <header className="hidden md:flex fixed top-0 left-0 right-0 z-40 items-center justify-between px-6 py-4 glass border-b border-white/10">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
-            <Sparkles className="w-5 h-5 text-white" />
+            <PokeballIcon size={22} />
           </div>
           <div>
             <h1 className="font-bold text-lg neon-text leading-none">PokéRoll</h1>
