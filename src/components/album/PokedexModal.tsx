@@ -9,6 +9,10 @@ import { getPokedexInfo, getTypeColor } from "@/data/pokedex";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { RARITY_CONFIG } from "@/data/rarity";
+import { getXpProgressFromTotal } from "@/data/pokemon-battle-level";
+import { useEconomyStore } from "@/stores/economy-store";
+import { useGymStore } from "@/stores/gym-store";
+import { PokemonGymBadges } from "@/components/gym/GymBadge";
 import type { CollectedPokemon, Pokemon } from "@/types";
 
 interface PokedexModalProps {
@@ -25,6 +29,8 @@ export function PokedexModal({
   onClose,
 }: PokedexModalProps) {
   const [mounted, setMounted] = useState(false);
+  const pokemonBattleXp = useEconomyStore((s) => s.pokemonBattleXp);
+  const getHallOfFameBorder = useGymStore((s) => s.getHallOfFameBorder);
 
   useEffect(() => setMounted(true), []);
 
@@ -41,6 +47,9 @@ export function PokedexModal({
 
   const info = getPokedexInfo(pokemon.id, pokemon.name);
   const config = RARITY_CONFIG[pokemon.rarity];
+  const xpData = pokemonBattleXp[String(pokemon.id)] ?? { level: 1, xp: 0 };
+  const xpProgress = getXpProgressFromTotal(xpData.xp);
+  const gymBadges = getHallOfFameBorder(pokemon.id);
 
   const modal = (
     <AnimatePresence>
@@ -164,6 +173,40 @@ export function PokedexModal({
                     value={new Date(collection.collectedAt).toLocaleDateString("pt-BR")}
                     icon={<Calendar className="w-3 h-3 text-indigo-400" />}
                   />
+                </div>
+              </div>
+
+              {/* XP de batalha + insígnias */}
+              <div className="px-5 py-4 border-b border-white/10 space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-white/50 font-semibold">Nível de Batalha</span>
+                    <span className="text-indigo-300 font-bold">Nv. {xpProgress.level}</span>
+                  </div>
+                  <div className="progress-bar h-2">
+                    <div
+                      className="progress-fill bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all"
+                      style={{ width: `${xpProgress.pct}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-1">
+                    {xpProgress.xpInLevel}/{xpProgress.xpNeeded} XP · Total {xpData.xp} XP
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider mb-2">
+                    Insígnias conquistadas
+                  </p>
+                  {gymBadges.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <PokemonGymBadges gymIds={gymBadges} size="sm" max={8} />
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-white/30">
+                      Nenhuma insígnia ainda. Vença líderes de ginásio com este Pokémon!
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -13,8 +13,10 @@ import {
 } from "@/data/pokemon-battle-level";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
+import { useGymStore } from "@/stores/gym-store";
 import { cn } from "@/lib/utils";
 import { RARITY_CONFIG } from "@/data/rarity";
+import { PokemonGymBadges } from "@/components/gym/GymBadge";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 
 interface TeamSelectorProps {
@@ -54,6 +56,9 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
   const pokemonBattleXp = useEconomyStore((s) => s.pokemonBattleXp);
   const favoritePokemon = useEconomyStore((s) => s.favoritePokemon);
   const toggleFavoritePokemon = useEconomyStore((s) => s.toggleFavoritePokemon);
+  const getLevelCap = useEconomyStore((s) => s.getLevelCap);
+  const badgeCount = useGymStore((s) => s.badges.length);
+  const getHallOfFameBorder = useGymStore((s) => s.getHallOfFameBorder);
 
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [levelFilter, setLevelFilter] = useState<LevelFilterId>("all");
@@ -142,6 +147,9 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
           <Users className="w-4 h-4 text-indigo-400" />
           Montar Time ({team.length}/{maxTeam})
         </h3>
+        <span className="text-[10px] text-amber-400/80">
+          Cap Nv.{getLevelCap()} · {badgeCount}🏅
+        </span>
         <div className="flex gap-2">
           <AnimatedButton variant="ghost" size="sm" onClick={clearTeam} icon={<X className="w-3.5 h-3.5" />}>
             Limpar
@@ -215,13 +223,14 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
           const disabled = !selected && team.length >= maxTeam;
           const level = pokemonBattleXp[String(pokemon.id)]?.level ?? 1;
           const type = getPrimaryType(pokemon.id, pokemon.name);
+          const pokemonBadges = getHallOfFameBorder(pokemon.id);
 
           return (
             <motion.div
               key={pokemon.id}
               role="button"
               tabIndex={disabled ? -1 : 0}
-              whileTap={{ scale: disabled ? 1 : 0.95 }}
+              whileTap={{ scale: disabled ? 1 : 0.98 }}
               onClick={() => !disabled && toggle(pokemon.id)}
               onKeyDown={(e) => {
                 if (!disabled && (e.key === "Enter" || e.key === " ")) {
@@ -279,6 +288,11 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
               />
               <p className="text-[10px] font-semibold truncate mt-1">{pokemon.name}</p>
               <p className="text-[9px] text-white/40 capitalize">{type}</p>
+              {pokemonBadges.length > 0 && (
+                <div className="mt-1">
+                  <PokemonGymBadges gymIds={pokemonBadges} size="xs" max={3} />
+                </div>
+              )}
             </motion.div>
           );
         })}

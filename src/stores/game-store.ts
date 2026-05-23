@@ -134,6 +134,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       if (result.isDuplicate) {
         economy.convertDuplicate();
+        const { getDuplicateXp } = await import("@/data/duplicate-xp");
+        economy.grantPokemonXp(pokemon.id, getDuplicateXp(pokemon.rarity));
       }
     }
 

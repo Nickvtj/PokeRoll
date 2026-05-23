@@ -10,17 +10,23 @@ import {
 import { getTeamPassiveBonuses } from "@/data/pokemon-stats";
 import {
   addPokemonXp,
-  getXpProgress,
+  getXpProgressFromTotal,
+  migrateLegacyTotalXp,
+  calcPokemonLevelFromTotalXp,
   POKEMON_BATTLE_XP_LOSS,
   POKEMON_BATTLE_XP_WIN,
-  POKEMON_XP_PER_LEVEL,
+  GYM_BATTLE_XP_WIN,
+  GYM_BATTLE_XP_LOSS,
+  ELITE_BATTLE_XP_WIN,
 } from "@/data/pokemon-battle-level";
+import type { BattleMode } from "@/types/gym";
 import { POKEMON_MAP } from "@/data/pokemon";
-import { loadEconomy, saveEconomy, getDefaultEconomy } from "@/lib/economy-storage";
+import { loadEconomy, getDefaultEconomy } from "@/lib/economy-storage";
+import { persistEconomy } from "@/lib/economy-sync-scheduler";
 import {
   loadEconomyFromSupabase,
-  syncEconomyToSupabase,
 } from "@/lib/economy-supabase";
+import { useGymStore } from "@/stores/gym-store";
 import type { EconomyState, RewardPayload } from "@/types/economy";
 import type { PokemonLevelUpResult } from "@/types/battle";
 
@@ -45,7 +51,9 @@ interface EconomyStore extends EconomyState {
   isFavoritePokemon: (id: number) => boolean;
   getPokemonProgress: (id: number) => { level: number; xp: number; xpInLevel: number; xpPct: number };
   getPokemonLevelsMap: () => Record<number, number>;
-  grantPokemonBattleXp: (pokemonIds: number[], won: boolean) => PokemonLevelUpResult[];
+  grantPokemonBattleXp: (pokemonIds: number[], won: boolean, mode?: BattleMode) => PokemonLevelUpResult[];
+  grantPokemonXp: (pokemonId: number, amount: number) => PokemonLevelUpResult | null;
+  getLevelCap: () => number;
   recordBattleWin: () => void;
   recordBattleLoss: () => void;
   recordClickGame: (coinsEarned: number) => void;
@@ -77,21 +85,112 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
 
   initializeEconomy: () => {
     const data = loadEconomy();
-    set({ ...data });
+    const migratedXp: Record<string, { level: number; xp: number }> = {};
+    for (const [key, val] of Object.entries(data.pokemonBattleXp ?? {})) {
+      const total = migrateLegacyTotalXp(val.level, val.xp);
+      migratedXp[key] = { xp: total, level: calcPokemonLevelFromTotalXp(total) };
+    }
+    set({ ...data, pokemonBattleXp: { ...data.pokemonBattleXp, ...migratedXp } });
     void loadEconomyFromSupabase().then((remote) => {
       if (remote) {
         set({ ...remote });
-        saveEconomy(remote);
+        persistEconomy(remote);
       }
     });
     get().checkDailyLogin();
     get().resetDailyIfNeeded();
   },
 
+  getLevelCap: () => useGymStore.getState().getLevelCap(),
+
+  grantPokemonXp: (pokemonId, amount) => {
+    if (amount <= 0) return null;
+    const pokemon = POKEMON_MAP[pokemonId];
+    if (!pokemon) return null;
+
+    const levelCap = get().getLevelCap();
+    let result: PokemonLevelUpResult | null = null;
+
+    set((s) => {
+      const key = String(pokemonId);
+      const current = s.pokemonBattleXp[key] ?? { level: 1, xp: 0 };
+      const prevProgress = getXpProgressFromTotal(current.xp);
+      const { progress, leveledUp, previousLevel } = addPokemonXp(current, amount, levelCap);
+      const newProgress = getXpProgressFromTotal(progress.xp);
+      result = {
+        pokemonId,
+        pokemonName: pokemon.name,
+        image: pokemon.image,
+        previousLevel,
+        newLevel: progress.level,
+        xpGained: amount,
+        previousXpInLevel: prevProgress.xpInLevel,
+        newXpInLevel: newProgress.xpInLevel,
+        xpPct: newProgress.pct,
+        xpNeeded: newProgress.xpNeeded,
+        leveledUp,
+      };
+      return { pokemonBattleXp: { ...s.pokemonBattleXp, [key]: progress } };
+    });
+
+    get().sync();
+    return result;
+  },
+
+  grantPokemonBattleXp: (pokemonIds, won, mode = "training") => {
+    const amount =
+      mode === "elite"
+        ? won
+          ? ELITE_BATTLE_XP_WIN
+          : GYM_BATTLE_XP_LOSS
+        : mode === "gym"
+          ? won
+            ? GYM_BATTLE_XP_WIN
+            : GYM_BATTLE_XP_LOSS
+          : won
+            ? POKEMON_BATTLE_XP_WIN
+            : POKEMON_BATTLE_XP_LOSS;
+
+    const levelCap = get().getLevelCap();
+    const results: PokemonLevelUpResult[] = [];
+
+    set((s) => {
+      const pokemonBattleXp = { ...s.pokemonBattleXp };
+      for (const id of pokemonIds) {
+        const key = String(id);
+        const pokemon = POKEMON_MAP[id];
+        if (!pokemon) continue;
+
+        const current = pokemonBattleXp[key] ?? { level: 1, xp: 0 };
+        const prevProgress = getXpProgressFromTotal(current.xp);
+        const { progress, leveledUp, previousLevel } = addPokemonXp(current, amount, levelCap);
+        pokemonBattleXp[key] = progress;
+        const newProgress = getXpProgressFromTotal(progress.xp);
+
+        results.push({
+          pokemonId: id,
+          pokemonName: pokemon.name,
+          image: pokemon.image,
+          previousLevel,
+          newLevel: progress.level,
+          xpGained: amount,
+          previousXpInLevel: prevProgress.xpInLevel,
+          newXpInLevel: newProgress.xpInLevel,
+          xpPct: newProgress.pct,
+          xpNeeded: newProgress.xpNeeded,
+          leveledUp,
+        });
+      }
+      return { pokemonBattleXp };
+    });
+
+    get().sync();
+    return results;
+  },
+
   sync: () => {
     const snap = getEconomySnapshot(get());
-    saveEconomy(snap);
-    void syncEconomyToSupabase(snap);
+    persistEconomy(snap);
   },
 
   addCoins: (amount, reason) => {
@@ -178,56 +277,19 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
   getPokemonProgress: (id) => {
     const key = String(id);
     const stored = get().pokemonBattleXp[key] ?? { level: 1, xp: 0 };
-    const { xpInLevel, pct, level } = getXpProgress(stored.xp);
+    const { xpInLevel, pct, level } = getXpProgressFromTotal(stored.xp);
     return { level, xp: stored.xp, xpInLevel, xpPct: pct };
   },
 
   getPokemonLevelsMap: () => {
     const map: Record<number, number> = {};
     for (const [key, val] of Object.entries(get().pokemonBattleXp)) {
-      map[Number(key)] = val.level;
+      map[Number(key)] = calcPokemonLevelFromTotalXp(val.xp);
     }
     for (const id of get().team) {
       if (!(id in map)) map[id] = 1;
     }
     return map;
-  },
-
-  grantPokemonBattleXp: (pokemonIds, won) => {
-    const amount = won ? POKEMON_BATTLE_XP_WIN : POKEMON_BATTLE_XP_LOSS;
-    const results: PokemonLevelUpResult[] = [];
-
-    set((s) => {
-      const pokemonBattleXp = { ...s.pokemonBattleXp };
-      for (const id of pokemonIds) {
-        const key = String(id);
-        const pokemon = POKEMON_MAP[id];
-        if (!pokemon) continue;
-
-        const current = pokemonBattleXp[key] ?? { level: 1, xp: 0 };
-        const prevProgress = getXpProgress(current.xp);
-        const { progress, leveledUp, previousLevel } = addPokemonXp(current, amount);
-        pokemonBattleXp[key] = progress;
-        const newProgress = getXpProgress(progress.xp);
-
-        results.push({
-          pokemonId: id,
-          pokemonName: pokemon.name,
-          image: pokemon.image,
-          previousLevel,
-          newLevel: progress.level,
-          xpGained: amount,
-          previousXpInLevel: prevProgress.xpInLevel,
-          newXpInLevel: newProgress.xpInLevel,
-          xpPct: newProgress.pct,
-          leveledUp,
-        });
-      }
-      return { pokemonBattleXp };
-    });
-
-    get().sync();
-    return results;
   },
 
   recordBattleWin: () => {
@@ -375,4 +437,4 @@ export function getEconomyBonuses(team: number[]) {
   return getTeamPassiveBonuses(team);
 }
 
-export { SPIN_COST_PER_REEL, STARTING_COINS, POKEMON_XP_PER_LEVEL };
+export { SPIN_COST_PER_REEL, STARTING_COINS };

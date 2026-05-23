@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react";
 import { useGameInit } from "@/hooks/use-game-init";
 import { useEconomyStore } from "@/stores/economy-store";
+import { useGymStore } from "@/stores/gym-store";
 import { RewardPopup } from "@/components/ui/RewardPopup";
 import { RewardAnimation } from "@/components/ui/RewardAnimation";
 import { useEffect } from "react";
@@ -10,10 +11,12 @@ import { useEffect } from "react";
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const { isLoading } = useGameInit();
   const initializeEconomy = useEconomyStore((s) => s.initializeEconomy);
+  const initializeGym = useGymStore((s) => s.initializeGym);
 
   useEffect(() => {
     initializeEconomy();
-  }, [initializeEconomy]);
+    initializeGym();
+  }, [initializeEconomy, initializeGym]);
 
   if (isLoading) {
     return (

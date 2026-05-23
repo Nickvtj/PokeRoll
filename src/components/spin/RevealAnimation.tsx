@@ -220,7 +220,7 @@ export function RevealAnimation({ results, show, onClose }: RevealAnimationProps
                       transition={{ delay: 0.5 }}
                       className="text-slate-400 text-sm mt-2 italic"
                     >
-                      Você já tinha esse no álbum...
+                      Duplicata! +XP para fortalecer este Pokémon 🪙
                     </motion.p>
                   )}
                 </div>

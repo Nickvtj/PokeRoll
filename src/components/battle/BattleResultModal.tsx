@@ -28,7 +28,7 @@ export function BattleResultModal({ state, onContinue }: BattleResultModalProps)
       >
         <div
           className="absolute inset-0 bg-black/70 backdrop-blur-md"
-          onClick={onContinue}
+          onClick={state.mode === "training" || !state.mode ? onContinue : undefined}
         />
         <motion.div
           initial={{ scale: 0.85, y: 40 }}
@@ -53,6 +53,16 @@ export function BattleResultModal({ state, onContinue }: BattleResultModalProps)
                 <Trophy className="w-9 h-9 text-white" />
               </motion.div>
               <h3 className="text-2xl font-bold text-amber-400">Vitória!</h3>
+              {won && state.gymMeta && state.gymMeta.stage < 5 && (
+                <p className="text-xs text-indigo-300/80">
+                  Batalha {state.gymMeta.stage}/{state.gymMeta.totalStages} concluída — continue!
+                </p>
+              )}
+              {won && state.gymMeta && state.gymMeta.stage === 5 && (
+                <p className="text-xs text-amber-400/90">
+                  Líder derrotado! Insígnia registrada nos Pokémon do time.
+                </p>
+              )}
               {state.reward && (
                 <div className="flex flex-wrap justify-center gap-4 py-1">
                   {state.reward.coins > 0 && (

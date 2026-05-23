@@ -37,6 +37,23 @@ export function BattleArena({ state, onContinue }: BattleArenaProps) {
   return (
     <>
       <div className="space-y-4">
+        {state.gymMeta && (
+          <div
+            className="glass-card px-3 py-2 text-center text-xs font-bold border"
+            style={{
+              borderColor: `${state.gymMeta.themeColor}40`,
+              color: state.gymMeta.themeColor,
+            }}
+          >
+            {state.gymMeta.gymName} · {state.gymMeta.trainerName}
+            {state.gymMeta.stage > 0 && (
+              <span className="text-white/50 font-normal">
+                {" "}
+                ({state.gymMeta.stage}/{state.gymMeta.totalStages})
+              </span>
+            )}
+          </div>
+        )}
         <div>
           <p className="text-xs text-red-400 font-bold uppercase tracking-wider mb-2">
             Inimigos

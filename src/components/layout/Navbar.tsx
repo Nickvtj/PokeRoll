@@ -20,7 +20,7 @@ const navItems = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const getUniqueCount = useGameStore((s) => s.getUniqueCount);
+  const uniqueCount = useGameStore((s) => Object.keys(s.collection).length);
 
   return (
     <>
@@ -62,7 +62,7 @@ export function Navbar() {
           <CoinCounter size="sm" />
           <div className="px-3 py-1.5 rounded-xl glass text-xs">
             <BookOpen className="w-3.5 h-3.5 text-cyan-400 inline mr-1" />
-            {getUniqueCount()}/150
+            {uniqueCount}/150
           </div>
         </div>
       </header>

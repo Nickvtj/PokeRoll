@@ -16,6 +16,7 @@ import { RarityBadge } from "@/components/ui/RarityBadge";
 import { TOTAL_POKEMON } from "@/data/pokemon";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
+import { ProfileBadgesPanel } from "@/components/profile/ProfileBadgesPanel";
 import { formatNumber } from "@/lib/utils";
 import { XP_PER_LEVEL } from "@/data/economy-balance";
 
@@ -139,6 +140,8 @@ export function ProfileCard() {
           </div>
         </div>
       </motion.div>
+
+      <ProfileBadgesPanel />
 
       {/* Barra de progresso do álbum */}
       <motion.div

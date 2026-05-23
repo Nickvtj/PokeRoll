@@ -1,4 +1,5 @@
 import type { Pokemon } from "@/types";
+import type { GymBattleMeta, BattleMode } from "@/types/gym";
 
 export interface PokemonAbility {
   id: string;
@@ -62,6 +63,7 @@ export interface PokemonLevelUpResult {
   previousXpInLevel: number;
   newXpInLevel: number;
   xpPct: number;
+  xpNeeded?: number;
   leveledUp: boolean;
 }
 
@@ -76,4 +78,8 @@ export interface BattleState {
   log: BattleLogEntry[];
   reward: BattleReward | null;
   levelUps?: PokemonLevelUpResult[];
+  mode?: BattleMode;
+  gymMeta?: GymBattleMeta;
+  playerDeaths?: number;
+  turnCount?: number;
 }

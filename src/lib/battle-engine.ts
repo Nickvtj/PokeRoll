@@ -222,6 +222,9 @@ export function initBattle(
     ],
     reward: null,
     levelUps: [],
+    mode: "training",
+    playerDeaths: 0,
+    turnCount: 0,
   };
 }
 
@@ -419,6 +422,18 @@ export function executeBattleTurn(
   return applyFighterUpdates(state, newAll, logEntries, nextTurnIndex);
 }
 
+function countNewPlayerDeaths(prev: BattleFighter[], next: BattleFighter[]): number {
+  let deaths = 0;
+  for (let i = 0; i < prev.length; i++) {
+    const before = prev[i];
+    const after = next.find(
+      (f) => f.pokemon.id === before.pokemon.id && f.slotIndex === before.slotIndex
+    );
+    if (before.currentHp > 0 && after && after.currentHp <= 0) deaths++;
+  }
+  return deaths;
+}
+
 function applyFighterUpdates(
   state: BattleState,
   all: BattleFighter[],
@@ -428,19 +443,26 @@ function applyFighterUpdates(
   const playerTeam = all.filter((f) => f.isPlayer);
   const enemyTeam = all.filter((f) => !f.isPlayer);
 
+  const newDeaths = countNewPlayerDeaths(state.playerTeam, playerTeam);
+  const playerDeaths = (state.playerDeaths ?? 0) + newDeaths;
+  const turnCount = (state.turnCount ?? 0) + 1;
+
   const newState: BattleState = {
     ...state,
     playerTeam,
     enemyTeam,
     currentTurnIndex: nextTurnIndex,
     log: logEntries,
+    playerDeaths,
+    turnCount,
   };
 
   const livingPlayers = getLivingFighters(playerTeam);
   const livingEnemies = getLivingFighters(enemyTeam);
 
   if (livingEnemies.length === 0) {
-    const reward = calcBattleReward(state.wave);
+    const isTraining = !state.mode || state.mode === "training";
+    const reward = isTraining ? calcBattleReward(state.wave) : null;
     return {
       state: {
         ...newState,
