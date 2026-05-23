@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Check, Shuffle, Users, X, Search } from "lucide-react";
+import { Check, Heart, Shuffle, Users, X, Search } from "lucide-react";
 import { POKEMON_LIST } from "@/data/pokemon";
 import { getPokedexInfo } from "@/data/pokedex";
 import {
@@ -52,10 +52,18 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
   const team = useEconomyStore((s) => s.team);
   const setTeam = useEconomyStore((s) => s.setTeam);
   const pokemonBattleXp = useEconomyStore((s) => s.pokemonBattleXp);
+  const favoritePokemon = useEconomyStore((s) => s.favoritePokemon);
+  const toggleFavoritePokemon = useEconomyStore((s) => s.toggleFavoritePokemon);
 
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [levelFilter, setLevelFilter] = useState<LevelFilterId>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+
+  const favoriteSet = useMemo(
+    () => new Set(favoritePokemon ?? []),
+    [favoritePokemon]
+  );
 
   const collected = useMemo(
     () => POKEMON_LIST.filter((p) => collection[p.id]),
@@ -69,15 +77,31 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return collected.filter((p) => {
-      const type = getPrimaryType(p.id, p.name);
-      const level = pokemonBattleXp[String(p.id)]?.level ?? 1;
-      if (q && !p.name.toLowerCase().includes(q)) return false;
-      if (typeFilter !== "all" && type !== typeFilter) return false;
-      if (!matchesLevelFilter(level, levelFilter)) return false;
-      return true;
-    });
-  }, [collected, typeFilter, levelFilter, pokemonBattleXp, searchQuery]);
+    return collected
+      .filter((p) => {
+        const type = getPrimaryType(p.id, p.name);
+        const level = pokemonBattleXp[String(p.id)]?.level ?? 1;
+        if (q && !p.name.toLowerCase().includes(q)) return false;
+        if (favoritesOnly && !favoriteSet.has(p.id)) return false;
+        if (typeFilter !== "all" && type !== typeFilter) return false;
+        if (!matchesLevelFilter(level, levelFilter)) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const aFav = favoriteSet.has(a.id) ? 0 : 1;
+        const bFav = favoriteSet.has(b.id) ? 0 : 1;
+        if (aFav !== bFav) return aFav - bFav;
+        return a.name.localeCompare(b.name);
+      });
+  }, [
+    collected,
+    typeFilter,
+    levelFilter,
+    pokemonBattleXp,
+    searchQuery,
+    favoritesOnly,
+    favoriteSet,
+  ]);
 
   const toggle = (id: number) => {
     if (team.includes(id)) {
@@ -90,7 +114,11 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
   const clearTeam = () => setTeam([]);
 
   const randomTeam = () => {
-    const pool = [...collected];
+    const pool = favoritesOnly
+      ? collected.filter((p) => favoriteSet.has(p.id))
+      : [...collected];
+    if (pool.length < maxTeam) return;
+
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -122,7 +150,7 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
             variant="secondary"
             size="sm"
             onClick={randomTeam}
-            disabled={collected.length < maxTeam}
+            disabled={favoritesOnly ? favoriteSet.size < maxTeam : collected.length < maxTeam}
             icon={<Shuffle className="w-3.5 h-3.5" />}
           >
             Aleatório
@@ -132,16 +160,29 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
 
       {/* Filtros */}
       <div className="flex flex-wrap gap-2">
-        <div className="relative flex-1 min-w-[140px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
+        <div className="relative flex-1 min-w-[160px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 w-4 h-4 text-white/40" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar Pokémon..."
-            className="w-full glass-card pl-8 pr-3 py-1.5 text-xs rounded-xl bg-transparent border border-white/10 text-white placeholder:text-white/30"
+            className="w-full rounded-xl bg-white/5 border border-white/10 pl-10 pr-3 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30"
           />
         </div>
+        <button
+          type="button"
+          onClick={() => setFavoritesOnly((v) => !v)}
+          className={cn(
+            "glass-card px-3 py-1.5 text-xs rounded-xl border transition-all flex items-center gap-1.5",
+            favoritesOnly
+              ? "border-pink-400/50 text-pink-300 bg-pink-500/10"
+              : "border-white/10 text-white/70 hover:text-white"
+          )}
+        >
+          <Heart className={cn("w-3.5 h-3.5", favoritesOnly && "fill-pink-400 text-pink-400")} />
+          Favoritos
+        </button>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
@@ -169,20 +210,29 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-72 overflow-y-auto pr-1">
         {filtered.map((pokemon) => {
           const selected = team.includes(pokemon.id);
+          const isFavorite = favoriteSet.has(pokemon.id);
           const config = RARITY_CONFIG[pokemon.rarity];
           const disabled = !selected && team.length >= maxTeam;
           const level = pokemonBattleXp[String(pokemon.id)]?.level ?? 1;
           const type = getPrimaryType(pokemon.id, pokemon.name);
 
           return (
-            <motion.button
+            <motion.div
               key={pokemon.id}
-              whileTap={{ scale: 0.95 }}
+              role="button"
+              tabIndex={disabled ? -1 : 0}
+              whileTap={{ scale: disabled ? 1 : 0.95 }}
               onClick={() => !disabled && toggle(pokemon.id)}
-              disabled={disabled}
+              onKeyDown={(e) => {
+                if (!disabled && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  toggle(pokemon.id);
+                }
+              }}
               className={cn(
-                "glass-card p-2 relative text-center transition-all",
+                "glass-card p-2 relative text-center transition-all cursor-pointer",
                 selected && "ring-2 ring-indigo-400",
+                isFavorite && !selected && "ring-1 ring-pink-400/40",
                 disabled && "opacity-30 cursor-not-allowed"
               )}
               style={
@@ -194,11 +244,28 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
                   : undefined
               }
             >
+              <button
+                type="button"
+                aria-label={isFavorite ? "Remover dos favoritos" : "Favoritar"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavoritePokemon(pokemon.id);
+                }}
+                className="absolute top-1 right-1 z-10 p-0.5 rounded-full hover:bg-white/10 transition-colors"
+              >
+                <Heart
+                  className={cn(
+                    "w-3.5 h-3.5",
+                    isFavorite ? "fill-pink-400 text-pink-400" : "text-white/25"
+                  )}
+                />
+              </button>
+
               <div className="absolute top-1 left-1 px-1 py-0.5 rounded-md bg-indigo-500/80 text-[9px] font-bold">
                 Nv.{level}
               </div>
               {selected && (
-                <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
+                <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
                   <Check className="w-2.5 h-2.5 text-white" />
                 </div>
               )}
@@ -212,14 +279,16 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
               />
               <p className="text-[10px] font-semibold truncate mt-1">{pokemon.name}</p>
               <p className="text-[9px] text-white/40 capitalize">{type}</p>
-            </motion.button>
+            </motion.div>
           );
         })}
       </div>
 
       {filtered.length === 0 && (
         <p className="text-center text-xs text-white/40 py-4">
-          Nenhum Pokémon com esses filtros.
+          {favoritesOnly
+            ? "Nenhum favorito com esses filtros. Toque no coração para favoritar."
+            : "Nenhum Pokémon com esses filtros."}
         </p>
       )}
     </div>

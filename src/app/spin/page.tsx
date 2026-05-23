@@ -30,6 +30,7 @@ export default function SpinPage() {
   const finishReelSpin = useGameStore((s) => s.finishReelSpin);
   const closeReveal = useGameStore((s) => s.closeReveal);
   const setSpinMultiplier = useGameStore((s) => s.setSpinMultiplier);
+  const spinSessionId = useGameStore((s) => s.spinSessionId);
   const profile = useGameStore((s) => s.profile);
   const canAffordSpin = useEconomyStore((s) => s.canAffordSpin);
   const getSpinCost = useEconomyStore((s) => s.getSpinCost);
@@ -173,9 +174,9 @@ export default function SpinPage() {
       >
         {reels.slice(0, spinMultiplier).map((sequence, i) => (
           <SpinMachine
-            key={`reel-${i}-${sequence.length}`}
+            key={`reel-${i}-${spinSessionId}`}
             sequence={sequence}
-            isSpinning={isSpinning}
+            isSpinning={isSpinning && sequence.length > 0}
             result={lastSpinResults[i] ?? null}
             onSpinComplete={handleReelComplete}
             compact={spinMultiplier > 1}
@@ -189,7 +190,7 @@ export default function SpinPage() {
           variant="gold"
           size="xl"
           onClick={handleSpin}
-          disabled={isSpinning || !canAfford}
+          disabled={isSpinning || showReveal || !canAfford}
           loading={isSpinning}
           icon={!isSpinning ? <Disc3 className="w-6 h-6" /> : undefined}
           className="w-full max-w-sm flex-col !gap-1 !py-4"

@@ -23,6 +23,7 @@ export function getDefaultEconomy(): EconomyState {
     missionsClaimed: [],
     lastMissionDate: "",
     team: [],
+    favoritePokemon: [],
     pokemonBattleXp: {},
   };
 }

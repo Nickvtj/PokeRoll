@@ -38,7 +38,7 @@ export function SpinMachine({
 
   useEffect(() => {
     if (!isSpinning || sequence.length === 0) {
-      setLocalSpinning(false);
+      if (!isSpinning) setLocalSpinning(false);
       return;
     }
 
@@ -46,6 +46,7 @@ export function SpinMachine({
     clearAllTimeouts();
     setLocalSpinning(true);
     setCurrentIndex(0);
+    setDisplayPokemon(sequence[0]);
 
     let index = 0;
     const totalSteps = sequence.length;

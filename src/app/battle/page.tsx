@@ -22,8 +22,6 @@ export default function BattlePage() {
   const recordBattleLoss = useEconomyStore((s) => s.recordBattleLoss);
   const grantPokemonBattleXp = useEconomyStore((s) => s.grantPokemonBattleXp);
   const getPokemonLevelsMap = useEconomyStore((s) => s.getPokemonLevelsMap);
-  const showRewardPopup = useEconomyStore((s) => s.showRewardPopup);
-
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -53,6 +51,8 @@ export default function BattlePage() {
         const won = state.phase === "victory";
         const levelUps = grantPokemonBattleXp(team, won);
 
+        let finalState = { ...state, levelUps };
+
         if (won && state.reward) {
           const coinBonus = bonuses.coinBonus;
           const xpBonus = bonuses.xpBonus;
@@ -70,18 +70,16 @@ export default function BattlePage() {
             state.wave,
             team
           );
-          showRewardPopup({
-            coins,
-            xp,
-            freeSpin: state.reward.freeSpin,
-            message: "Vitória na batalha!",
-          });
+          finalState = {
+            ...finalState,
+            reward: { ...state.reward, coins, xp },
+          };
         } else if (!won) {
           recordBattleLoss();
           void recordBattleToSupabase(false, 0, 0, false, state.wave, team);
         }
 
-        return { ...state, levelUps };
+        return finalState;
       }
       return state;
     });
@@ -93,7 +91,6 @@ export default function BattlePage() {
     recordBattleLoss,
     grantFreeSpin,
     grantPokemonBattleXp,
-    showRewardPopup,
   ]);
 
   useEffect(() => {

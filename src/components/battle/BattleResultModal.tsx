@@ -2,7 +2,7 @@
 
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Skull } from "lucide-react";
+import { Trophy, Skull, Coins, Star, Gift } from "lucide-react";
 import { BattleLevelUpPanel } from "@/components/battle/BattleLevelUpPanel";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import type { BattleState } from "@/types/battle";
@@ -45,13 +45,35 @@ export function BattleResultModal({ state, onContinue }: BattleResultModalProps)
         >
           {won ? (
             <>
-              <Trophy className="w-14 h-14 text-amber-400 mx-auto" />
+              <motion.div
+                animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.08, 1] }}
+                transition={{ duration: 0.6 }}
+                className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center"
+              >
+                <Trophy className="w-9 h-9 text-white" />
+              </motion.div>
               <h3 className="text-2xl font-bold text-amber-400">Vitória!</h3>
               {state.reward && (
-                <p className="text-white/60 text-sm">
-                  +{state.reward.coins} moedas · +{state.reward.xp} XP conta
-                  {state.reward.freeSpin && " · Spin grátis!"}
-                </p>
+                <div className="flex flex-wrap justify-center gap-4 py-1">
+                  {state.reward.coins > 0 && (
+                    <div className="flex items-center gap-1.5 text-amber-400 font-bold">
+                      <Coins className="w-5 h-5" />
+                      +{state.reward.coins}
+                    </div>
+                  )}
+                  {state.reward.xp > 0 && (
+                    <div className="flex items-center gap-1.5 text-indigo-400 font-bold">
+                      <Star className="w-5 h-5" />
+                      +{state.reward.xp} XP
+                    </div>
+                  )}
+                  {state.reward.freeSpin && (
+                    <div className="flex items-center gap-1.5 text-cyan-400 font-bold text-sm">
+                      <Gift className="w-5 h-5" />
+                      Spin grátis!
+                    </div>
+                  )}
+                </div>
               )}
             </>
           ) : (

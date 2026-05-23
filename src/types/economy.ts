@@ -16,6 +16,7 @@ export interface EconomyState {
   missionsClaimed: string[];
   lastMissionDate: string;
   team: number[]; // 3 pokemon ids
+  favoritePokemon: number[];
   pokemonBattleXp: Record<string, { level: number; xp: number }>;
 }
 

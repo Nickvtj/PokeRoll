@@ -41,6 +41,8 @@ interface EconomyStore extends EconomyState {
   payForSpin: (multiplier: number) => boolean;
 
   setTeam: (team: number[]) => void;
+  toggleFavoritePokemon: (id: number) => void;
+  isFavoritePokemon: (id: number) => boolean;
   getPokemonProgress: (id: number) => { level: number; xp: number; xpInLevel: number; xpPct: number };
   getPokemonLevelsMap: () => Record<number, number>;
   grantPokemonBattleXp: (pokemonIds: number[], won: boolean) => PokemonLevelUpResult[];
@@ -157,6 +159,21 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     set({ team: team.slice(0, 3) });
     get().sync();
   },
+
+  toggleFavoritePokemon: (id) => {
+    set((s) => {
+      const favorites = s.favoritePokemon ?? [];
+      const exists = favorites.includes(id);
+      return {
+        favoritePokemon: exists
+          ? favorites.filter((f) => f !== id)
+          : [...favorites, id],
+      };
+    });
+    get().sync();
+  },
+
+  isFavoritePokemon: (id) => (get().favoritePokemon ?? []).includes(id),
 
   getPokemonProgress: (id) => {
     const key = String(id);
@@ -349,6 +366,7 @@ function getEconomySnapshot(state: EconomyStore): EconomyState {
     missionsClaimed: state.missionsClaimed,
     lastMissionDate: state.lastMissionDate,
     team: state.team,
+    favoritePokemon: state.favoritePokemon ?? [],
     pokemonBattleXp: state.pokemonBattleXp,
   };
 }

@@ -32,6 +32,7 @@ interface GameState {
   lastSpinResults: SpinResult[];
   spinSequences: Pokemon[][];
   completedReels: number;
+  spinSessionId: number;
   showReveal: boolean;
   albumFilter: AlbumFilter;
 
@@ -85,6 +86,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   lastSpinResults: [],
   spinSequences: [],
   completedReels: 0,
+  spinSessionId: 0,
   showReveal: false,
   albumFilter: {
     rarity: "all",
@@ -118,14 +120,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!economy.canAffordSpin(spinMultiplier)) return null;
     if (!economy.payForSpin(spinMultiplier)) return null;
 
-    set({
-      isSpinning: true,
-      lastSpinResults: [],
-      spinSequences: [],
-      completedReels: 0,
-      showReveal: false,
-    });
-
     let collection = { ...get().collection };
     const results: SpinResult[] = [];
     const sequences: Pokemon[][] = [];
@@ -154,10 +148,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
 
     set({
+      isSpinning: true,
+      lastSpinResults: results,
+      spinSequences: sequences,
+      completedReels: 0,
+      spinSessionId: get().spinSessionId + 1,
+      showReveal: false,
       collection,
       profile: newProfile,
-      spinSequences: sequences,
-      lastSpinResults: results,
     });
 
     await Promise.all([
@@ -171,8 +169,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   finishReelSpin: () => {
     set((state) => {
+      if (!state.isSpinning || state.spinSequences.length === 0) return state;
+
       const next = state.completedReels + 1;
-      const done = next >= state.spinSequences.length && state.spinSequences.length > 0;
+      const done = next >= state.spinSequences.length;
 
       return {
         completedReels: next,
@@ -182,7 +182,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   closeReveal: () => {
-    set({ showReveal: false, lastSpinResults: [], spinSequences: [] });
+    set({
+      showReveal: false,
+      lastSpinResults: [],
+      spinSequences: [],
+      completedReels: 0,
+    });
   },
 
   setAlbumFilter: (filter) => {

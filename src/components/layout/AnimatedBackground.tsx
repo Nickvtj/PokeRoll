@@ -2,6 +2,12 @@
 
 import { motion } from "framer-motion";
 
+/** Valor pseudo-aleatório estável (mesmo no SSR e no cliente) */
+function seededUnit(index: number, salt: number) {
+  const x = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
 export function AnimatedBackground() {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden">
@@ -55,17 +61,17 @@ export function AnimatedBackground() {
           key={`particle-${i}`}
           className="absolute w-1 h-1 rounded-full bg-white/20"
           style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
+            left: `${seededUnit(i, 1) * 100}%`,
+            top: `${seededUnit(i, 2) * 100}%`,
           }}
           animate={{
             opacity: [0.2, 0.8, 0.2],
             y: [0, -30, 0],
           }}
           transition={{
-            duration: 3 + Math.random() * 4,
+            duration: 3 + seededUnit(i, 3) * 4,
             repeat: Infinity,
-            delay: Math.random() * 5,
+            delay: seededUnit(i, 4) * 5,
           }}
         />
       ))}
