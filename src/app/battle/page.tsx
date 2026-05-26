@@ -2,14 +2,18 @@
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Swords } from "lucide-react";
 import { BattleTabs, type BattleTabId } from "@/components/battle/BattleTabs";
-import { TrainingPanel } from "@/components/battle/TrainingPanel";
 import { CoinCounter } from "@/components/ui/CoinCounter";
+import { PanelSkeleton } from "@/components/ui/RouteLoading";
 import { getLevelCapLabel } from "@/data/pokemon-xp-curve";
 import { useGymStore } from "@/stores/gym-store";
 import { useEconomyStore } from "@/stores/economy-store";
+
+const TrainingPanel = dynamic(
+  () => import("@/components/battle/TrainingPanel").then((m) => m.TrainingPanel),
+  { loading: () => <PanelSkeleton label="Carregando treino..." /> }
+);
 
 const GymMap = dynamic(
   () => import("@/components/gym/GymMap").then((m) => m.GymMap),
@@ -18,16 +22,8 @@ const GymMap = dynamic(
 
 const EliteFourScreen = dynamic(
   () => import("@/components/gym/EliteFourScreen").then((m) => m.EliteFourScreen),
-  { loading: () => <PanelSkeleton label="Carregando Elite Four..." /> }
+  { loading: () => <PanelSkeleton label="Carregando Liga Elite..." /> }
 );
-
-function PanelSkeleton({ label }: { label: string }) {
-  return (
-    <div className="glass-card p-8 text-center text-white/40 text-sm animate-pulse">
-      {label}
-    </div>
-  );
-}
 
 export default function BattlePage() {
   const [tab, setTab] = useState<BattleTabId>("training");
@@ -38,12 +34,7 @@ export default function BattlePage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        className="flex items-center justify-between"
-      >
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Swords className="w-8 h-8 text-red-400" />
@@ -54,7 +45,7 @@ export default function BattlePage() {
           </p>
         </div>
         <CoinCounter size="sm" />
-      </motion.div>
+      </div>
 
       <BattleTabs active={tab} onChange={setTab} eliteLocked={!isEliteUnlocked()} />
 

@@ -49,9 +49,6 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
   const onCompleteRef = useRef(onComplete);
 
   const team = useEconomyStore((s) => s.team);
-  const clickGamesToday = useEconomyStore((s) => s.clickGamesToday);
-  const clickCoinsToday = useEconomyStore((s) => s.clickCoinsToday);
-
   const bonuses = getEconomyBonuses(team);
 
   onCompleteRef.current = onComplete;
@@ -63,14 +60,9 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
     endedRef.current = true;
     setPlaying(false);
 
-    const { coins } = calcClickGameReward(
-      scoreRef.current,
-      clickGamesToday,
-      clickCoinsToday,
-      bonuses.coinBonus
-    );
+    const coins = calcClickGameReward(scoreRef.current, bonuses.coinBonus);
     onCompleteRef.current(scoreRef.current, coins, maxComboRef.current);
-  }, [clickGamesToday, clickCoinsToday, bonuses.coinBonus]);
+  }, [bonuses.coinBonus]);
 
   const start = () => {
     endedRef.current = false;

@@ -2,11 +2,9 @@ import {
   BALL_TYPES,
   CLICK_BASE_COINS_MAX,
   CLICK_BASE_COINS_MIN,
-  CLICK_DAILY_SOFT_CAP,
-  CLICK_FATIGUE_MULTIPLIER,
-  CLICK_FATIGUE_START,
   type BallType,
 } from "@/data/economy-balance";
+import { applyMinigameCoinBonus } from "@/lib/minigame-rewards";
 
 export interface SpawnedBall {
   id: string;
@@ -72,26 +70,10 @@ export function calcClickScore(
   return Math.round(base * mult);
 }
 
-export function calcClickGameReward(
-  score: number,
-  gamesPlayedToday: number,
-  coinsEarnedToday: number,
-  coinBonus = 0
-): { coins: number; capped: boolean } {
+export function calcClickGameReward(score: number, coinBonus = 0): number {
   let coins =
     CLICK_BASE_COINS_MIN +
-    Math.floor((score / 100) * (CLICK_BASE_COINS_MAX - CLICK_BASE_COINS_MIN));
+    Math.floor((score / 120) * (CLICK_BASE_COINS_MAX - CLICK_BASE_COINS_MIN));
   coins = Math.min(CLICK_BASE_COINS_MAX, Math.max(CLICK_BASE_COINS_MIN, coins));
-  coins = Math.round(coins * (1 + coinBonus));
-
-  if (gamesPlayedToday >= CLICK_FATIGUE_START) {
-    coins = Math.round(coins * CLICK_FATIGUE_MULTIPLIER);
-  }
-
-  const remaining = CLICK_DAILY_SOFT_CAP - coinsEarnedToday;
-  const capped = remaining <= 0;
-  if (capped) return { coins: 0, capped: true };
-  if (coins > remaining) coins = remaining;
-
-  return { coins, capped: false };
+  return applyMinigameCoinBonus(coins, coinBonus);
 }

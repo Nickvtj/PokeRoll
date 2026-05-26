@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 export type BattleTabId = "training" | "gyms" | "elite";
 
 const TABS: { id: BattleTabId; label: string; icon: typeof Dumbbell }[] = [
-  { id: "training", label: "Training", icon: Dumbbell },
-  { id: "gyms", label: "Gyms", icon: Map },
-  { id: "elite", label: "Elite", icon: Crown },
+  { id: "training", label: "Treino", icon: Dumbbell },
+  { id: "gyms", label: "Ginásios", icon: Map },
+  { id: "elite", label: "Liga Elite", icon: Crown },
 ];
 
 interface BattleTabsProps {

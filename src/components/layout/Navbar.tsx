@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, Disc3, BookOpen, User, Swords, MousePointerClick } from "lucide-react";
+import { Home, Disc3, BookOpen, User, Swords, Gamepad2 } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { CoinCounter } from "@/components/ui/CoinCounter";
 import { cn } from "@/lib/utils";
@@ -12,10 +12,10 @@ import { useEconomyStore } from "@/stores/economy-store";
 import { TrainerAvatarDisplay } from "@/components/profile/TrainerAvatarDisplay";
 
 const navItems = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/battle", label: "Battle", icon: Swords },
-  { href: "/minigame", label: "Click", icon: MousePointerClick },
-  { href: "/spin", label: "Spin", icon: Disc3 },
+  { href: "/", label: "Início", icon: Home },
+  { href: "/battle", label: "Batalha", icon: Swords },
+  { href: "/games", label: "Jogos", icon: Gamepad2 },
+  { href: "/spin", label: "Roleta", icon: Disc3 },
   { href: "/album", label: "Álbum", icon: BookOpen },
   { href: "/profile", label: "Perfil", icon: User },
 ];
@@ -42,7 +42,10 @@ export function Navbar() {
 
         <nav className="flex items-center gap-0.5">
           {navItems.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
+            const active =
+              href === "/"
+                ? pathname === "/"
+                : pathname === href || pathname.startsWith(`${href}/`);
             return (
               <Link key={href} href={href}>
                 <motion.div
@@ -87,7 +90,10 @@ export function Navbar() {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-white/10">
         <div className="grid grid-cols-6 items-center py-1 px-0.5">
           {navItems.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
+            const active =
+              href === "/"
+                ? pathname === "/"
+                : pathname === href || pathname.startsWith(`${href}/`);
             return (
               <Link key={href} href={href}>
                 <motion.div

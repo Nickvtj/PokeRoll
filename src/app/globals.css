@@ -29,7 +29,7 @@ body {
 
 @layer components {
   .glass {
-    @apply backdrop-blur-xl border border-white/10;
+    @apply backdrop-blur-md border border-white/10;
     background: var(--glass-bg);
   }
 

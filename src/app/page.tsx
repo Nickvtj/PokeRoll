@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Play, Sparkles, Swords, MousePointerClick, Coins } from "lucide-react";
+import { Play, Sparkles, Swords, Gamepad2, Coins } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { CoinCounter } from "@/components/ui/CoinCounter";
 import { useGameStore } from "@/stores/game-store";
@@ -20,18 +20,18 @@ const gameModes = [
   {
     href: "/battle",
     icon: Swords,
-    title: "Auto Battle",
+    title: "Batalha",
     desc: "4~7 moedas · Principal progressão",
     color: "from-red-500/20 to-orange-500/20 border-red-500/30",
     iconColor: "text-red-400",
   },
   {
-    href: "/minigame",
-    icon: MousePointerClick,
-    title: "Click Rush",
-    desc: "1~3 moedas · Casual rápido",
-    color: "from-cyan-500/20 to-blue-500/20 border-cyan-500/30",
-    iconColor: "text-cyan-400",
+    href: "/games",
+    icon: Gamepad2,
+    title: "Jogos",
+    desc: "3 minigames · 1~3 moedas cada",
+    color: "from-indigo-500/20 to-violet-500/20 border-indigo-500/30",
+    iconColor: "text-indigo-400",
   },
   {
     href: "/spin",
@@ -74,12 +74,7 @@ export default function HomePage() {
       ))}
 
       <div className="relative z-10 text-center max-w-2xl mx-auto space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="space-y-4"
-        >
+        <div className="space-y-4">
           <div className="flex justify-center">
             <CoinCounter size="lg" />
           </div>
@@ -98,14 +93,9 @@ export default function HomePage() {
           <p className="text-lg md:text-xl text-white/60 text-balance max-w-md mx-auto">
             Ganhe moedas, batalhe, clique e gire a roleta para completar seu álbum!
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-center justify-center gap-4 flex-wrap"
-        >
+        <div className="flex items-center justify-center gap-4 flex-wrap">
           <div className="glass-card px-5 py-3 text-center">
             <p className="text-2xl font-bold text-cyan-400">{getUniqueCount()}</p>
             <p className="text-xs text-white/50">Coletados</p>
@@ -114,15 +104,9 @@ export default function HomePage() {
             <p className="text-2xl font-bold text-indigo-400">{getProgress()}%</p>
             <p className="text-xs text-white/50">Progresso</p>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Game modes */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto"
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto">
           {gameModes.map(({ href, icon: Icon, title, desc, color, iconColor }) => (
             <Link key={href} href={href}>
               <motion.div
@@ -136,19 +120,15 @@ export default function HomePage() {
               </motion.div>
             </Link>
           ))}
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4, type: "spring" }}
-        >
+        <div>
           <Link href="/battle">
             <AnimatedButton variant="gold" size="xl" icon={<Play className="w-6 h-6 fill-current" />}>
               BATALHAR AGORA
             </AnimatedButton>
           </Link>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

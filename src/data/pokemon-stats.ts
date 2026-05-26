@@ -98,7 +98,7 @@ export const POKEMON_ABILITIES: Record<number, PokemonAbility> = {
   133: {
     id: "adaptability",
     name: "Adaptabilidade",
-    description: "+10% combo no minigame",
+    description: "+10% recompensa nos minigames",
     type: "passive",
     effect: "combo_bonus",
     value: 0.1,

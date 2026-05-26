@@ -15,7 +15,7 @@ const ORBS = [
   { color: "#f59e0b", size: 200, x: "80%", y: "30%", duration: 13, delay: 1 },
 ] as const;
 
-const PARTICLE_COUNT = 10;
+const PARTICLE_COUNT = 6;
 
 const PARTICLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
   left: `${(seededUnit(i, 1) * 100).toFixed(4)}%`,
@@ -41,7 +41,7 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
       {ORBS.map((orb, i) => (
         <div
           key={i}
-          className="absolute rounded-full opacity-20 blur-2xl bg-orb-drift"
+          className="absolute rounded-full opacity-20 blur-xl bg-orb-drift"
           style={{
             width: orb.size,
             height: orb.size,

@@ -13,7 +13,6 @@ import type { AchievementStats } from "@/data/achievements";
 import {
   computeNewAchievements,
   loadAchievementsFromSupabase,
-  mergeAchievementIds,
   syncAchievementsToSupabase,
 } from "@/lib/achievements-sync";
 import { getTeamPassiveBonuses } from "@/data/pokemon-stats";
@@ -35,6 +34,7 @@ import { persistEconomy } from "@/lib/economy-sync-scheduler";
 import {
   loadEconomyFromSupabase,
 } from "@/lib/economy-supabase";
+import { mergeEconomyState } from "@/lib/economy-merge";
 import { useGymStore } from "@/stores/gym-store";
 import type { EconomyState, RewardPayload } from "@/types/economy";
 import type { PokemonLevelUpResult } from "@/types/battle";
@@ -109,19 +109,13 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
       ([remote, remoteAchievements]) => {
         if (!remote) return;
         const local = get();
-        set({
-          ...remote,
-          pokemonBattleXp: { ...local.pokemonBattleXp, ...remote.pokemonBattleXp },
-          favoritePokemon:
-            (remote.favoritePokemon?.length ?? 0) > 0
-              ? remote.favoritePokemon
-              : local.favoritePokemon,
-          unlockedAchievements: mergeAchievementIds(
-            local.unlockedAchievements ?? [],
-            mergeAchievementIds(remote.unlockedAchievements ?? [], remoteAchievements)
-          ),
-          welcomeClaimed: remote.welcomeClaimed ?? local.welcomeClaimed ?? true,
-        });
+        set(
+          mergeEconomyState(
+            getEconomySnapshot(local),
+            remote,
+            remoteAchievements ?? []
+          )
+        );
         persistEconomy(getEconomySnapshot(get()));
       }
     );
@@ -246,8 +240,9 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
   },
 
   addXp: (amount) => {
+    if (!Number.isFinite(amount) || amount <= 0) return;
     set((s) => {
-      const xp = s.xp + amount;
+      const xp = (Number.isFinite(s.xp) ? s.xp : 0) + amount;
       const level = calcLevel(xp);
       const rank = Math.floor(level / 5) + 1;
       return { xp, level, rank };

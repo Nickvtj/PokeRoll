@@ -5,13 +5,35 @@ export const STARTING_COINS = 0;
 export const WELCOME_PACKAGE_COINS = 15;
 export const DUPLICATE_COIN_REWARD = 2;
 
-/** Click Minigame — menos eficiente que batalha */
+/** Minigames — sem teto diário; recompensas menores que batalha (4–7) */
+export const CAPTURE_SHAKE_MS = 700;
+export const CAPTURE_COINS_MIN = 1;
+export const CAPTURE_COINS_MAX = 5;
+
+export const CAPTURE_COINS_BY_RARITY = {
+  common: 1,
+  uncommon: 2,
+  rare: 3,
+  epic: 4,
+  legendary: 5,
+} as const;
+
 export const CLICK_GAME_DURATION_SEC = 30;
 export const CLICK_BASE_COINS_MIN = 1;
-export const CLICK_BASE_COINS_MAX = 3;
-export const CLICK_DAILY_SOFT_CAP = 12;
-export const CLICK_FATIGUE_START = 4;
-export const CLICK_FATIGUE_MULTIPLIER = 0.55;
+export const CLICK_BASE_COINS_MAX = 2;
+
+export const MEMORY_PAIR_COUNT = 8;
+export const MEMORY_GAME_DURATION_SEC = 45;
+export const MEMORY_COINS_MIN = 1;
+export const MEMORY_COINS_MAX = 3;
+
+/** @deprecated mantido por compat — sem teto/fadiga ativos */
+export const MINIGAME_DAILY_SOFT_CAP = 9999;
+export const MINIGAME_FATIGUE_START = 9999;
+export const MINIGAME_FATIGUE_MULTIPLIER = 1;
+export const CLICK_DAILY_SOFT_CAP = MINIGAME_DAILY_SOFT_CAP;
+export const CLICK_FATIGUE_START = MINIGAME_FATIGUE_START;
+export const CLICK_FATIGUE_MULTIPLIER = MINIGAME_FATIGUE_MULTIPLIER;
 
 /** Auto Battle — fonte principal de moedas (~1 vitória ≈ 1 giro) */
 export const BATTLE_BASE_COINS_MIN = 4;
@@ -29,15 +51,15 @@ export const MAX_LEVEL = 50;
 export const DAILY_LOGIN_COINS = [3, 4, 5, 6, 8, 10, 12];
 export const STREAK_BONUS_COINS = 2;
 
-/** Missões diárias — recompensa proporcional ao esforço (spin = 5 moedas) */
+/** Missões diárias */
 export const DAILY_MISSIONS = [
   { id: "spin_5", label: "Girar 5 vezes", target: 5, reward: 8, type: "spins" as const },
   { id: "battle_3", label: "Vencer 3 batalhas", target: 3, reward: 12, type: "battles" as const },
-  { id: "click_2", label: "Jogar 2 minigames", target: 2, reward: 5, type: "clicks" as const },
+  { id: "click_2", label: "Jogar 2 jogos", target: 2, reward: 5, type: "clicks" as const },
   { id: "collect_2", label: "Coletar 2 Pokémon novos", target: 2, reward: 10, type: "new_pokemon" as const },
 ];
 
-/** Pokébolas do minigame */
+/** Pokébolas do Click Rush */
 export const BALL_TYPES = {
   poke: { label: "Poké", points: 1, color: "#ef4444", chance: 0.55 },
   great: { label: "Great", points: 3, color: "#3b82f6", chance: 0.28 },

@@ -65,8 +65,9 @@ export function TrainingPanel() {
       void recordBattleToSupabase(true, coins, xp, !!state.reward.freeSpin, state.wave, team);
       finalState = { ...finalState, reward: { ...state.reward, coins, xp } };
     } else if (!won) {
+      addXp(6);
       recordBattleLoss();
-      void recordBattleToSupabase(false, 0, 0, false, state.wave, team);
+      void recordBattleToSupabase(false, 0, 6, false, state.wave, team);
     }
     setBattleState(finalState);
   }, [team, addCoins, addXp, recordBattleWin, recordBattleLoss, grantFreeSpin, grantPokemonBattleXp]);

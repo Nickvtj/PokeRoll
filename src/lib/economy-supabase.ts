@@ -28,10 +28,10 @@ type EconomyRow = {
 
 function mapRowToEconomy(data: EconomyRow): EconomyState {
   return {
-    coins: data.coins,
-    xp: data.xp,
-    level: data.level,
-    rank: data.rank,
+    coins: data.coins ?? 0,
+    xp: data.xp ?? 0,
+    level: data.level ?? 1,
+    rank: data.rank ?? 1,
     freeSpins: data.free_spins,
     battleWins: data.battle_wins,
     totalBattles: data.total_battles,
