@@ -37,6 +37,8 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
     teamIds: number[];
   } | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const battleStateRef = useRef<BattleState | null>(null);
+  battleStateRef.current = battleState;
 
   const startStage = (s: number) => {
     if (team.length < 3) return;
@@ -48,40 +50,42 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
   };
 
   const processTurns = useCallback(() => {
-    setBattleState((prev) => {
-      if (!prev || prev.phase !== "fighting") return prev;
-      const bonuses = getEconomyBonuses(team);
-      const { state, done } = executeBattleTurn(prev, {
-        battleDamage: bonuses.battleDamage,
-        critChance: bonuses.critChance,
-      });
+    const prev = battleStateRef.current;
+    if (!prev || prev.phase !== "fighting") return;
 
-      if (done) {
-        setFighting(false);
-        const won = state.phase === "victory";
-        const levelUps = grantPokemonBattleXp(team, won, "gym");
-        let finalState = { ...state, levelUps };
-
-        if (won && state.gymMeta) {
-          const avgLevel =
-            team.reduce((sum, id) => sum + (getPokemonLevelsMap()[id] ?? 1), 0) / team.length;
-          const bonus = calcPerfectRun(
-            true,
-            state.playerDeaths ?? 0,
-            state.turnCount ?? 0,
-            avgLevel,
-            state.gymMeta.recommendedLevel
-          );
-          const { badgeEarned } = recordGymStageWin(gymId, stage, team, bonus);
-
-          if (badgeEarned) {
-            setBadgeReward({ bonus, teamIds: [...team] });
-          }
-        }
-        return finalState;
-      }
-      return state;
+    const bonuses = getEconomyBonuses(team);
+    const { state, done } = executeBattleTurn(prev, {
+      battleDamage: bonuses.battleDamage,
+      critChance: bonuses.critChance,
     });
+
+    if (!done) {
+      setBattleState(state);
+      return;
+    }
+
+    setFighting(false);
+    const won = state.phase === "victory";
+    const levelUps = grantPokemonBattleXp(team, won, "gym");
+    const finalState: BattleState = { ...state, levelUps };
+
+    if (won && state.gymMeta) {
+      const avgLevel =
+        team.reduce((sum, id) => sum + (getPokemonLevelsMap()[id] ?? 1), 0) / team.length;
+      const bonus = calcPerfectRun(
+        true,
+        state.playerDeaths ?? 0,
+        state.turnCount ?? 0,
+        avgLevel,
+        state.gymMeta.recommendedLevel
+      );
+      const { badgeEarned } = recordGymStageWin(gymId, stage, team, bonus);
+
+      if (badgeEarned) {
+        setBadgeReward({ bonus, teamIds: [...team] });
+      }
+    }
+    setBattleState(finalState);
   }, [team, stage, gymId, grantPokemonBattleXp, getPokemonLevelsMap, recordGymStageWin]);
 
   useEffect(() => {

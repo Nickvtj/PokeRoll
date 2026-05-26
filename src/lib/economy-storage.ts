@@ -27,6 +27,7 @@ export function getDefaultEconomy(): EconomyState {
     pokemonBattleXp: {},
     welcomeClaimed: false,
     unlockedAchievements: [],
+    selectedAvatarId: "default",
   };
 }
 

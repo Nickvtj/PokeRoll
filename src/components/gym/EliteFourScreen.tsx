@@ -1,6 +1,6 @@
 "use client";
 
-import { ELITE_FOUR, isEliteMemberUnlocked } from "@/data/gyms";
+import { ELITE_FOUR, ELITE_REQUIRED_ACCOUNT_LEVEL, isEliteMemberUnlocked } from "@/data/gyms";
 import { Lock } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BattleArena } from "@/components/battle/BattleArena";
@@ -19,8 +19,10 @@ export function EliteFourScreen() {
   const isEliteUnlocked = useGymStore((s) => s.isEliteUnlocked);
   const eliteProgress = useGymStore((s) => s.eliteProgress);
   const championDefeated = useGymStore((s) => s.championDefeated);
+  const badgeCount = useGymStore((s) => s.badges.length);
   const recordEliteWin = useGymStore((s) => s.recordEliteWin);
   const team = useEconomyStore((s) => s.team);
+  const accountLevel = useEconomyStore((s) => s.level);
   const getPokemonLevelsMap = useEconomyStore((s) => s.getPokemonLevelsMap);
   const grantPokemonBattleXp = useEconomyStore((s) => s.grantPokemonBattleXp);
 
@@ -28,6 +30,8 @@ export function EliteFourScreen() {
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const battleStateRef = useRef<BattleState | null>(null);
+  battleStateRef.current = battleState;
 
   const leagueUnlocked = isEliteUnlocked();
 
@@ -42,36 +46,38 @@ export function EliteFourScreen() {
   };
 
   const processTurns = useCallback(() => {
-    setBattleState((prev) => {
-      if (!prev || prev.phase !== "fighting") return prev;
-      const bonuses = getEconomyBonuses(team);
-      const { state, done } = executeBattleTurn(prev, {
-        battleDamage: bonuses.battleDamage,
-        critChance: bonuses.critChance,
-      });
+    const prev = battleStateRef.current;
+    if (!prev || prev.phase !== "fighting") return;
 
-      if (done) {
-        setFighting(false);
-        const won = state.phase === "victory";
-        grantPokemonBattleXp(team, won, "elite");
-
-        if (won && activeElite) {
-          const avgLevel =
-            team.reduce((sum, id) => sum + (getPokemonLevelsMap()[id] ?? 1), 0) / team.length;
-          const rec = ELITE_FOUR.find((e) => e.id === activeElite);
-          const bonus = calcPerfectRun(
-            true,
-            state.playerDeaths ?? 0,
-            state.turnCount ?? 0,
-            avgLevel,
-            rec?.recommendedLevel ?? 40
-          );
-          recordEliteWin(activeElite, team, bonus);
-        }
-        return { ...state, levelUps: [] };
-      }
-      return state;
+    const bonuses = getEconomyBonuses(team);
+    const { state, done } = executeBattleTurn(prev, {
+      battleDamage: bonuses.battleDamage,
+      critChance: bonuses.critChance,
     });
+
+    if (!done) {
+      setBattleState(state);
+      return;
+    }
+
+    setFighting(false);
+    const won = state.phase === "victory";
+    const levelUps = grantPokemonBattleXp(team, won, "elite");
+
+    if (won && activeElite) {
+      const avgLevel =
+        team.reduce((sum, id) => sum + (getPokemonLevelsMap()[id] ?? 1), 0) / team.length;
+      const rec = ELITE_FOUR.find((e) => e.id === activeElite);
+      const bonus = calcPerfectRun(
+        true,
+        state.playerDeaths ?? 0,
+        state.turnCount ?? 0,
+        avgLevel,
+        rec?.recommendedLevel ?? 40
+      );
+      recordEliteWin(activeElite, team, bonus);
+    }
+    setBattleState({ ...state, levelUps });
   }, [team, activeElite, grantPokemonBattleXp, getPokemonLevelsMap, recordEliteWin]);
 
   useEffect(() => {
@@ -101,9 +107,18 @@ export function EliteFourScreen() {
   return (
     <div className="space-y-4">
       {!leagueUnlocked && (
-        <div className="glass-card p-4 text-center border border-white/10 bg-white/5">
+        <div className="glass-card p-4 text-center border border-white/10 bg-white/5 space-y-1">
           <Lock className="w-8 h-8 mx-auto text-white/30 mb-2" />
-          <p className="text-sm text-white/50">Colete as 8 insígnias para desafiar a Elite Four</p>
+          {accountLevel < ELITE_REQUIRED_ACCOUNT_LEVEL && (
+            <p className="text-sm text-white/50">
+              Requer Nv. {ELITE_REQUIRED_ACCOUNT_LEVEL} da conta (você: Nv. {accountLevel})
+            </p>
+          )}
+          {badgeCount < 8 && (
+            <p className="text-sm text-white/50">
+              Colete as 8 insígnias ({badgeCount}/8)
+            </p>
+          )}
         </div>
       )}
 
@@ -147,7 +162,9 @@ export function EliteFourScreen() {
                   <div className="flex items-center gap-2 text-white/50 text-xs font-semibold">
                     <Lock className="w-4 h-4" />
                     {!leagueUnlocked
-                      ? "8 insígnias necessárias"
+                      ? accountLevel < ELITE_REQUIRED_ACCOUNT_LEVEL
+                        ? `Nv. ${ELITE_REQUIRED_ACCOUNT_LEVEL}+ necessário`
+                        : "8 insígnias necessárias"
                       : index === 0
                         ? "Bloqueado"
                         : `Derrote ${ELITE_FOUR[index - 1]?.name} primeiro`}

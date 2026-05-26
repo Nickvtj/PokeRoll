@@ -1,9 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Award } from "lucide-react";
 import { GYMS } from "@/data/gyms";
 import { useGymStore } from "@/stores/gym-store";
 import { GymBadge } from "@/components/gym/GymBadge";
+import { ProfileSection } from "@/components/profile/ProfileSection";
 
 export function ProfileBadgesPanel() {
   const badges = useGymStore((s) => s.badges);
@@ -13,14 +15,14 @@ export function ProfileBadgesPanel() {
   const missing = GYMS.filter((g) => !badges.includes(g.id));
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15 }}
-      className="glass-card p-6 space-y-4"
+    <ProfileSection
+      title="Insígnias Kanto"
+      description="Conquistadas ao vencer os líderes de ginásio."
+      icon={Award}
+      iconClassName="text-amber-400"
     >
-      <div className="flex items-center justify-between">
-        <h3 className="font-bold">Insígnias Kanto</h3>
+      <div className="flex items-center justify-between px-1">
+        <span className="text-xs text-white/50">Progresso da liga</span>
         <span className="text-sm font-bold text-indigo-300">{badges.length}/8</span>
       </div>
 
@@ -61,6 +63,6 @@ export function ProfileBadgesPanel() {
           🏆 Campeão da Liga — Hall of Fame
         </p>
       )}
-    </motion.div>
+    </ProfileSection>
   );
 }

@@ -1,8 +1,9 @@
 import { create } from "zustand";
-import { allBadgesEarned, GYM_MAP, GYMS, isGymUnlocked } from "@/data/gyms";
+import { GYM_MAP, GYMS, isEliteLeagueUnlocked, isGymUnlocked } from "@/data/gyms";
 import { getLevelCap } from "@/data/pokemon-xp-curve";
 import { getDefaultGymState, loadGymState, saveGymState } from "@/lib/gym-storage";
 import { loadGymFromSupabase, syncGymToSupabase } from "@/lib/gym-supabase";
+import { useEconomyStore } from "@/stores/economy-store";
 import type {
   EliteId,
   GymId,
@@ -102,9 +103,15 @@ export const useGymStore = create<GymStore>((set, get) => ({
 
   hasBadge: (gymId) => get().badges.includes(gymId),
 
-  isGymUnlocked: (gymId) => isGymUnlocked(gymId, get().badges),
+  isGymUnlocked: (gymId) => {
+    const accountLevel = useEconomyStore.getState().level;
+    return isGymUnlocked(gymId, accountLevel);
+  },
 
-  isEliteUnlocked: () => allBadgesEarned(get().badges),
+  isEliteUnlocked: () => {
+    const accountLevel = useEconomyStore.getState().level;
+    return isEliteLeagueUnlocked(accountLevel, get().badges);
+  },
 
   getGymProgress: (gymId) => get().gymProgress[gymId] ?? defaultProgress(),
 

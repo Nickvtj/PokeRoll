@@ -77,6 +77,7 @@ interface EconomyStore extends EconomyState {
   closeRewardPopup: () => void;
   claimWelcomePackage: () => void;
   refreshAchievements: (stats: AchievementStats) => void;
+  setSelectedAvatar: (avatarId: string) => void;
   sync: () => void;
 }
 
@@ -463,6 +464,11 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     get().sync();
     void syncAchievementsToSupabase(newlyUnlocked);
   },
+
+  setSelectedAvatar: (avatarId) => {
+    set({ selectedAvatarId: avatarId });
+    get().sync();
+  },
 }));
 
 function getEconomySnapshot(state: EconomyStore): EconomyState {
@@ -488,6 +494,7 @@ function getEconomySnapshot(state: EconomyStore): EconomyState {
     pokemonBattleXp: state.pokemonBattleXp,
     welcomeClaimed: state.welcomeClaimed ?? false,
     unlockedAchievements: state.unlockedAchievements ?? [],
+    selectedAvatarId: state.selectedAvatarId ?? "default",
   };
 }
 

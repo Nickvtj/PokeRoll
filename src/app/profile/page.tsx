@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Gift, Trophy, CalendarDays } from "lucide-react";
+import { User, Gift, Trophy, CalendarDays, Palette, Award } from "lucide-react";
 import { ProfileCard } from "@/components/profile/ProfileCard";
+import { ProfileCustomizePanel } from "@/components/profile/ProfileCustomizePanel";
+import { ProfileBadgesPanel } from "@/components/profile/ProfileBadgesPanel";
 import { MissionsPanel } from "@/components/missions/MissionsPanel";
 import { AchievementsPanel } from "@/components/missions/AchievementsPanel";
 import { DailyReward } from "@/components/ui/DailyReward";
@@ -11,6 +13,8 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { id: "resumo", label: "Resumo", icon: User },
+  { id: "personalizar", label: "Avatar", icon: Palette },
+  { id: "insignias", label: "Insígnias", icon: Award },
   { id: "missoes", label: "Missões", icon: Gift },
   { id: "login", label: "Login", icon: CalendarDays },
   { id: "conquistas", label: "Conquistas", icon: Trophy },
@@ -32,11 +36,10 @@ export default function ProfilePage() {
           <User className="w-8 h-8 text-purple-400" />
           Meu Perfil
         </h1>
-        <p className="text-white/50 text-sm">Selecione uma seção abaixo</p>
+        <p className="text-white/50 text-sm">Escolha uma seção para explorar</p>
       </motion.div>
 
-      {/* Menu de abas */}
-      <div className="glass-card p-1.5 grid grid-cols-4 gap-1">
+      <div className="glass-card p-1.5 grid grid-cols-3 sm:grid-cols-6 gap-1">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -56,7 +59,7 @@ export default function ProfilePage() {
               />
             )}
             <Icon className="w-4 h-4 relative z-10" />
-            <span className="relative z-10">{label}</span>
+            <span className="relative z-10 leading-tight text-center">{label}</span>
           </button>
         ))}
       </div>
@@ -70,6 +73,8 @@ export default function ProfilePage() {
           transition={{ duration: 0.2 }}
         >
           {activeTab === "resumo" && <ProfileCard />}
+          {activeTab === "personalizar" && <ProfileCustomizePanel />}
+          {activeTab === "insignias" && <ProfileBadgesPanel />}
           {activeTab === "missoes" && <MissionsPanel />}
           {activeTab === "login" && <DailyReward />}
           {activeTab === "conquistas" && <AchievementsPanel />}

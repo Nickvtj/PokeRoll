@@ -1,6 +1,16 @@
 import type { GymDefinition, GymId, GymTrainerStage, EliteDefinition, EliteId } from "@/types/gym";
 
-export const GYMS: GymDefinition[] = [
+/** Nível mínimo da conta para Elite Four (além das 8 insígnias) */
+export const ELITE_REQUIRED_ACCOUNT_LEVEL = 40;
+
+function withAccountLevel(gym: Omit<GymDefinition, "requiredAccountLevel">): GymDefinition {
+  return {
+    ...gym,
+    requiredAccountLevel: gym.order === 1 ? 1 : (gym.order - 1) * 5,
+  };
+}
+
+const GYMS_BASE: Omit<GymDefinition, "requiredAccountLevel">[] = [
   {
     id: "brock",
     order: 1,
@@ -106,6 +116,8 @@ export const GYMS: GymDefinition[] = [
     description: "Chefe da Equipe Rocket. Rhydon e Nidoking esmagam.",
   },
 ];
+
+export const GYMS: GymDefinition[] = GYMS_BASE.map(withAccountLevel);
 
 export const GYM_MAP: Record<GymId, GymDefinition> = Object.fromEntries(
   GYMS.map((g) => [g.id, g])
@@ -229,11 +241,31 @@ export function getGymById(id: GymId): GymDefinition {
   return GYM_MAP[id];
 }
 
-export function isGymUnlocked(gymId: GymId, badges: GymId[]): boolean {
+export function isGymUnlocked(gymId: GymId, accountLevel: number): boolean {
   const gym = GYM_MAP[gymId];
-  if (gym.order === 1) return true;
-  const prevGym = GYMS.find((g) => g.order === gym.order - 1);
-  return prevGym ? badges.includes(prevGym.id) : false;
+  return accountLevel >= gym.requiredAccountLevel;
+}
+
+export function isEliteLeagueUnlocked(accountLevel: number, badges: GymId[]): boolean {
+  return accountLevel >= ELITE_REQUIRED_ACCOUNT_LEVEL && allBadgesEarned(badges);
+}
+
+export function getTeamGymReadiness(
+  team: number[],
+  pokemonLevels: Record<number, number>,
+  recommendedLevel: number
+): { ready: boolean; avgLevel: number; teamComplete: boolean } {
+  const teamComplete = team.length >= 3;
+  if (!teamComplete) {
+    return { ready: false, avgLevel: 0, teamComplete: false };
+  }
+  const avgLevel =
+    team.reduce((sum, id) => sum + (pokemonLevels[id] ?? 1), 0) / team.length;
+  return {
+    ready: avgLevel >= recommendedLevel,
+    avgLevel: Math.round(avgLevel * 10) / 10,
+    teamComplete: true,
+  };
 }
 
 export function allBadgesEarned(badges: GymId[]): boolean {

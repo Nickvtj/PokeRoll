@@ -20,6 +20,7 @@ export interface EconomyState {
   pokemonBattleXp: Record<string, { level: number; xp: number }>;
   welcomeClaimed?: boolean;
   unlockedAchievements: string[];
+  selectedAvatarId: string;
 }
 
 export interface CoinTransaction {

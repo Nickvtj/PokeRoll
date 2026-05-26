@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Lock, Coins, ChevronDown } from "lucide-react";
 import { TOTAL_POKEMON } from "@/data/pokemon";
-import { getHallOfFameCount } from "@/data/gyms";
+import { getHallOfFameCount, getTeamGymReadiness } from "@/data/gyms";
 import { GYM_LEADER_COIN_REWARD } from "@/data/gym-badges";
 import { useGymStore } from "@/stores/gym-store";
 import { useEconomyStore } from "@/stores/economy-store";
@@ -27,11 +27,20 @@ export function GymCard({ gym, unlocked, hasBadge }: GymCardProps) {
   const canClaimGymCoins = useGymStore((s) => s.canClaimGymCoins);
   const claimGymCoinReward = useGymStore((s) => s.claimGymCoinReward);
   const addCoins = useEconomyStore((s) => s.addCoins);
+  const accountLevel = useEconomyStore((s) => s.level);
+  const team = useEconomyStore((s) => s.team);
+  const getPokemonLevelsMap = useEconomyStore((s) => s.getPokemonLevelsMap);
 
   const progress = getGymProgress(gym.id);
   const hofCount = getHallOfFameCount(hallOfFame, gym.id);
   const canClaim = canClaimGymCoins(gym.id);
   const coinsClaimed = progress.coinRewardClaimed;
+  const teamReadiness = getTeamGymReadiness(
+    team,
+    getPokemonLevelsMap(),
+    gym.recommendedLevel
+  );
+  const canChallenge = unlocked && teamReadiness.ready;
 
   const handleClaimCoins = () => {
     const amount = claimGymCoinReward(gym.id);
@@ -74,7 +83,22 @@ export function GymCard({ gym, unlocked, hasBadge }: GymCardProps) {
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-white/50">{gym.arenaName} · Nv. {gym.recommendedLevel}+</p>
+            <p className="text-[10px] text-white/50">
+              {gym.arenaName} · Pokémon Nv. {gym.recommendedLevel}+
+            </p>
+            {!unlocked && (
+              <p className="text-[10px] text-amber-400/90 mt-1">
+                Requer Nv. {gym.requiredAccountLevel} da conta (você: Nv. {accountLevel})
+              </p>
+            )}
+            {unlocked && !teamReadiness.teamComplete && (
+              <p className="text-[10px] text-orange-400/90 mt-1">Monte um time de 3 Pokémon</p>
+            )}
+            {unlocked && teamReadiness.teamComplete && !teamReadiness.ready && (
+              <p className="text-[10px] text-orange-400/90 mt-1">
+                Time médio Nv. {teamReadiness.avgLevel} · recomendado Nv. {gym.recommendedLevel}+
+              </p>
+            )}
             <p className="text-[10px] text-white/40 mt-1 line-clamp-2">{gym.description}</p>
           </div>
         </div>
@@ -92,11 +116,11 @@ export function GymCard({ gym, unlocked, hasBadge }: GymCardProps) {
       <div className="p-3 flex gap-2">
         <button
           type="button"
-          disabled={!unlocked}
-          onClick={() => setBattling(true)}
+          disabled={!canChallenge}
+          onClick={() => canChallenge && setBattling(true)}
           className={cn(
             "flex-1 py-2 rounded-xl text-xs font-bold transition-all",
-            unlocked
+            canChallenge
               ? "bg-indigo-500/30 text-indigo-200 hover:bg-indigo-500/40 border border-indigo-500/30"
               : "bg-white/5 text-white/30 cursor-not-allowed"
           )}

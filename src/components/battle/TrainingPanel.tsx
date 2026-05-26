@@ -24,6 +24,8 @@ export function TrainingPanel() {
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const battleStateRef = useRef<BattleState | null>(null);
+  battleStateRef.current = battleState;
 
   const startBattle = () => {
     if (team.length < 3) return;
@@ -34,37 +36,39 @@ export function TrainingPanel() {
   };
 
   const processTurns = useCallback(() => {
-    setBattleState((prev) => {
-      if (!prev || prev.phase !== "fighting") return prev;
-      const bonuses = getEconomyBonuses(team);
-      const { state, done } = executeBattleTurn(prev, {
-        battleDamage: bonuses.battleDamage,
-        critChance: bonuses.critChance,
-      });
+    const prev = battleStateRef.current;
+    if (!prev || prev.phase !== "fighting") return;
 
-      if (done) {
-        setFighting(false);
-        const won = state.phase === "victory";
-        const levelUps = grantPokemonBattleXp(team, won, "training");
-        let finalState = { ...state, levelUps };
-
-        if (won && state.reward) {
-          const coins = Math.round(state.reward.coins * (1 + bonuses.coinBonus));
-          const xp = Math.round(state.reward.xp * (1 + bonuses.xpBonus));
-          addCoins(coins);
-          addXp(xp);
-          recordBattleWin();
-          if (state.reward.freeSpin) grantFreeSpin();
-          void recordBattleToSupabase(true, coins, xp, !!state.reward.freeSpin, state.wave, team);
-          finalState = { ...finalState, reward: { ...state.reward, coins, xp } };
-        } else if (!won) {
-          recordBattleLoss();
-          void recordBattleToSupabase(false, 0, 0, false, state.wave, team);
-        }
-        return finalState;
-      }
-      return state;
+    const bonuses = getEconomyBonuses(team);
+    const { state, done } = executeBattleTurn(prev, {
+      battleDamage: bonuses.battleDamage,
+      critChance: bonuses.critChance,
     });
+
+    if (!done) {
+      setBattleState(state);
+      return;
+    }
+
+    setFighting(false);
+    const won = state.phase === "victory";
+    const levelUps = grantPokemonBattleXp(team, won, "training");
+    let finalState: BattleState = { ...state, levelUps };
+
+    if (won && state.reward) {
+      const coins = Math.round(state.reward.coins * (1 + bonuses.coinBonus));
+      const xp = Math.round(state.reward.xp * (1 + bonuses.xpBonus));
+      addCoins(coins);
+      addXp(xp);
+      recordBattleWin();
+      if (state.reward.freeSpin) grantFreeSpin();
+      void recordBattleToSupabase(true, coins, xp, !!state.reward.freeSpin, state.wave, team);
+      finalState = { ...finalState, reward: { ...state.reward, coins, xp } };
+    } else if (!won) {
+      recordBattleLoss();
+      void recordBattleToSupabase(false, 0, 0, false, state.wave, team);
+    }
+    setBattleState(finalState);
   }, [team, addCoins, addXp, recordBattleWin, recordBattleLoss, grantFreeSpin, grantPokemonBattleXp]);
 
   useEffect(() => {

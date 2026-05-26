@@ -23,6 +23,7 @@ type EconomyRow = {
   pokemon_battle_xp?: Record<string, { level: number; xp: number }> | null;
   welcome_claimed?: boolean | null;
   unlocked_achievements?: string[] | null;
+  selected_avatar_id?: string | null;
 };
 
 function mapRowToEconomy(data: EconomyRow): EconomyState {
@@ -48,6 +49,7 @@ function mapRowToEconomy(data: EconomyRow): EconomyState {
     pokemonBattleXp: data.pokemon_battle_xp ?? {},
     welcomeClaimed: data.welcome_claimed ?? false,
     unlockedAchievements: data.unlocked_achievements ?? [],
+    selectedAvatarId: data.selected_avatar_id ?? "default",
   };
 }
 
@@ -96,6 +98,7 @@ export async function syncEconomyToSupabase(economy: EconomyState): Promise<void
     pokemon_battle_xp: economy.pokemonBattleXp ?? {},
     welcome_claimed: economy.welcomeClaimed ?? false,
     unlocked_achievements: economy.unlockedAchievements ?? [],
+    selected_avatar_id: economy.selectedAvatarId ?? "default",
     updated_at: new Date().toISOString(),
   };
 

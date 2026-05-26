@@ -26,6 +26,8 @@ export interface GymDefinition {
   themeGradient: string;
   arenaName: string;
   description: string;
+  /** Nível mínimo da conta para acessar o ginásio */
+  requiredAccountLevel: number;
 }
 
 export interface GymTrainerStage {

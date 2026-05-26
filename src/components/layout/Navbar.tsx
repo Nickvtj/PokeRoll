@@ -9,6 +9,7 @@ import { CoinCounter } from "@/components/ui/CoinCounter";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
+import { TrainerAvatarDisplay } from "@/components/profile/TrainerAvatarDisplay";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -24,6 +25,7 @@ export function Navbar() {
   const uniqueCount = useGameStore((s) => Object.keys(s.collection).length);
   const username = useGameStore((s) => s.profile.username);
   const level = useEconomyStore((s) => s.level);
+  const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
 
   return (
     <>
@@ -67,11 +69,16 @@ export function Navbar() {
             <BookOpen className="w-3.5 h-3.5 text-cyan-400 inline mr-1" />
             {uniqueCount}/150
           </div>
-          <div className="px-3 py-1.5 rounded-xl glass text-xs border border-white/5">
-            <span className="text-white/70 font-medium truncate max-w-[100px] inline-block align-bottom">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl glass text-xs border border-white/5">
+            <TrainerAvatarDisplay
+              avatarId={selectedAvatarId}
+              username={username}
+              size="xs"
+            />
+            <span className="text-white/70 font-medium truncate max-w-[100px]">
               {username}
             </span>
-            <span className="text-indigo-400 font-semibold ml-1.5">Nv.{level}</span>
+            <span className="text-indigo-400 font-semibold">Nv.{level}</span>
           </div>
         </div>
       </header>
