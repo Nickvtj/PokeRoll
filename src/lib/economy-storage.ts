@@ -25,6 +25,8 @@ export function getDefaultEconomy(): EconomyState {
     team: [],
     favoritePokemon: [],
     pokemonBattleXp: {},
+    welcomeClaimed: false,
+    unlockedAchievements: [],
   };
 }
 
@@ -32,7 +34,15 @@ export function loadEconomy(): EconomyState {
   if (typeof window === "undefined") return getDefaultEconomy();
   try {
     const raw = localStorage.getItem(ECONOMY_KEY);
-    if (raw) return { ...getDefaultEconomy(), ...JSON.parse(raw) };
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<EconomyState>;
+      const isLegacy = !("welcomeClaimed" in parsed);
+      return {
+        ...getDefaultEconomy(),
+        ...parsed,
+        welcomeClaimed: isLegacy ? true : parsed.welcomeClaimed ?? false,
+      };
+    }
   } catch {
     /* fallback */
   }

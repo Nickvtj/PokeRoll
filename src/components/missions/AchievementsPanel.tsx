@@ -1,31 +1,13 @@
 "use client";
 
 import { Trophy } from "lucide-react";
-import { ACHIEVEMENTS, getUnlockedAchievements } from "@/data/achievements";
+import { ACHIEVEMENTS } from "@/data/achievements";
 import { useEconomyStore } from "@/stores/economy-store";
-import { useGameStore } from "@/stores/game-store";
 import { cn } from "@/lib/utils";
 
 export function AchievementsPanel() {
-  const getUniqueCount = useGameStore((s) => s.getUniqueCount);
-  const profile = useGameStore((s) => s.profile);
-  const coins = useEconomyStore((s) => s.coins);
-  const level = useEconomyStore((s) => s.level);
-  const battleWins = useEconomyStore((s) => s.battleWins);
-  const clickGamesPlayed = useEconomyStore((s) => s.clickGamesPlayed);
-  const dailyStreak = useEconomyStore((s) => s.dailyStreak);
-
-  const stats = {
-    uniquePokemon: getUniqueCount(),
-    totalSpins: profile.totalSpins,
-    battleWins,
-    clickGames: clickGamesPlayed,
-    level,
-    dailyStreak,
-    coins,
-  };
-
-  const unlocked = new Set(getUnlockedAchievements(stats));
+  const unlockedAchievements = useEconomyStore((s) => s.unlockedAchievements ?? []);
+  const unlocked = new Set(unlockedAchievements);
 
   return (
     <div className="glass-card p-5 space-y-4">

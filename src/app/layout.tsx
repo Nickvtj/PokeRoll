@@ -5,7 +5,7 @@ import { GameProvider } from "@/components/layout/GameProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PokéRoll — Coleção de Figurinhas Pokémon",
+  title: "PokéRoll",
   description:
     "Gire a roleta, colete 150 Pokémon e complete seu álbum de figurinhas!",
   keywords: ["pokemon", "jogo", "coleção", "figurinhas", "gacha"],

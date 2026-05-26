@@ -2,16 +2,21 @@
 
 import { Loader2 } from "lucide-react";
 import { useGameInit } from "@/hooks/use-game-init";
+import { useAchievementSync, useDuplicateRewardGuard } from "@/hooks/use-achievement-sync";
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGymStore } from "@/stores/gym-store";
 import { RewardPopup } from "@/components/ui/RewardPopup";
 import { RewardAnimation } from "@/components/ui/RewardAnimation";
+import { WelcomeModal } from "@/components/ui/WelcomeModal";
 import { useEffect } from "react";
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const { isLoading } = useGameInit();
   const initializeEconomy = useEconomyStore((s) => s.initializeEconomy);
   const initializeGym = useGymStore((s) => s.initializeGym);
+
+  useAchievementSync(!isLoading);
+  useDuplicateRewardGuard();
 
   useEffect(() => {
     initializeEconomy();
@@ -30,6 +35,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
+      <WelcomeModal />
       <RewardAnimation />
       <RewardPopup />
     </>

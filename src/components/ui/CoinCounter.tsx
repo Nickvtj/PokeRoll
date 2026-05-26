@@ -61,12 +61,14 @@ export function SpinCurrencyDisplay({ multiplier, className }: SpinCurrencyDispl
   const getSpinCost = useEconomyStore((s) => s.getSpinCost);
   const canAffordSpin = useEconomyStore((s) => s.canAffordSpin);
   const freeSpins = useEconomyStore((s) => s.freeSpins);
+  const coins = useEconomyStore((s) => s.coins);
   const cost = getSpinCost(multiplier);
   const canAfford = canAffordSpin(multiplier);
+  const willUseFreeSpin = freeSpins >= multiplier && coins < cost;
 
   return (
     <div className={cn("text-center text-sm", className)}>
-      {freeSpins >= multiplier ? (
+      {willUseFreeSpin ? (
         <p className="text-cyan-400 font-semibold">
           Spin grátis disponível! ({freeSpins} restantes)
         </p>

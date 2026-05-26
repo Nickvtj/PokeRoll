@@ -38,10 +38,12 @@ function ResultCard({ result, index }: { result: SpinResult; index: number }) {
           ...(isDuplicate ? { x: [0, -3, 3, -2, 2, 0] } : {}),
         }}
         transition={{
-          delay: index * 0.15,
-          type: "spring",
-          damping: 15,
-          x: { delay: index * 0.15 + 0.3, duration: 0.5 },
+          opacity: { delay: index * 0.15, type: "spring", damping: 15 },
+          y: { delay: index * 0.15, type: "spring", damping: 15 },
+          scale: { delay: index * 0.15, type: "spring", damping: 15 },
+          ...(isDuplicate
+            ? { x: { delay: index * 0.15 + 0.3, duration: 0.5, ease: "easeInOut" } }
+            : {}),
         }}
         className="glass-card p-4 pt-5 text-center space-y-3 relative overflow-hidden"
         style={{
@@ -145,7 +147,10 @@ export function RevealAnimation({ results, show, onClose }: RevealAnimationProps
             }}
             transition={{
               scale: { type: "spring", damping: 15, stiffness: 200 },
-              x: { delay: 0.4, duration: 0.6 },
+              opacity: { type: "spring", damping: 15, stiffness: 200 },
+              ...(isDuplicate && isSingle
+                ? { x: { delay: 0.4, duration: 0.6, ease: "easeInOut" } }
+                : {}),
             }}
             onClick={(e) => e.stopPropagation()}
             className="relative z-10 w-full max-w-lg max-h-[85dvh] overflow-y-auto overflow-x-visible"
@@ -176,8 +181,12 @@ export function RevealAnimation({ results, show, onClose }: RevealAnimationProps
 
                 <motion.div
                   initial={{ scale: 0 }}
-                  animate={{ scale: isDuplicate ? [0, 1, 0.95, 1] : 1 }}
-                  transition={{ type: "spring", delay: 0.2, damping: isDuplicate ? 8 : 10 }}
+                  animate={{ scale: 1 }}
+                  transition={
+                    isDuplicate
+                      ? { type: "tween", duration: 0.45, ease: "easeOut", delay: 0.2 }
+                      : { type: "spring", delay: 0.2, damping: 10 }
+                  }
                   className="relative mx-auto w-48 h-48 z-10"
                 >
                   {!isDuplicate && (

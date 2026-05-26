@@ -18,6 +18,8 @@ export interface EconomyState {
   team: number[]; // 3 pokemon ids
   favoritePokemon: number[];
   pokemonBattleXp: Record<string, { level: number; xp: number }>;
+  welcomeClaimed?: boolean;
+  unlockedAchievements: string[];
 }
 
 export interface CoinTransaction {

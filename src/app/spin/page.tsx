@@ -38,7 +38,7 @@ export default function SpinPage() {
   const coins = useEconomyStore((s) => s.coins);
 
   const spinCost = getSpinCost(spinMultiplier);
-  const hasFreeSpin = freeSpins >= spinMultiplier;
+  const willUseFreeSpin = freeSpins >= spinMultiplier && coins < spinCost;
   const canAfford = canAffordSpin(spinMultiplier);
 
   const [noCoinsMsg, setNoCoinsMsg] = useState(false);
@@ -197,7 +197,7 @@ export default function SpinPage() {
         >
           {isSpinning ? (
             "GIRANDO..."
-          ) : hasFreeSpin ? (
+          ) : willUseFreeSpin ? (
             <span className="flex flex-col items-center leading-tight">
               <span>GIRAR GRÁTIS</span>
               <span className="text-xs font-normal opacity-80">

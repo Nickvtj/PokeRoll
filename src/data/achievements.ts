@@ -18,8 +18,8 @@ export interface AchievementStats {
 
 export const ACHIEVEMENTS: Achievement[] = [
   {
-    id: "first_spin",
-    label: "Primeiro Passo",
+    id: "spin_10",
+    label: "Girador",
     description: "Realize 10 spins na roleta",
     icon: "🎰",
     check: (s) => s.totalSpins >= 10,

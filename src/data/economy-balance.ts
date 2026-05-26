@@ -1,7 +1,8 @@
 /** Balanceamento central da economia PokéRoll — spins são escassos, mas jogável */
 
 export const SPIN_COST_PER_REEL = 5;
-export const STARTING_COINS = 20;
+export const STARTING_COINS = 0;
+export const WELCOME_PACKAGE_COINS = 15;
 export const DUPLICATE_COIN_REWARD = 2;
 
 /** Click Minigame — menos eficiente que batalha */
@@ -12,9 +13,9 @@ export const CLICK_DAILY_SOFT_CAP = 12;
 export const CLICK_FATIGUE_START = 4;
 export const CLICK_FATIGUE_MULTIPLIER = 0.55;
 
-/** Auto Battle — fonte principal de moedas */
-export const BATTLE_BASE_COINS_MIN = 3;
-export const BATTLE_BASE_COINS_MAX = 8;
+/** Auto Battle — fonte principal de moedas (~1 vitória ≈ 1 giro) */
+export const BATTLE_BASE_COINS_MIN = 4;
+export const BATTLE_BASE_COINS_MAX = 7;
 export const BATTLE_FREE_SPIN_CHANCE = 0.04;
 export const BATTLE_XP_BASE = 22;
 export const BATTLE_DURATION_BASE_MS = 18000;

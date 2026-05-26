@@ -1,20 +1,31 @@
 import { getLocalUserId, getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { EconomyState } from "@/types/economy";
 
-export async function loadEconomyFromSupabase(): Promise<EconomyState | null> {
-  if (!isSupabaseConfigured) return null;
-  const supabase = getSupabase();
-  if (!supabase) return null;
+type EconomyRow = {
+  coins: number;
+  xp: number;
+  level: number;
+  rank: number;
+  free_spins: number;
+  battle_wins: number;
+  total_battles: number;
+  click_games_played: number;
+  click_coins_today: number;
+  click_games_today: number;
+  last_click_game_date: string | null;
+  daily_streak: number;
+  last_login_date: string | null;
+  mission_progress: Record<string, number> | null;
+  missions_claimed: string[] | null;
+  last_mission_date: string | null;
+  team: number[] | null;
+  favorite_pokemon?: number[] | null;
+  pokemon_battle_xp?: Record<string, { level: number; xp: number }> | null;
+  welcome_claimed?: boolean | null;
+  unlocked_achievements?: string[] | null;
+};
 
-  const userId = getLocalUserId();
-  const { data, error } = await supabase
-    .from("player_economy")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
-
-  if (error || !data) return null;
-
+function mapRowToEconomy(data: EconomyRow): EconomyState {
   return {
     coins: data.coins,
     xp: data.xp,
@@ -29,11 +40,31 @@ export async function loadEconomyFromSupabase(): Promise<EconomyState | null> {
     lastClickGameDate: data.last_click_game_date ?? "",
     dailyStreak: data.daily_streak,
     lastLoginDate: data.last_login_date ?? "",
-    missionProgress: (data.mission_progress as Record<string, number>) ?? {},
+    missionProgress: data.mission_progress ?? {},
     missionsClaimed: data.missions_claimed ?? [],
     lastMissionDate: data.last_mission_date ?? "",
     team: data.team ?? [],
+    favoritePokemon: data.favorite_pokemon ?? [],
+    pokemonBattleXp: data.pokemon_battle_xp ?? {},
+    welcomeClaimed: data.welcome_claimed ?? false,
+    unlockedAchievements: data.unlocked_achievements ?? [],
   };
+}
+
+export async function loadEconomyFromSupabase(): Promise<EconomyState | null> {
+  if (!isSupabaseConfigured) return null;
+  const supabase = getSupabase();
+  if (!supabase) return null;
+
+  const userId = getLocalUserId();
+  const { data, error } = await supabase
+    .from("player_economy")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !data) return null;
+  return mapRowToEconomy(data as EconomyRow);
 }
 
 export async function syncEconomyToSupabase(economy: EconomyState): Promise<void> {
@@ -61,6 +92,10 @@ export async function syncEconomyToSupabase(economy: EconomyState): Promise<void
     missions_claimed: economy.missionsClaimed,
     last_mission_date: economy.lastMissionDate || null,
     team: economy.team,
+    favorite_pokemon: economy.favoritePokemon ?? [],
+    pokemon_battle_xp: economy.pokemonBattleXp ?? {},
+    welcome_claimed: economy.welcomeClaimed ?? false,
+    unlocked_achievements: economy.unlockedAchievements ?? [],
     updated_at: new Date().toISOString(),
   };
 

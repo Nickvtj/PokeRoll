@@ -21,7 +21,7 @@ const gameModes = [
     href: "/battle",
     icon: Swords,
     title: "Auto Battle",
-    desc: "3~8 moedas · Principal progressão",
+    desc: "4~7 moedas · Principal progressão",
     color: "from-red-500/20 to-orange-500/20 border-red-500/30",
     iconColor: "text-red-400",
   },

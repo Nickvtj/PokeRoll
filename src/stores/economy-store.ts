@@ -5,8 +5,17 @@ import {
   DUPLICATE_COIN_REWARD,
   SPIN_COST_PER_REEL,
   STARTING_COINS,
+  WELCOME_PACKAGE_COINS,
+  STREAK_BONUS_COINS,
   XP_PER_LEVEL,
 } from "@/data/economy-balance";
+import type { AchievementStats } from "@/data/achievements";
+import {
+  computeNewAchievements,
+  loadAchievementsFromSupabase,
+  mergeAchievementIds,
+  syncAchievementsToSupabase,
+} from "@/lib/achievements-sync";
 import { getTeamPassiveBonuses } from "@/data/pokemon-stats";
 import {
   addPokemonXp,
@@ -66,6 +75,8 @@ interface EconomyStore extends EconomyState {
 
   showRewardPopup: (reward: RewardPayload) => void;
   closeRewardPopup: () => void;
+  claimWelcomePackage: () => void;
+  refreshAchievements: (stats: AchievementStats) => void;
   sync: () => void;
 }
 
@@ -85,20 +96,39 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
 
   initializeEconomy: () => {
     const data = loadEconomy();
+
     const migratedXp: Record<string, { level: number; xp: number }> = {};
     for (const [key, val] of Object.entries(data.pokemonBattleXp ?? {})) {
       const total = migrateLegacyTotalXp(val.level, val.xp);
       migratedXp[key] = { xp: total, level: calcPokemonLevelFromTotalXp(total) };
     }
     set({ ...data, pokemonBattleXp: { ...data.pokemonBattleXp, ...migratedXp } });
-    void loadEconomyFromSupabase().then((remote) => {
-      if (remote) {
-        set({ ...remote });
-        persistEconomy(remote);
+
+    void Promise.all([loadEconomyFromSupabase(), loadAchievementsFromSupabase()]).then(
+      ([remote, remoteAchievements]) => {
+        if (!remote) return;
+        const local = get();
+        set({
+          ...remote,
+          pokemonBattleXp: { ...local.pokemonBattleXp, ...remote.pokemonBattleXp },
+          favoritePokemon:
+            (remote.favoritePokemon?.length ?? 0) > 0
+              ? remote.favoritePokemon
+              : local.favoritePokemon,
+          unlockedAchievements: mergeAchievementIds(
+            local.unlockedAchievements ?? [],
+            mergeAchievementIds(remote.unlockedAchievements ?? [], remoteAchievements)
+          ),
+          welcomeClaimed: remote.welcomeClaimed ?? local.welcomeClaimed ?? true,
+        });
+        persistEconomy(getEconomySnapshot(get()));
       }
-    });
-    get().checkDailyLogin();
-    get().resetDailyIfNeeded();
+    );
+
+    if (data.welcomeClaimed) {
+      get().checkDailyLogin();
+      get().resetDailyIfNeeded();
+    }
   },
 
   getLevelCap: () => useGymStore.getState().getLevelCap(),
@@ -244,14 +274,16 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
   getSpinCost: (multiplier) => SPIN_COST_PER_REEL * multiplier,
 
   payForSpin: (multiplier) => {
-    const free = get().freeSpins;
-    if (free >= multiplier) {
+    const cost = get().getSpinCost(multiplier);
+    if (get().coins >= cost) {
+      return get().spendCoins(cost);
+    }
+    if (get().freeSpins >= multiplier) {
       set((s) => ({ freeSpins: s.freeSpins - multiplier }));
       get().sync();
       return true;
     }
-    const cost = get().getSpinCost(multiplier);
-    return get().spendCoins(cost);
+    return false;
   },
 
   setTeam: (team) => {
@@ -341,7 +373,9 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     }
 
     const dayIndex = Math.min(newStreak - 1, DAILY_LOGIN_COINS.length - 1);
-    const coins = DAILY_LOGIN_COINS[dayIndex];
+    const baseCoins = DAILY_LOGIN_COINS[dayIndex];
+    const streakBonus = newStreak > 1 ? STREAK_BONUS_COINS : 0;
+    const coins = baseCoins + streakBonus;
 
     set({
       lastLoginDate: today,
@@ -350,7 +384,10 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     get().addCoins(coins);
     get().showRewardPopup({
       coins,
-      message: `Login dia ${newStreak}! +${coins} moedas`,
+      message:
+        streakBonus > 0
+          ? `Login dia ${newStreak}! +${baseCoins} moedas (+${streakBonus} bônus streak)`
+          : `Login dia ${newStreak}! +${coins} moedas`,
     });
     get().sync();
     return coins;
@@ -407,6 +444,25 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
 
   showRewardPopup: (reward) => set({ lastReward: reward, showReward: true }),
   closeRewardPopup: () => set({ showReward: false, lastReward: null }),
+
+  claimWelcomePackage: () => {
+    if (get().welcomeClaimed) return;
+    set({ welcomeClaimed: true });
+    get().addCoins(WELCOME_PACKAGE_COINS);
+    get().sync();
+    get().checkDailyLogin();
+    get().resetDailyIfNeeded();
+  },
+
+  refreshAchievements: (stats) => {
+    const current = get().unlockedAchievements ?? [];
+    const newlyUnlocked = computeNewAchievements(stats, current);
+    if (newlyUnlocked.length === 0) return;
+
+    set({ unlockedAchievements: [...current, ...newlyUnlocked] });
+    get().sync();
+    void syncAchievementsToSupabase(newlyUnlocked);
+  },
 }));
 
 function getEconomySnapshot(state: EconomyStore): EconomyState {
@@ -430,6 +486,8 @@ function getEconomySnapshot(state: EconomyStore): EconomyState {
     team: state.team,
     favoritePokemon: state.favoritePokemon ?? [],
     pokemonBattleXp: state.pokemonBattleXp,
+    welcomeClaimed: state.welcomeClaimed ?? false,
+    unlockedAchievements: state.unlockedAchievements ?? [],
   };
 }
 

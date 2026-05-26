@@ -139,7 +139,8 @@ export function generateEnemyTeam(
 
   const levelBonus = (avgPokemonLevel - 1) * 0.018;
   const targetTier = Math.max(1, avgRarityTier + (wave - 1) * 0.25 + levelBonus * 2);
-  const difficulty = 0.92 + wave * 0.035 + levelBonus + Math.random() * 0.06;
+  const targetLevel = Math.max(1, Math.round(avgPokemonLevel) + (wave - 1));
+  const difficulty = 0.94 + wave * 0.03 + levelBonus + Math.random() * 0.05;
 
   const usedIds = new Set<number>();
   const enemies: BattleFighter[] = [];
@@ -173,9 +174,11 @@ export function generateEnemyTeam(
     if (!pokemon) continue;
 
     usedIds.add(pokemon.id);
+    const levelVariance = Math.floor(Math.random() * 3) - 1;
+    const slotLevel = Math.max(1, targetLevel + levelVariance);
     enemies.push(
       normalizeEnemyToPlayer(
-        createFighter(pokemon, false, 1, slot),
+        createFighter(pokemon, false, slotLevel, slot),
         playerAvg,
         difficulty
       )

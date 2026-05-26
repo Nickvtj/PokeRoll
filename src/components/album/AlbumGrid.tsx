@@ -1,18 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Filter, Search, X } from "lucide-react";
 import { PokemonCard } from "@/components/pokemon/PokemonCard";
 import { PokedexModal } from "@/components/album/PokedexModal";
+import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { RARITY_ORDER, RARITY_CONFIG } from "@/data/rarity";
 import { TOTAL_POKEMON } from "@/data/pokemon";
 import { useGameStore } from "@/stores/game-store";
 import { cn } from "@/lib/utils";
 import type { Pokemon, Rarity } from "@/types";
 
+const ALBUM_PAGE_SIZE = 48;
+
 export function AlbumGrid() {
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
+  const [visibleCount, setVisibleCount] = useState(ALBUM_PAGE_SIZE);
 
   const collection = useGameStore((s) => s.collection);
   const albumFilter = useGameStore((s) => s.albumFilter);
@@ -28,6 +32,17 @@ export function AlbumGrid() {
     if (isSearching) return getSearchableCollected();
     return getFilteredPokemon();
   }, [isSearching, getSearchableCollected, getFilteredPokemon, albumFilter]);
+
+  const visiblePokemon = useMemo(
+    () => displayedPokemon.slice(0, visibleCount),
+    [displayedPokemon, visibleCount]
+  );
+
+  const hasMore = visibleCount < displayedPokemon.length;
+
+  useEffect(() => {
+    setVisibleCount(ALBUM_PAGE_SIZE);
+  }, [albumFilter.rarity, albumFilter.status, albumFilter.generation, albumFilter.searchQuery]);
 
   const collected = getUniqueCount();
   const progress = getProgress();
@@ -59,7 +74,10 @@ export function AlbumGrid() {
           <input
             type="text"
             value={albumFilter.searchQuery}
-            onChange={(e) => setAlbumFilter({ searchQuery: e.target.value })}
+            onChange={(e) => {
+              setAlbumFilter({ searchQuery: e.target.value });
+              setVisibleCount(ALBUM_PAGE_SIZE);
+            }}
             placeholder="Buscar nos Pokémon que você já tem..."
             className="w-full pl-10 pr-10 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all"
           />
@@ -97,12 +115,27 @@ export function AlbumGrid() {
               <FilterChip
                 key={value}
                 active={albumFilter.status === value}
-                onClick={() => setAlbumFilter({ status: value })}
-              >
-                {label}
-              </FilterChip>
-            ))}
-          </div>
+              onClick={() => setAlbumFilter({ status: value })}
+            >
+              {label}
+            </FilterChip>
+          ))}
+        </div>
+
+        {(albumFilter.rarity !== "all" ||
+          albumFilter.status !== "all" ||
+          albumFilter.generation !== "all") && (
+          <button
+            type="button"
+            onClick={() => {
+              setAlbumFilter({ rarity: "all", status: "all", generation: "all" });
+              setVisibleCount(ALBUM_PAGE_SIZE);
+            }}
+            className="text-xs text-indigo-400 hover:text-indigo-300"
+          >
+            Limpar filtros
+          </button>
+        )}
 
           <div className="flex flex-wrap gap-2">
             <FilterChip
@@ -143,25 +176,37 @@ export function AlbumGrid() {
       <div
         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4"
       >
-        {displayedPokemon.map((pokemon) => {
+        {visiblePokemon.map((pokemon) => {
           const entry = collection[pokemon.id];
           return (
-            <PokemonCard
-              key={pokemon.id}
-              pokemon={pokemon}
-              collected={!!entry}
-              duplicateCount={entry?.count}
-              size="sm"
-              animate={false}
-              onClick={
-                entry
-                  ? () => setSelectedPokemon(pokemon)
-                  : undefined
-              }
-            />
+            <div key={pokemon.id} className="album-card-slot">
+              <PokemonCard
+                pokemon={pokemon}
+                collected={!!entry}
+                duplicateCount={entry?.count}
+                size="sm"
+                animate={false}
+                onClick={
+                  entry
+                    ? () => setSelectedPokemon(pokemon)
+                    : undefined
+                }
+              />
+            </div>
           );
         })}
       </div>
+
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <AnimatedButton
+            variant="secondary"
+            onClick={() => setVisibleCount((n) => n + ALBUM_PAGE_SIZE)}
+          >
+            Carregar mais ({displayedPokemon.length - visibleCount} restantes)
+          </AnimatedButton>
+        </div>
+      )}
 
       {displayedPokemon.length === 0 && (
         <div className="text-center py-12 text-white/40">

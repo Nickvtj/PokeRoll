@@ -34,12 +34,14 @@ interface GameState {
   completedReels: number;
   spinSessionId: number;
   showReveal: boolean;
+  duplicateRewardsGranted: boolean;
   albumFilter: AlbumFilter;
 
   initialize: () => Promise<void>;
   setSpinMultiplier: (multiplier: SpinMultiplier) => void;
   spin: () => Promise<SpinResult[] | null>;
   finishReelSpin: () => void;
+  grantDuplicateRewards: () => void;
   closeReveal: () => void;
   setAlbumFilter: (filter: Partial<AlbumFilter>) => void;
 
@@ -88,6 +90,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   completedReels: 0,
   spinSessionId: 0,
   showReveal: false,
+  duplicateRewardsGranted: false,
   albumFilter: {
     rarity: "all",
     generation: "all",
@@ -133,7 +136,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       collection = applyCollectionEntry(collection, pokemon.id);
 
       if (result.isDuplicate) {
-        economy.convertDuplicate();
         const { getDuplicateXp } = await import("@/data/duplicate-xp");
         economy.grantPokemonXp(pokemon.id, getDuplicateXp(pokemon.rarity));
       }
@@ -156,6 +158,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       completedReels: 0,
       spinSessionId: get().spinSessionId + 1,
       showReveal: false,
+      duplicateRewardsGranted: false,
       collection,
       profile: newProfile,
     });
@@ -176,6 +179,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       const next = state.completedReels + 1;
       const done = next >= state.spinSequences.length;
 
+      if (done) {
+        queueMicrotask(() => get().grantDuplicateRewards());
+      }
+
       return {
         completedReels: next,
         ...(done ? { isSpinning: false, showReveal: true } : {}),
@@ -183,7 +190,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
+  grantDuplicateRewards: () => {
+    const { lastSpinResults, duplicateRewardsGranted } = get();
+    if (duplicateRewardsGranted || lastSpinResults.length === 0) return;
+
+    const duplicateCount = lastSpinResults.filter((r) => r.isDuplicate).length;
+    set({ duplicateRewardsGranted: true });
+
+    if (duplicateCount === 0) return;
+
+    void import("@/stores/economy-store").then(({ useEconomyStore }) => {
+      const economy = useEconomyStore.getState();
+      for (let i = 0; i < duplicateCount; i++) {
+        economy.convertDuplicate();
+      }
+    });
+  },
+
   closeReveal: () => {
+    get().grantDuplicateRewards();
     set({
       showReveal: false,
       lastSpinResults: [],

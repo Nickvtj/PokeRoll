@@ -105,21 +105,28 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
 
   useEffect(() => {
     if (!playing) return;
+
     const interval = setInterval(() => {
-      setBalls((prev) => [...prev.slice(-10), spawnBall()]);
-      const rare = maybeSpawnRareEvent();
-      if (rare) setRareEvents((prev) => [...prev.slice(-2), rare]);
-    }, 450);
+      const now = Date.now();
+      setBalls((prev) => {
+        const alive = prev.filter((b) => now - b.createdAt < b.lifetime);
+        return Math.random() < 0.55 ? [...alive.slice(-10), spawnBall()] : alive;
+      });
+      setRareEvents((prev) => {
+        const alive = prev.filter((r) => now - r.createdAt < r.lifetime);
+        const rare = maybeSpawnRareEvent();
+        return rare ? [...alive.slice(-2), rare] : alive;
+      });
+    }, 280);
+
     return () => clearInterval(interval);
   }, [playing]);
 
   useEffect(() => {
     if (!playing) return;
     const interval = setInterval(() => {
-      const now = Date.now();
-      setBalls((prev) => prev.filter((b) => now - b.createdAt < b.lifetime));
-      setRareEvents((prev) => prev.filter((r) => now - r.createdAt < r.lifetime));
-    }, 200);
+      setPopups((prev) => prev.slice(-6));
+    }, 400);
     return () => clearInterval(interval);
   }, [playing]);
 

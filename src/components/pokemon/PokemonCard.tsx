@@ -66,8 +66,8 @@ export function PokemonCard({
             alt={pokemon.name}
             width={sizes.image}
             height={sizes.image}
+            loading="lazy"
             className="object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
-            unoptimized
           />
         ) : (
           <div className="relative flex items-center justify-center">
@@ -76,8 +76,8 @@ export function PokemonCard({
               alt="???"
               width={sizes.image}
               height={sizes.image}
+              loading="lazy"
               className="object-contain brightness-0 opacity-20 blur-sm scale-90"
-              unoptimized
             />
             <Lock className="absolute w-8 h-8 text-white/30" />
           </div>

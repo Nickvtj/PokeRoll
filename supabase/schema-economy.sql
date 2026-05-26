@@ -4,7 +4,7 @@
 -- Economia do jogador
 CREATE TABLE IF NOT EXISTS player_economy (
   user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  coins INTEGER NOT NULL DEFAULT 15,
+  coins INTEGER NOT NULL DEFAULT 0,
   xp INTEGER NOT NULL DEFAULT 0,
   level INTEGER NOT NULL DEFAULT 1,
   rank INTEGER NOT NULL DEFAULT 1,
@@ -21,6 +21,10 @@ CREATE TABLE IF NOT EXISTS player_economy (
   missions_claimed TEXT[] NOT NULL DEFAULT '{}',
   last_mission_date DATE,
   team INTEGER[] NOT NULL DEFAULT '{}',
+  favorite_pokemon INTEGER[] NOT NULL DEFAULT '{}',
+  pokemon_battle_xp JSONB NOT NULL DEFAULT '{}',
+  welcome_claimed BOOLEAN NOT NULL DEFAULT FALSE,
+  unlocked_achievements TEXT[] NOT NULL DEFAULT '{}',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

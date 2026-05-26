@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { RARITY_CONFIG } from "@/data/rarity";
 import { StickerBadge } from "@/components/ui/StickerBadge";
@@ -25,15 +24,40 @@ export function SpinMachine({
   compact = false,
   reelIndex = 0,
 }: SpinMachineProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [displayPokemon, setDisplayPokemon] = useState<Pokemon | null>(null);
   const [localSpinning, setLocalSpinning] = useState(false);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const hasCompletedRef = useRef(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const dotsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const spinningRef = useRef(false);
 
   const clearAllTimeouts = useCallback(() => {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
+  }, []);
+
+  const applyPokemonToDom = useCallback((pokemon: Pokemon) => {
+    if (imgRef.current) {
+      imgRef.current.src = pokemon.image;
+      imgRef.current.alt = pokemon.name;
+    }
+    const config = RARITY_CONFIG[pokemon.rarity];
+    if (frameRef.current) {
+      frameRef.current.style.borderColor = `${config.color}60`;
+      frameRef.current.style.boxShadow = spinningRef.current
+        ? `0 0 40px ${config.glowColor}, inset 0 0 30px rgba(0,0,0,0.5)`
+        : `0 0 20px ${config.glowColor}`;
+    }
+    (["common", "uncommon", "rare", "epic", "legendary"] as const).forEach((r, i) => {
+      const dot = dotsRef.current[i];
+      if (!dot) return;
+      const active = pokemon.rarity === r;
+      dot.style.opacity = active ? "1" : "0.3";
+      dot.style.transform = active ? "scale(1.3)" : "scale(1)";
+      dot.style.boxShadow = active ? `0 0 8px ${RARITY_CONFIG[r].glowColor}` : "none";
+    });
   }, []);
 
   useEffect(() => {
@@ -44,9 +68,11 @@ export function SpinMachine({
 
     hasCompletedRef.current = false;
     clearAllTimeouts();
+    spinningRef.current = true;
     setLocalSpinning(true);
-    setCurrentIndex(0);
-    setDisplayPokemon(sequence[0]);
+
+    const finalPokemon = sequence[sequence.length - 1];
+    applyPokemonToDom(sequence[0]);
 
     let index = 0;
     const totalSteps = sequence.length;
@@ -59,24 +85,23 @@ export function SpinMachine({
 
     const tick = () => {
       if (index < totalSteps) {
-        setCurrentIndex(index);
-        setDisplayPokemon(sequence[index]);
+        applyPokemonToDom(sequence[index]);
         index++;
         delay = Math.min(delay + 15, 350);
         schedule(tick, delay);
       } else if (!hasCompletedRef.current) {
         hasCompletedRef.current = true;
+        spinningRef.current = false;
         setLocalSpinning(false);
+        setDisplayPokemon(finalPokemon);
         onSpinComplete();
       }
     };
 
     schedule(tick, 100 + reelIndex * 150);
 
-    return () => {
-      clearAllTimeouts();
-    };
-  }, [isSpinning, sequence, onSpinComplete, reelIndex, clearAllTimeouts]);
+    return () => clearAllTimeouts();
+  }, [isSpinning, sequence, onSpinComplete, reelIndex, clearAllTimeouts, applyPokemonToDom]);
 
   const pokemon = displayPokemon ?? sequence[0];
 
@@ -99,33 +124,26 @@ export function SpinMachine({
 
   const config = RARITY_CONFIG[pokemon.rarity];
   const showResult = !localSpinning && !isSpinning && result;
+  const imgSize = compact ? 90 : 180;
 
   return (
     <div className={cn("relative mx-auto", compact ? "w-full" : "w-full max-w-md")}>
       <div className="glass-card p-1 rounded-3xl">
-        <div
-          className={cn(
-            "slot-machine-bg rounded-[22px] relative overflow-hidden",
-            compact ? "p-3" : "p-6"
-          )}
-        >
+        <div className={cn("slot-machine-bg rounded-[22px] relative overflow-hidden", compact ? "p-3" : "p-6")}>
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-60" />
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-60" />
 
           <div className={cn("relative mx-auto", compact ? "max-w-[140px]" : "max-w-[280px]")}>
             {showResult && (
               <div className="absolute -top-2 -right-2 z-30">
-                <StickerBadge
-                  variant={result.isNew ? "new" : "duplicate"}
-                  size="sm"
-                />
+                <StickerBadge variant={result.isNew ? "new" : "duplicate"} size="sm" />
               </div>
             )}
 
             <div
+              ref={frameRef}
               className={cn(
-                "relative mx-auto w-full rounded-2xl overflow-hidden border-2 transition-colors duration-300",
-                compact ? "aspect-square" : "aspect-square"
+                "relative mx-auto w-full rounded-2xl overflow-hidden border-2 transition-colors duration-300 aspect-square"
               )}
               style={{
                 borderColor: `${config.color}60`,
@@ -134,38 +152,32 @@ export function SpinMachine({
                   : `0 0 20px ${config.glowColor}`,
               }}
             >
-            <div
-              className="absolute inset-0 z-10 pointer-events-none opacity-10"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.3) 2px, rgba(0,0,0,0.3) 4px)",
-              }}
-            />
+              <div
+                className="absolute inset-0 z-10 pointer-events-none opacity-10"
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.3) 2px, rgba(0,0,0,0.3) 4px)",
+                }}
+              />
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${pokemon.id}-${currentIndex}`}
-                initial={{ y: localSpinning ? -100 : 0, opacity: localSpinning ? 0 : 1 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 100, opacity: 0 }}
-                transition={{ duration: localSpinning ? 0.08 : 0.4 }}
+              <div
                 className="absolute inset-0 flex flex-col items-center justify-center p-2"
                 style={{
                   background: `radial-gradient(circle at center, ${config.color}15 0%, transparent 70%)`,
                 }}
               >
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  ref={imgRef}
                   src={pokemon.image}
                   alt={pokemon.name}
-                  width={compact ? 90 : 180}
-                  height={compact ? 90 : 180}
+                  width={imgSize}
+                  height={imgSize}
                   className="object-contain drop-shadow-2xl"
-                  unoptimized
+                  decoding="async"
                 />
                 {!localSpinning && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                  <p
                     className={cn(
                       "mt-1 font-bold truncate max-w-full px-1",
                       compact ? "text-xs" : "text-lg"
@@ -173,47 +185,40 @@ export function SpinMachine({
                     style={{ color: config.color }}
                   >
                     {pokemon.name}
-                  </motion.p>
+                  </p>
                 )}
-              </motion.div>
-            </AnimatePresence>
+              </div>
 
-            {localSpinning && (
-              <motion.div
-                animate={{ x: ["-100%", "200%"] }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 z-20 pointer-events-none"
-                style={{
-                  background:
-                    "linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)",
-                  width: "50%",
-                }}
-              />
-            )}
-          </div>
+              {localSpinning && (
+                <div
+                  className="absolute inset-0 z-20 pointer-events-none slot-shimmer"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)",
+                    width: "50%",
+                  }}
+                />
+              )}
+            </div>
           </div>
 
           <div className={cn("flex justify-center gap-1.5", compact ? "mt-2" : "mt-4")}>
-            {(["common", "uncommon", "rare", "epic", "legendary"] as const).map(
-              (r) => (
-                <div
-                  key={r}
-                  className={cn(
-                    "rounded-full transition-all duration-300",
-                    compact ? "w-2 h-2" : "w-3 h-3"
-                  )}
-                  style={{
-                    backgroundColor: RARITY_CONFIG[r].color,
-                    opacity: pokemon.rarity === r ? 1 : 0.3,
-                    transform: pokemon.rarity === r ? "scale(1.3)" : "scale(1)",
-                    boxShadow:
-                      pokemon.rarity === r
-                        ? `0 0 8px ${RARITY_CONFIG[r].glowColor}`
-                        : "none",
-                  }}
-                />
-              )
-            )}
+            {(["common", "uncommon", "rare", "epic", "legendary"] as const).map((r, i) => (
+              <div
+                key={r}
+                ref={(el) => {
+                  dotsRef.current[i] = el;
+                }}
+                className={cn("rounded-full transition-all duration-300", compact ? "w-2 h-2" : "w-3 h-3")}
+                style={{
+                  backgroundColor: RARITY_CONFIG[r].color,
+                  opacity: pokemon.rarity === r ? 1 : 0.3,
+                  transform: pokemon.rarity === r ? "scale(1.3)" : "scale(1)",
+                  boxShadow:
+                    pokemon.rarity === r ? `0 0 8px ${RARITY_CONFIG[r].glowColor}` : "none",
+                }}
+              />
+            ))}
           </div>
         </div>
       </div>
