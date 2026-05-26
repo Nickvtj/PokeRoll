@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description:
     "Gire a roleta, colete 150 Pokémon e complete seu álbum de figurinhas!",
   keywords: ["pokemon", "jogo", "coleção", "figurinhas", "gacha"],
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

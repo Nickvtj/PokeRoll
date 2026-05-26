@@ -18,9 +18,9 @@ interface PokemonCardProps {
 }
 
 const sizeConfig = {
-  sm: { card: "p-2", image: 64, text: "text-xs" },
-  md: { card: "p-3", image: 96, text: "text-sm" },
-  lg: { card: "p-4", image: 128, text: "text-base" },
+  sm: { card: "p-2", image: 84, imageBox: "h-[7.5rem]", text: "text-xs" },
+  md: { card: "p-3", image: 96, imageBox: "h-28", text: "text-sm" },
+  lg: { card: "p-4", image: 128, imageBox: "h-36", text: "text-base" },
 };
 
 export function PokemonCard({
@@ -59,7 +59,7 @@ export function PokemonCard({
         #{String(pokemon.id).padStart(3, "0")}
       </span>
 
-      <div className="relative flex items-center justify-center h-28 mb-2">
+      <div className={cn("relative flex items-center justify-center mb-2", sizes.imageBox)}>
         {collected ? (
           <Image
             src={pokemon.image}

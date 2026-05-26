@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Play, Sparkles, Star, Zap, Swords, MousePointerClick, Coins } from "lucide-react";
+import { Play, Sparkles, Swords, MousePointerClick, Coins } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { CoinCounter } from "@/components/ui/CoinCounter";
 import { useGameStore } from "@/stores/game-store";
@@ -139,30 +139,9 @@ export default function HomePage() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="flex flex-wrap justify-center gap-3"
-        >
-          {[
-            { icon: Zap, text: "Economia Balanceada" },
-            { icon: Star, text: "Auto Battle" },
-            { icon: Sparkles, text: "Click Minigame" },
-          ].map(({ icon: Icon, text }) => (
-            <span
-              key={text}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 text-xs text-white/60 border border-white/10"
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {text}
-            </span>
-          ))}
-        </motion.div>
-
-        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5, type: "spring" }}
+          transition={{ delay: 0.4, type: "spring" }}
         >
           <Link href="/battle">
             <AnimatedButton variant="gold" size="xl" icon={<Play className="w-6 h-6 fill-current" />}>

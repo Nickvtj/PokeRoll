@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
-import Image from "next/image";
 import { RARITY_CONFIG } from "@/data/rarity";
 import { StickerBadge } from "@/components/ui/StickerBadge";
+import { SpinMachineIdle } from "@/components/spin/SpinMachineIdle";
 import type { Pokemon, SpinResult } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -109,13 +109,21 @@ export function SpinMachine({
     return (
       <div className={cn("relative mx-auto", compact ? "w-full" : "w-full max-w-md")}>
         <div className="glass-card p-1 rounded-3xl">
-          <div
-            className={cn(
-              "slot-machine-bg rounded-[22px] flex items-center justify-center border border-white/10 border-dashed",
-              compact ? "p-3 aspect-square max-w-[140px] mx-auto" : "p-6 aspect-square max-w-[280px] mx-auto"
-            )}
-          >
-            <p className={cn("text-white/20 font-bold", compact ? "text-xs" : "text-sm")}>?</p>
+          <div className={cn("slot-machine-bg rounded-[22px] relative overflow-hidden", compact ? "p-3" : "p-6")}>
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-60" />
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-60" />
+            <div className={cn("relative mx-auto", compact ? "max-w-[140px]" : "max-w-[280px]")}>
+              <SpinMachineIdle compact={compact} />
+            </div>
+            <div className={cn("flex justify-center gap-1.5", compact ? "mt-2" : "mt-4")}>
+              {(["common", "uncommon", "rare", "epic", "legendary"] as const).map((r) => (
+                <div
+                  key={r}
+                  className={cn("rounded-full opacity-20", compact ? "w-2 h-2" : "w-3 h-3")}
+                  style={{ backgroundColor: RARITY_CONFIG[r].color }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>

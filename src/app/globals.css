@@ -164,6 +164,24 @@ body {
   }
 }
 
+.slot-idle-track {
+  animation: slot-idle-scroll 8s linear infinite;
+}
+
+.pokemon-silhouette {
+  filter: brightness(0) invert(1);
+  opacity: 0.14;
+}
+
+@keyframes slot-idle-scroll {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
 @keyframes slot-shimmer {
   0% {
     transform: translateX(-100%);
@@ -179,7 +197,7 @@ body {
 
 .album-card-slot {
   content-visibility: auto;
-  contain-intrinsic-size: 120px 140px;
+  contain-intrinsic-size: 120px 160px;
 }
 
 /* Scrollbar customizada */

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Disc3,
@@ -11,6 +12,9 @@ import {
   Coins,
   Star,
   Swords,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { TOTAL_POKEMON } from "@/data/pokemon";
@@ -22,6 +26,7 @@ import { XP_PER_LEVEL } from "@/data/economy-balance";
 
 export function ProfileCard() {
   const profile = useGameStore((s) => s.profile);
+  const setUsername = useGameStore((s) => s.setUsername);
   const getUniqueCount = useGameStore((s) => s.getUniqueCount);
   const getDuplicateCount = useGameStore((s) => s.getDuplicateCount);
   const getHighestRarity = useGameStore((s) => s.getHighestRarity);
@@ -34,12 +39,31 @@ export function ProfileCard() {
   const battleWins = useEconomyStore((s) => s.battleWins);
   const freeSpins = useEconomyStore((s) => s.freeSpins);
 
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(profile.username);
+
+  useEffect(() => {
+    if (!editingName) setNameDraft(profile.username);
+  }, [profile.username, editingName]);
+
   const highestRarity = getHighestRarity();
   const progress = getProgress();
   const unique = getUniqueCount();
   const duplicates = getDuplicateCount();
   const xpInLevel = xp % XP_PER_LEVEL;
   const xpPct = (xpInLevel / XP_PER_LEVEL) * 100;
+
+  const saveUsername = async () => {
+    const trimmed = nameDraft.trim();
+    if (trimmed.length < 2) return;
+    await setUsername(trimmed);
+    setEditingName(false);
+  };
+
+  const cancelEdit = () => {
+    setNameDraft(profile.username);
+    setEditingName(false);
+  };
 
   const stats = [
     {
@@ -103,7 +127,52 @@ export function ProfileCard() {
         </div>
 
         <div>
-          <h2 className="text-2xl font-bold">{profile.username}</h2>
+          {editingName ? (
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <input
+                type="text"
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                maxLength={20}
+                className="w-44 px-3 py-1.5 rounded-xl bg-white/5 border border-indigo-500/40 text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void saveUsername();
+                  if (e.key === "Escape") cancelEdit();
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => void saveUsername()}
+                disabled={nameDraft.trim().length < 2}
+                className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-40"
+              >
+                <Check className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="p-1.5 rounded-lg bg-white/5 text-white/50 hover:bg-white/10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              <h2 className="text-2xl font-bold">{profile.username}</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setNameDraft(profile.username);
+                  setEditingName(true);
+                }}
+                className="p-1.5 rounded-lg text-white/40 hover:text-indigo-300 hover:bg-white/5 transition-colors"
+                title="Editar nome"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            </div>
+          )}
           <div className="flex items-center justify-center gap-1.5 mt-1 text-white/40 text-sm">
             <Calendar className="w-3.5 h-3.5" />
             Treinador desde{" "}

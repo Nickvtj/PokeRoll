@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import { POKEMON_MAP, TOTAL_POKEMON } from "@/data/pokemon";
 import { useGymStore } from "@/stores/gym-store";
@@ -12,7 +13,13 @@ interface PokemonHallOfFameProps {
 }
 
 export function PokemonHallOfFame({ gymId, themeColor }: PokemonHallOfFameProps) {
-  const winners = useGymStore((s) => s.getHallOfFameForGym(gymId));
+  const hallOfFame = useGymStore((s) => s.hallOfFame);
+  const winners = useMemo(() => {
+    const ids = hallOfFame
+      .filter((e) => e.gymId === gymId)
+      .map((e) => e.pokemonId);
+    return [...new Set(ids)];
+  }, [hallOfFame, gymId]);
 
   if (winners.length === 0) {
     return (

@@ -44,6 +44,7 @@ interface GameState {
   grantDuplicateRewards: () => void;
   closeReveal: () => void;
   setAlbumFilter: (filter: Partial<AlbumFilter>) => void;
+  setUsername: (username: string) => Promise<void>;
 
   getCollectedCount: () => number;
   getUniqueCount: () => number;
@@ -219,6 +220,15 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   setAlbumFilter: (filter) => {
     set({ albumFilter: { ...get().albumFilter, ...filter } });
+  },
+
+  setUsername: async (username) => {
+    const trimmed = username.trim().slice(0, 20);
+    if (trimmed.length < 2) return;
+
+    const newProfile = { ...get().profile, username: trimmed };
+    set({ profile: newProfile });
+    await syncProfile(newProfile);
   },
 
   getCollectedCount: () => Object.keys(get().collection).length,
