@@ -5,11 +5,12 @@ import { useGameInit } from "@/hooks/use-game-init";
 import { useAchievementSync, useDuplicateRewardGuard } from "@/hooks/use-achievement-sync";
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGymStore } from "@/stores/gym-store";
+import { useGameStore } from "@/stores/game-store";
 import { RewardPopup } from "@/components/ui/RewardPopup";
 import { RewardAnimation } from "@/components/ui/RewardAnimation";
 import { WelcomeModal } from "@/components/ui/WelcomeModal";
 import { useEffect } from "react";
-import { preloadAllPokemonSpritesDeferred } from "@/lib/sprite-preload";
+import { preloadPrioritySpritesDeferred } from "@/lib/sprite-preload";
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const { isLoading } = useGameInit();
@@ -25,9 +26,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [initializeEconomy, initializeGym]);
 
   useEffect(() => {
-    if (!isLoading) {
-      preloadAllPokemonSpritesDeferred();
-    }
+    if (isLoading) return;
+
+    const team = useEconomyStore.getState().team;
+    const collectedIds = Object.keys(useGameStore.getState().collection).map(Number);
+    preloadPrioritySpritesDeferred(team, collectedIds);
   }, [isLoading]);
 
   if (isLoading) {

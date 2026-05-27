@@ -86,7 +86,10 @@ body {
     background: rgba(15, 22, 41, 0.32);
   }
 
-  html[data-visual-quality="medium"] .glass-blur,
+  html[data-visual-quality="medium"] .glass-blur {
+    @apply backdrop-blur-sm;
+  }
+
   html[data-visual-quality="high"] .glass-blur {
     @apply backdrop-blur-md;
   }
@@ -249,6 +252,11 @@ body {
   html[data-visual-quality="low"] .bg-particle-float,
   html[data-visual-quality="low"] .slot-idle-track {
     animation: none;
+  }
+
+  .ambient-paused .bg-orb-drift,
+  .ambient-paused .bg-particle-float {
+    animation-play-state: paused;
   }
 }
 

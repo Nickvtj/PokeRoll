@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 import { useVisualQuality } from "@/components/layout/VisualQualityProvider";
 
 function seededUnit(index: number, salt: number) {
@@ -28,9 +29,18 @@ const PARTICLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
 export const AnimatedBackground = memo(function AnimatedBackground() {
   const quality = useVisualQuality();
   const [particlesReady, setParticlesReady] = useState(false);
+  const [tabVisible, setTabVisible] = useState(true);
 
   useEffect(() => {
     setParticlesReady(true);
+  }, []);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      setTabVisible(document.visibilityState === "visible");
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
   const showAnimatedOrbs = quality !== "low";
@@ -38,12 +48,14 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
 
   return (
     <div
-      className="fixed inset-0 -z-10 overflow-hidden pointer-events-none"
+      className={cn(
+        "fixed inset-0 -z-10 overflow-hidden pointer-events-none",
+        !tabVisible && "ambient-paused"
+      )}
       aria-hidden
     >
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a0e1a] via-[#121829] to-[#0a0e1a]" />
 
-      {/* Wash estático — identidade visual mesmo em low */}
       <div className="absolute inset-0 bg-ambient-wash" />
 
       {showAnimatedOrbs && (

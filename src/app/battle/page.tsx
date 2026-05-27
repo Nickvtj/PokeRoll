@@ -1,12 +1,22 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { Swords } from "lucide-react";
 import { BattleTabs, type BattleTabId } from "@/components/battle/BattleTabs";
 import { TrainingPanel } from "@/components/battle/TrainingPanel";
-import { GymMap } from "@/components/gym/GymMap";
-import { EliteFourScreen } from "@/components/gym/EliteFourScreen";
+import { PanelSkeleton } from "@/components/ui/RouteLoading";
 import { useGymStore } from "@/stores/gym-store";
+
+const GymMap = dynamic(
+  () => import("@/components/gym/GymMap").then((m) => ({ default: m.GymMap })),
+  { loading: () => <PanelSkeleton label="Carregando ginásios..." /> }
+);
+
+const EliteFourScreen = dynamic(
+  () => import("@/components/gym/EliteFourScreen").then((m) => ({ default: m.EliteFourScreen })),
+  { loading: () => <PanelSkeleton label="Carregando Elite Four..." /> }
+);
 
 export default function BattlePage() {
   const [tab, setTab] = useState<BattleTabId>("training");

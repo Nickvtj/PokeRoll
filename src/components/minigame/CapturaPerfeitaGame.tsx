@@ -58,13 +58,13 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
   const [caught, setCaught] = useState<Pokemon[]>([]);
   const [goodHits, setGoodHits] = useState(0);
   const [perfectHits, setPerfectHits] = useState(0);
-  const [cursor, setCursor] = useState(50);
   const [zoneCenter, setZoneCenter] = useState(50);
   const [lastQuality, setLastQuality] = useState<CaptureHitQuality | null>(null);
   const [ballAnim, setBallAnim] = useState<BallAnim>("none");
   const [pokemonKey, setPokemonKey] = useState(0);
 
   const cursorRef = useRef(50);
+  const cursorThumbRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const endedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
@@ -79,17 +79,22 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
 
   const config = wild ? getCaptureConfig(wild.rarity) : null;
 
+  const setCursorPosition = useCallback((pos: number) => {
+    cursorRef.current = pos;
+    const el = cursorThumbRef.current;
+    if (el) el.style.left = `calc(${pos}% - 3px)`;
+  }, []);
+
   const spawnNext = useCallback(() => {
     const pokemon = pickWildPokemon();
     setWild(pokemon);
     setZoneCenter(rollZoneCenter());
-    setCursor(50);
-    cursorRef.current = 50;
+    setCursorPosition(50);
     setBallAnim("none");
     setLastQuality(null);
     setPokemonKey((k) => k + 1);
     setPhase("playing");
-  }, []);
+  }, [setCursorPosition]);
 
   const finishGame = useCallback(
     (missed: boolean, lastPokemon: Pokemon) => {
@@ -146,8 +151,7 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
     const tick = (now: number) => {
       const elapsed = (now - start) / 1000;
       const pos = 50 + 50 * Math.sin(elapsed * speed * 2.8);
-      cursorRef.current = pos;
-      setCursor(pos);
+      setCursorPosition(pos);
       rafRef.current = requestAnimationFrame(tick);
     };
 
@@ -155,7 +159,7 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [phase, wild, config, pokemonKey]);
+  }, [phase, wild, config, pokemonKey, setCursorPosition]);
 
   const handleTap = () => {
     if (phase !== "playing" || !wild || !config || endedRef.current) return;
@@ -353,8 +357,9 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
               }}
             />
             <div
+              ref={cursorThumbRef}
               className="absolute top-1 bottom-1 w-1.5 rounded-full bg-white shadow-lg shadow-white/50"
-              style={{ left: `calc(${cursor}% - 3px)` }}
+              style={{ left: "calc(50% - 3px)" }}
             />
           </div>
         </button>

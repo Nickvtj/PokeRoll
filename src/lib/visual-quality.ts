@@ -11,11 +11,15 @@ export function detectVisualQuality(): VisualQuality {
 
   const isMobile = window.matchMedia("(max-width: 768px)").matches;
   const nav = navigator as Navigator & { deviceMemory?: number };
-  const lowCores = (navigator.hardwareConcurrency ?? 8) <= 4;
-  const lowMemory = nav.deviceMemory !== undefined && nav.deviceMemory <= 4;
+  const cores = navigator.hardwareConcurrency ?? 4;
+  const memory = nav.deviceMemory;
 
-  if (isMobile || lowCores || lowMemory) return "medium";
-  return "high";
+  if (isMobile) return "medium";
+
+  const isHighEnd =
+    cores >= 8 && (memory === undefined || memory >= 8);
+
+  return isHighEnd ? "high" : "medium";
 }
 
 export function applyVisualQuality(quality: VisualQuality): void {

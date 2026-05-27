@@ -2,7 +2,9 @@ import { POKEMON_LIST } from "@/data/pokemon";
 import { getPokemonSpriteUrl, POKEMON_SPRITE_CDN_URL } from "@/data/pokemon-sprites";
 
 const preloadedIds = new Set<number>();
-let fullPreloadStarted = false;
+let priorityPreloadStarted = false;
+
+const BATCH_SIZE = 24;
 
 function preloadOne(id: number): void {
   if (preloadedIds.has(id)) return;
@@ -38,15 +40,51 @@ export function preloadSpinSprites(sequences: { id: number }[][]): void {
   preloadPokemonSprites([...ids]);
 }
 
-/** Precarrega todos os sprites em background após o boot. */
-export function preloadAllPokemonSpritesDeferred(): void {
-  if (fullPreloadStarted || typeof window === "undefined") return;
-  fullPreloadStarted = true;
-
-  const run = () => preloadPokemonSprites();
+function scheduleIdle(work: () => void, timeout = 3000): void {
   if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(run, { timeout: 4000 });
+    window.requestIdleCallback(work, { timeout });
   } else {
-    setTimeout(run, 500);
+    setTimeout(work, 400);
   }
+}
+
+function preloadInBatches(ids: number[], startIndex = 0): void {
+  const batch = ids.slice(startIndex, startIndex + BATCH_SIZE);
+  for (const id of batch) preloadOne(id);
+
+  const next = startIndex + BATCH_SIZE;
+  if (next < ids.length) {
+    scheduleIdle(() => preloadInBatches(ids, next), 4000);
+  }
+}
+
+/**
+ * Precarrega em background: time + coleção (+ primeiros IDs do álbum se poucos coletados).
+ * Evita baixar os 150 sprites de uma vez.
+ */
+export function preloadPrioritySpritesDeferred(
+  teamIds: number[],
+  collectedIds: number[]
+): void {
+  if (priorityPreloadStarted || typeof window === "undefined") return;
+  priorityPreloadStarted = true;
+
+  const priority = new Set<number>([...teamIds, ...collectedIds]);
+
+  if (priority.size < 24) {
+    for (const p of POKEMON_LIST.slice(0, 48)) {
+      priority.add(p.id);
+    }
+  }
+
+  const ids = [...priority];
+
+  scheduleIdle(() => preloadInBatches(ids), 2500);
+}
+
+/** @deprecated Use preloadPrioritySpritesDeferred */
+export function preloadAllPokemonSpritesDeferred(): void {
+  if (priorityPreloadStarted || typeof window === "undefined") return;
+  priorityPreloadStarted = true;
+  scheduleIdle(() => preloadPokemonSprites(), 4000);
 }

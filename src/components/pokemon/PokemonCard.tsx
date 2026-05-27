@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo } from "react";
 import Image from "next/image";
 import { Lock, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ const sizeConfig = {
   lg: { card: "p-4", image: 128, imageBox: "h-36", text: "text-base", lock: "w-9 h-9" },
 };
 
-export function PokemonCard({
+export const PokemonCard = memo(function PokemonCard({
   pokemon,
   collected = false,
   duplicateCount = 0,
@@ -99,4 +99,4 @@ export function PokemonCard({
       )}
     </div>
   );
-}
+});
