@@ -1,4 +1,7 @@
-import { saveEconomy } from "@/lib/economy-storage";
+import {
+  flushEconomyLocal,
+  persistEconomyLocal,
+} from "@/lib/economy-storage";
 import { syncEconomyToSupabase } from "@/lib/economy-supabase";
 import type { EconomyState } from "@/types/economy";
 
@@ -7,9 +10,9 @@ let remoteTimer: ReturnType<typeof setTimeout> | null = null;
 
 const REMOTE_DEBOUNCE_MS = 600;
 
-/** Persistência local imediata; Supabase em lote para não travar a UI */
+/** Persistência local debounced; Supabase em lote para não travar a UI. */
 export function persistEconomy(economy: EconomyState): void {
-  saveEconomy(economy);
+  persistEconomyLocal(economy);
   pendingRemote = economy;
 
   if (remoteTimer) clearTimeout(remoteTimer);
@@ -23,6 +26,8 @@ export function persistEconomy(economy: EconomyState): void {
 }
 
 export function flushEconomyPersistence(): void {
+  flushEconomyLocal();
+
   if (remoteTimer) {
     clearTimeout(remoteTimer);
     remoteTimer = null;

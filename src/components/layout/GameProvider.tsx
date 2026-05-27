@@ -9,6 +9,7 @@ import { RewardPopup } from "@/components/ui/RewardPopup";
 import { RewardAnimation } from "@/components/ui/RewardAnimation";
 import { WelcomeModal } from "@/components/ui/WelcomeModal";
 import { useEffect } from "react";
+import { preloadAllPokemonSpritesDeferred } from "@/lib/sprite-preload";
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const { isLoading } = useGameInit();
@@ -22,6 +23,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     initializeEconomy();
     initializeGym();
   }, [initializeEconomy, initializeGym]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      preloadAllPokemonSpritesDeferred();
+    }
+  }, [isLoading]);
 
   if (isLoading) {
     return (

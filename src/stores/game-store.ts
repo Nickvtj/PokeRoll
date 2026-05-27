@@ -9,10 +9,11 @@ import {
 import {
   loadCollection,
   loadProfile,
-  syncFullCollection,
-  syncProfile,
-  recordSpin,
+  persistLocalProfile,
+  syncProfileToSupabase,
 } from "@/lib/storage";
+import { queueSpinPersistence } from "@/lib/game-sync-scheduler";
+import { preloadSpinSprites } from "@/lib/sprite-preload";
 import type {
   AlbumFilter,
   CollectedPokemon,
@@ -164,11 +165,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       profile: newProfile,
     });
 
-    await Promise.all([
-      syncFullCollection(collection),
-      syncProfile(newProfile),
-      ...results.map((r) => recordSpin(r.pokemon.id, r.isDuplicate)),
-    ]);
+    preloadSpinSprites(sequences);
+
+    queueSpinPersistence({
+      collection,
+      profile: newProfile,
+      spins: results.map((r) => ({
+        pokemonId: r.pokemon.id,
+        isDuplicate: r.isDuplicate,
+      })),
+    });
 
     return results;
   },
@@ -228,7 +234,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     const newProfile = { ...get().profile, username: trimmed };
     set({ profile: newProfile });
-    await syncProfile(newProfile);
+    persistLocalProfile(newProfile);
+    void syncProfileToSupabase(newProfile);
   },
 
   getCollectedCount: () => Object.keys(get().collection).length,

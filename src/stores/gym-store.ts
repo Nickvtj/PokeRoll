@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { GYM_MAP, GYMS, isEliteLeagueUnlocked, isGymUnlocked } from "@/data/gyms";
 import { getLevelCap } from "@/data/pokemon-xp-curve";
-import { getDefaultGymState, loadGymState, saveGymState } from "@/lib/gym-storage";
+import { getDefaultGymState, loadGymState, persistGymState, saveGymStateImmediate } from "@/lib/gym-storage";
 import { loadGymFromSupabase, syncGymToSupabase } from "@/lib/gym-supabase";
 import { useEconomyStore } from "@/stores/economy-store";
 import type {
@@ -85,14 +85,14 @@ export const useGymStore = create<GymStore>((set, get) => ({
     void loadGymFromSupabase().then((remote) => {
       if (remote) {
         set({ ...remote });
-        saveGymState(remote);
+        saveGymStateImmediate(remote);
       }
     });
   },
 
   sync: () => {
     const snap = getGymSnapshot(get());
-    saveGymState(snap);
+    persistGymState(snap);
     void syncGymToSupabase(snap);
   },
 

@@ -1,8 +1,10 @@
-import { STORAGE_KEYS } from "@/lib/supabase";
+import { createDebouncedJsonPersist } from "@/lib/debounced-local-storage";
 import type { EconomyState } from "@/types/economy";
 import { STARTING_COINS } from "@/data/economy-balance";
 
 const ECONOMY_KEY = "pokeroll_economy";
+
+const economyPersist = createDebouncedJsonPersist<EconomyState>(ECONOMY_KEY);
 
 export function getDefaultEconomy(): EconomyState {
   return {
@@ -50,9 +52,22 @@ export function loadEconomy(): EconomyState {
   return getDefaultEconomy();
 }
 
+export function persistEconomyLocal(economy: EconomyState): void {
+  economyPersist.schedule(economy);
+}
+
+export function flushEconomyLocal(): void {
+  economyPersist.flush();
+}
+
+/** Grava imediatamente — uso em merge remoto ou flush crítico. */
+export function saveEconomyImmediate(economy: EconomyState): void {
+  economyPersist.writeImmediate(economy);
+}
+
+/** @deprecated Prefer persistEconomyLocal via economy-sync-scheduler */
 export function saveEconomy(economy: EconomyState): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(ECONOMY_KEY, JSON.stringify(economy));
+  persistEconomyLocal(economy);
 }
 
 export { ECONOMY_KEY };

@@ -4,7 +4,16 @@ import {
   isSupabaseConfigured,
   STORAGE_KEYS,
 } from "@/lib/supabase";
+import { createDebouncedJsonPersist } from "@/lib/debounced-local-storage";
 import type { CollectedPokemon, PlayerProfile } from "@/types";
+
+const collectionPersist = createDebouncedJsonPersist<
+  Record<number, CollectedPokemon>
+>(STORAGE_KEYS.collection);
+
+const profilePersist = createDebouncedJsonPersist<PlayerProfile>(
+  STORAGE_KEYS.profile
+);
 
 export async function loadCollection(): Promise<
   Record<number, CollectedPokemon>
@@ -46,11 +55,21 @@ function loadLocalCollection(): Record<number, CollectedPokemon> {
   }
 }
 
+export function persistLocalCollection(
+  collection: Record<number, CollectedPokemon>
+): void {
+  collectionPersist.schedule(collection);
+}
+
+export function flushLocalCollection(): void {
+  collectionPersist.flush();
+}
+
+/** @deprecated Prefer persistLocalCollection — mantido para compatibilidade interna. */
 export function saveLocalCollection(
   collection: Record<number, CollectedPokemon>
 ): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEYS.collection, JSON.stringify(collection));
+  persistLocalCollection(collection);
 }
 
 export async function saveCollectionEntry(
@@ -92,7 +111,7 @@ export async function saveCollectionEntry(
 function saveLocalCollectionEntry(entry: CollectedPokemon): void {
   const collection = loadLocalCollection();
   collection[entry.pokemonId] = entry;
-  saveLocalCollection(collection);
+  persistLocalCollection(collection);
 }
 
 export async function loadProfile(): Promise<PlayerProfile> {
@@ -143,75 +162,103 @@ function loadLocalProfile(): PlayerProfile {
     totalSpins: 0,
     createdAt: new Date().toISOString(),
   };
-  localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(profile));
+  profilePersist.writeImmediate(profile);
   return profile;
 }
 
+export function persistLocalProfile(profile: PlayerProfile): void {
+  profilePersist.schedule(profile);
+}
+
+export function flushLocalProfile(): void {
+  profilePersist.flush();
+}
+
+/** @deprecated Prefer persistLocalProfile */
 export function saveLocalProfile(profile: PlayerProfile): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(profile));
+  persistLocalProfile(profile);
 }
 
 export async function recordSpin(
   pokemonId: number,
   isDuplicate: boolean
 ): Promise<void> {
-  if (isSupabaseConfigured) {
-    const supabase = getSupabase();
-    if (!supabase) return;
+  await recordSpinsToSupabase([{ pokemonId, isDuplicate }]);
+}
 
-    const userId = getLocalUserId();
-    await supabase.from("spins").insert({
+export async function recordSpinsToSupabase(
+  spins: { pokemonId: number; isDuplicate: boolean }[],
+  profile?: PlayerProfile
+): Promise<void> {
+  if (!isSupabaseConfigured || spins.length === 0) return;
+
+  const supabase = getSupabase();
+  if (!supabase) return;
+
+  const userId = getLocalUserId();
+
+  await supabase.from("spins").insert(
+    spins.map(({ pokemonId, isDuplicate }) => ({
       user_id: userId,
       pokemon_id: pokemonId,
       is_duplicate: isDuplicate,
-    });
+    }))
+  );
 
-    const { data: user } = await supabase
+  if (profile) {
+    await syncProfileToSupabase(profile);
+    return;
+  }
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("total_spins")
+    .eq("id", userId)
+    .single();
+
+  if (user) {
+    await supabase
       .from("users")
-      .select("total_spins")
-      .eq("id", userId)
-      .single();
-
-    if (user) {
-      await supabase
-        .from("users")
-        .update({ total_spins: user.total_spins + 1 })
-        .eq("id", userId);
-    }
+      .update({ total_spins: user.total_spins + spins.length })
+      .eq("id", userId);
   }
 }
 
 export async function syncFullCollection(
   collection: Record<number, CollectedPokemon>
 ): Promise<void> {
-  saveLocalCollection(collection);
+  persistLocalCollection(collection);
 }
 
 export async function syncProfile(profile: PlayerProfile): Promise<void> {
-  saveLocalProfile(profile);
+  persistLocalProfile(profile);
+  await syncProfileToSupabase(profile);
+}
 
-  if (isSupabaseConfigured) {
-    const supabase = getSupabase();
-    if (!supabase) return;
+export async function syncProfileToSupabase(
+  profile: PlayerProfile
+): Promise<void> {
+  if (!isSupabaseConfigured) return;
 
-    const { data: existing } = await supabase
+  const supabase = getSupabase();
+  if (!supabase) return;
+
+  const { data: existing } = await supabase
+    .from("users")
+    .select("id")
+    .eq("id", profile.id)
+    .single();
+
+  if (existing) {
+    await supabase
       .from("users")
-      .select("id")
-      .eq("id", profile.id)
-      .single();
-
-    if (existing) {
-      await supabase
-        .from("users")
-        .update({ total_spins: profile.totalSpins, username: profile.username })
-        .eq("id", profile.id);
-    } else {
-      await supabase.from("users").insert({
-        id: profile.id,
-        username: profile.username,
-        total_spins: profile.totalSpins,
-      });
-    }
+      .update({ total_spins: profile.totalSpins, username: profile.username })
+      .eq("id", profile.id);
+  } else {
+    await supabase.from("users").insert({
+      id: profile.id,
+      username: profile.username,
+      total_spins: profile.totalSpins,
+    });
   }
 }

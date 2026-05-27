@@ -1,4 +1,5 @@
 import type { Pokemon, Rarity } from "@/types";
+import { getPokemonSpriteUrl } from "@/data/pokemon-sprites";
 
 const GEN1_NAMES: Record<number, string> = {
   1: "Bulbasaur", 2: "Ivysaur", 3: "Venusaur", 4: "Charmander", 5: "Charmeleon",
@@ -64,7 +65,7 @@ function getRarity(id: number): Rarity {
 }
 
 function getImageUrl(id: number): string {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+  return getPokemonSpriteUrl(id);
 }
 
 function createPokemon(id: number): Pokemon {

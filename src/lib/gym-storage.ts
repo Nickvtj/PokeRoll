@@ -1,6 +1,9 @@
+import { createDebouncedJsonPersist } from "@/lib/debounced-local-storage";
 import type { GymState } from "@/types/gym";
 
 const GYM_KEY = "pokeroll_gym";
+
+const gymPersist = createDebouncedJsonPersist<GymState>(GYM_KEY);
 
 export function getDefaultGymState(): GymState {
   return {
@@ -25,9 +28,22 @@ export function loadGymState(): GymState {
   return getDefaultGymState();
 }
 
+export function persistGymState(state: GymState): void {
+  gymPersist.schedule(state);
+}
+
+export function flushGymState(): void {
+  gymPersist.flush();
+}
+
+/** Grava imediatamente — uso ao receber dados remotos no boot. */
+export function saveGymStateImmediate(state: GymState): void {
+  gymPersist.writeImmediate(state);
+}
+
+/** @deprecated Prefer persistGymState */
 export function saveGymState(state: GymState): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(GYM_KEY, JSON.stringify(state));
+  persistGymState(state);
 }
 
 export { GYM_KEY };
