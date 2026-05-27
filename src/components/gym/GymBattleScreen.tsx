@@ -13,9 +13,7 @@ import { initGymBattle } from "@/lib/gym-battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
 import { POKEMON_MAP } from "@/data/pokemon";
-import {
-  playBattleHit,
-} from "@/lib/sound-engine";
+import { playNewBattleHitSounds } from "@/lib/battle-sound-utils";
 import type { BattleState } from "@/types/battle";
 import type { GymId } from "@/types/gym";
 import type { PerfectRunBonus } from "@/types/gym";
@@ -68,8 +66,8 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
     });
 
     if (state.log.length > lastLogLenRef.current) {
+      playNewBattleHitSounds(state.log, lastLogLenRef.current);
       lastLogLenRef.current = state.log.length;
-      void playBattleHit();
     }
 
     if (!done) {

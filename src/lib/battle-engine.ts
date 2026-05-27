@@ -1,8 +1,10 @@
 import { POKEMON_LIST } from "@/data/pokemon";
 import { getPokemonBattleStats } from "@/data/pokemon-stats";
+import { getPokedexInfo } from "@/data/pokedex";
 import {
   getTypeEffectiveness,
   getTypesStrongAgainst,
+  normalizeType,
 } from "@/data/type-chart";
 import {
   BATTLE_BASE_COINS_MAX,
@@ -13,6 +15,8 @@ import {
 import { getStatMultiplier } from "@/data/pokemon-battle-level";
 import type {
   BattleFighter,
+  BattleHitEffectiveness,
+  BattleHitSound,
   BattleLogEntry,
   BattleReward,
   BattleState,
@@ -20,8 +24,37 @@ import type {
 import type { Pokemon, Rarity } from "@/types";
 
 let logId = 0;
-function log(message: string, type: BattleLogEntry["type"]): BattleLogEntry {
-  return { id: `log-${++logId}`, message, type, timestamp: Date.now() };
+function log(
+  message: string,
+  type: BattleLogEntry["type"],
+  hitSound?: BattleHitSound
+): BattleLogEntry {
+  return { id: `log-${++logId}`, message, type, timestamp: Date.now(), hitSound };
+}
+
+function effectivenessFromMult(typeMult: number): BattleHitEffectiveness {
+  if (typeMult === 0) return "immune";
+  if (typeMult > 1) return "super";
+  if (typeMult < 1) return "weak";
+  return "normal";
+}
+
+function buildHitSound(
+  attacker: BattleFighter,
+  typeMult: number,
+  isCrit: boolean
+): BattleHitSound {
+  const info = getPokedexInfo(attacker.pokemon.id, attacker.pokemon.name);
+  const primary = normalizeType(attacker.stats.type);
+  const rawSecondary = info.types[1] ? normalizeType(info.types[1]) : undefined;
+  const secondary = rawSecondary && rawSecondary !== primary ? rawSecondary : undefined;
+
+  return {
+    attackType: primary,
+    secondaryType: secondary,
+    isCrit,
+    effectiveness: effectivenessFromMult(typeMult),
+  };
 }
 
 const RARITY_TIER: Record<Rarity, number> = {
@@ -283,7 +316,7 @@ function calcDamage(
   defender: BattleFighter,
   damageMult = 1,
   critChance = 0
-): { damage: number; isCrit: boolean; typeLabel: string | null } {
+): { damage: number; isCrit: boolean; typeLabel: string | null; typeMult: number } {
   const isCrit = Math.random() < critChance;
   let defense = defender.stats.defense;
   const defAbility = defender.stats.ability;
@@ -297,7 +330,7 @@ function calcDamage(
   );
 
   if (typeMult === 0) {
-    return { damage: 0, isCrit: false, typeLabel };
+    return { damage: 0, isCrit: false, typeLabel, typeMult };
   }
 
   let raw =
@@ -309,6 +342,7 @@ function calcDamage(
     damage: Math.max(typeMult > 1 ? 2 : 1, Math.round(raw)),
     isCrit,
     typeLabel,
+    typeMult,
   };
 }
 
@@ -380,7 +414,7 @@ export function executeBattleTurn(
         (t) => t.pokemon.id === f.pokemon.id && t.isPlayer === f.isPlayer
       );
       if (!isTarget) return f;
-      const { damage, isCrit, typeLabel } = calcDamage(
+      const { damage, isCrit, typeLabel, typeMult } = calcDamage(
         attacker,
         f,
         damageMult * ability!.value,
@@ -390,7 +424,8 @@ export function executeBattleTurn(
       logEntries.push(
         log(
           `${attacker.pokemon.name} atingiu ${f.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${suffix})`,
-          "damage"
+          "damage",
+          buildHitSound(attacker, typeMult, isCrit)
         )
       );
       const newHp = Math.max(0, f.currentHp - damage);
@@ -400,7 +435,7 @@ export function executeBattleTurn(
     return applyFighterUpdates(state, newAll, logEntries, nextTurnIndex);
   }
 
-  const { damage, isCrit, typeLabel } = calcDamage(
+  const { damage, isCrit, typeLabel, typeMult } = calcDamage(
     attacker,
     target,
     damageMult,
@@ -411,7 +446,8 @@ export function executeBattleTurn(
   logEntries.push(
     log(
       `${attacker.pokemon.name} → ${target.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${typeSuffix})`,
-      "attack"
+      "attack",
+      buildHitSound(attacker, typeMult, isCrit)
     )
   );
 

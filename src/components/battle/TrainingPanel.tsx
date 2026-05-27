@@ -9,7 +9,7 @@ import { POKEMON_MAP } from "@/data/pokemon";
 import { executeBattleTurn, initBattle } from "@/lib/battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordBattleToSupabase } from "@/lib/economy-supabase";
-import { playBattleHit } from "@/lib/sound-engine";
+import { playNewBattleHitSounds } from "@/lib/battle-sound-utils";
 import type { BattleState } from "@/types/battle";
 
 export function TrainingPanel() {
@@ -55,8 +55,8 @@ export function TrainingPanel() {
     });
 
     if (state.log.length > lastLogLenRef.current) {
+      playNewBattleHitSounds(state.log, lastLogLenRef.current);
       lastLogLenRef.current = state.log.length;
-      void playBattleHit();
     }
 
     if (!done) {

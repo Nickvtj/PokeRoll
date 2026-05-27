@@ -58,15 +58,7 @@ export async function playSpinTick(pitch = 300): Promise<void> {
   await playTone(pitch, 0.035, "triangle", 0.05);
 }
 
-export async function playBattleHit(): Promise<void> {
-  await playNoteSequence(
-    [
-      { freq: 180, dur: 0.05, vol: 0.09, type: "square" },
-      { freq: 140, dur: 0.07, vol: 0.07, type: "triangle" },
-    ],
-    0.02
-  );
-}
+export { playBattleHit } from "@/lib/battle-hit-sounds";
 
 export async function playBattleWin(): Promise<void> {
   await playNoteSequence(
