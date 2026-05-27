@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { Gamepad2, Target, MousePointerClick, Brain, Coins, Sparkles } from "lucide-react";
 import {
-  CAPTURE_COINS_MAX,
-  CAPTURE_COINS_MIN,
   CLICK_BASE_COINS_MAX,
   CLICK_BASE_COINS_MIN,
   MEMORY_COINS_MAX,
@@ -18,7 +16,7 @@ const GAMES = [
     href: "/games/captura",
     title: "Captura Perfeita",
     desc: "Acerte o timing na zona verde enquanto a Pokébola balança.",
-    reward: `${CAPTURE_COINS_MIN}~${CAPTURE_COINS_MAX} moedas`,
+    reward: "1 moeda por captura",
     icon: Target,
     color: "from-emerald-500/20 to-cyan-500/10 border-emerald-500/25",
     iconColor: "text-emerald-400",

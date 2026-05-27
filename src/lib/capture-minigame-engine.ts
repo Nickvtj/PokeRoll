@@ -1,6 +1,6 @@
 import type { Pokemon, Rarity } from "@/types";
 import { POKEMON_LIST } from "@/data/pokemon";
-import { CAPTURE_COINS_BY_RARITY } from "@/data/economy-balance";
+import { CAPTURE_COINS_PER_CATCH } from "@/data/economy-balance";
 import { applyMinigameCoinBonus } from "@/lib/minigame-rewards";
 
 export interface CaptureConfig {
@@ -31,8 +31,8 @@ export function getCaptureConfig(rarity: Rarity): CaptureConfig {
   return CAPTURE_BY_RARITY[rarity];
 }
 
-export function getCaptureCoinsForRarity(rarity: Rarity): number {
-  return CAPTURE_COINS_BY_RARITY[rarity];
+export function getCaptureCoinsForRarity(_rarity: Rarity): number {
+  return CAPTURE_COINS_PER_CATCH;
 }
 
 export function pickWildPokemon(): Pokemon {
@@ -78,8 +78,7 @@ export function calcCaptureReward(
   let coins = 0;
 
   if (captured) {
-    coins = CAPTURE_COINS_BY_RARITY[pokemonRarity];
-    coins = applyMinigameCoinBonus(coins, coinBonus);
+    coins = applyMinigameCoinBonus(CAPTURE_COINS_PER_CATCH, coinBonus);
   }
 
   const accountXp = captured ? 6 + perfectHits * 2 + (perfectHits === totalShakes ? 4 : 0) : 2;
@@ -103,13 +102,10 @@ export function calcStreakReward(
     return { coins: 0, accountXp: 2, bonusPokemonXp: 0 };
   }
 
-  let coins = caught.reduce(
-    (sum, p) => sum + applyMinigameCoinBonus(CAPTURE_COINS_BY_RARITY[p.rarity], coinBonus),
-    0
+  const coins = applyMinigameCoinBonus(
+    caught.length * CAPTURE_COINS_PER_CATCH,
+    coinBonus
   );
-
-  if (caught.length >= 3) coins += Math.floor(caught.length / 3);
-  if (caught.length >= 5) coins += 2;
 
   const accountXp = 4 + caught.length * 4 + perfectHits * 2;
   const bonusPokemonXp =

@@ -7,16 +7,10 @@ export const DUPLICATE_COIN_REWARD = 2;
 
 /** Minigames — sem teto diário; recompensas menores que batalha (4–7) */
 export const CAPTURE_SHAKE_MS = 700;
-export const CAPTURE_COINS_MIN = 1;
-export const CAPTURE_COINS_MAX = 5;
-
-export const CAPTURE_COINS_BY_RARITY = {
-  common: 1,
-  uncommon: 2,
-  rare: 3,
-  epic: 4,
-  legendary: 5,
-} as const;
+/** Moedas por Pokémon capturado na sequência (Captura Perfeita) */
+export const CAPTURE_COINS_PER_CATCH = 1;
+export const CAPTURE_COINS_MIN = CAPTURE_COINS_PER_CATCH;
+export const CAPTURE_COINS_MAX = CAPTURE_COINS_PER_CATCH;
 
 export const CLICK_GAME_DURATION_SEC = 30;
 export const CLICK_BASE_COINS_MIN = 1;

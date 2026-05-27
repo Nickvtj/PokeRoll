@@ -64,7 +64,7 @@ export default function CapturaGamePage() {
   return (
     <GamePageShell
       title="Captura Perfeita"
-      subtitle="Capture em sequência · moedas por raridade"
+      subtitle="Capture em sequência · 1 moeda por captura"
       icon={<Target className="w-7 h-7 text-emerald-400 shrink-0" />}
       tips={
         <>

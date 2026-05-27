@@ -204,12 +204,10 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
         </div>
         <h3 className="text-xl font-bold">Captura Perfeita</h3>
         <p className="text-white/50 text-sm leading-relaxed">
-          Acerte o timing e capture Pokémon em sequência. Quanto mais você pegar seguidos,
-          mais moedas ganha. Errou? A sequência termina.
+          Acerte o timing e capture Pokémon em sequência. Cada captura vale 1 moeda.
+          Errou? A sequência termina.
         </p>
-        <p className="text-xs text-amber-400/90">
-          Cada captura: Comum 1 · Incomum 2 · Raro 3 · Épico 4 · Lendário 5 🪙
-        </p>
+        <p className="text-xs text-amber-400/90">1 moeda por captura 🪙</p>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}

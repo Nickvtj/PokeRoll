@@ -57,36 +57,42 @@ export function PokemonCard({
         #{String(pokemon.id).padStart(3, "0")}
       </span>
 
-      <div className={cn("relative flex items-center justify-center mb-2", sizes.imageBox)}>
-        {collected ? (
-          <Image
-            src={pokemon.image}
-            alt={pokemon.name}
-            width={sizes.image}
-            height={sizes.image}
-            loading="lazy"
-            className="object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
-          />
-        ) : (
-          <div className="relative flex flex-col items-center justify-center gap-2" aria-hidden>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-b from-indigo-500/10 via-transparent to-purple-500/10 blur-xl scale-125" />
-            <div className="relative w-16 h-16 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
-              <Lock className={cn("text-white/20", sizes.lock)} />
-            </div>
-            <Sparkles className="w-3 h-3 text-white/15 absolute top-2 right-4" />
+      {collected ? (
+        <>
+          <div className={cn("relative flex items-center justify-center mb-2", sizes.imageBox)}>
+            <Image
+              src={pokemon.image}
+              alt={pokemon.name}
+              width={sizes.image}
+              height={sizes.image}
+              loading="lazy"
+              className="object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
+            />
           </div>
-        )}
-      </div>
-
-      <div className="text-center space-y-1.5">
-        <p className={cn("font-semibold truncate", sizes.text, !collected && "text-white/25")}>
-          {collected ? pokemon.name : "—"}
-        </p>
-        {collected && <RarityBadge rarity={pokemon.rarity} size="sm" />}
-        {!collected && (
-          <p className="text-[10px] text-white/20 uppercase tracking-widest">Não encontrado</p>
-        )}
-      </div>
+          <div className="text-center space-y-1.5">
+            <p className={cn("font-semibold truncate", sizes.text)}>{pokemon.name}</p>
+            <RarityBadge rarity={pokemon.rarity} size="sm" />
+          </div>
+        </>
+      ) : (
+        <div
+          className={cn(
+            "relative flex flex-col items-center justify-center gap-2.5 text-center",
+            sizes.imageBox,
+            "mb-1"
+          )}
+          aria-hidden
+        >
+          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-indigo-500/10 via-transparent to-purple-500/10 blur-xl scale-125" />
+          <div className="relative w-16 h-16 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
+            <Lock className={cn("text-white/20", sizes.lock)} />
+          </div>
+          <Sparkles className="w-3 h-3 text-white/15 absolute top-2 right-4" />
+          <p className="relative text-[10px] text-white/25 uppercase tracking-widest font-medium">
+            Não encontrado
+          </p>
+        </div>
+      )}
 
       {collected && pokemon.rarity === "legendary" && (
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/10 to-transparent animate-shimmer pointer-events-none" />
