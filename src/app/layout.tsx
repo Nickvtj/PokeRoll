@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Navbar } from "@/components/layout/Navbar";
 import { AnimatedBackground } from "@/components/layout/AnimatedBackground";
 import { GameProvider } from "@/components/layout/GameProvider";
+import { VisualQualityProvider } from "@/components/layout/VisualQualityProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,15 +21,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" data-visual-quality="medium">
       <body className="font-body antialiased">
-        <AnimatedBackground />
-        <GameProvider>
-          <Navbar />
-          <main className="min-h-dvh pt-10 md:pt-0 lg:pt-16 pb-20 md:pb-8">
-            {children}
-          </main>
-        </GameProvider>
+        <VisualQualityProvider>
+          <AnimatedBackground />
+          <GameProvider>
+            <Navbar />
+            <main className="min-h-dvh pt-10 md:pt-0 lg:pt-16 pb-20 md:pb-8">
+              {children}
+            </main>
+          </GameProvider>
+        </VisualQualityProvider>
       </body>
     </html>
   );

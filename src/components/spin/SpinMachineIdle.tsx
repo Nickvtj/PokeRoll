@@ -56,7 +56,7 @@ export function SpinMachineIdle({ compact = false }: SpinMachineIdleProps) {
       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
         <div
           className={cn(
-            "rounded-full border border-white/10 bg-black/30 backdrop-blur-sm",
+            "rounded-full border border-white/10 bg-black/40",
             compact ? "px-3 py-1" : "px-4 py-2"
           )}
         >

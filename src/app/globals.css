@@ -29,15 +29,40 @@ body {
 
 @layer components {
   .glass {
-    @apply backdrop-blur-md border border-white/10;
-    background: var(--glass-bg);
+    @apply border border-white/10;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  /* Glass translúcido — identidade PokéRoll; blur leve em medium, completo em high */
+  html[data-visual-quality="high"] .glass {
+    @apply backdrop-blur-md;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  html[data-visual-quality="medium"] .glass {
+    @apply backdrop-blur-sm;
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  html[data-visual-quality="low"] .glass {
+    background: rgba(255, 255, 255, 0.09);
   }
 
   .glass-card {
-    @apply glass rounded-2xl shadow-2xl;
+    @apply glass rounded-2xl;
     box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.4),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  html[data-visual-quality="high"] .glass-card,
+  html[data-visual-quality="medium"] .glass-card {
+    background: rgba(15, 22, 41, 0.32);
+  }
+
+  html[data-visual-quality="medium"] .glass-blur,
+  html[data-visual-quality="high"] .glass-blur {
+    @apply backdrop-blur-md;
   }
 
   .neon-text {
@@ -94,6 +119,10 @@ body {
     box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
   }
 
+  .pokemon-missing-slot {
+    @apply flex items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.03];
+  }
+
   .slot-machine-bg {
     background: linear-gradient(
       180deg,
@@ -117,6 +146,50 @@ body {
 }
 
 @layer utilities {
+  /* Fundo ambiente — gradientes radiais + blur em camada única (barato na GPU) */
+  .bg-ambient-wash {
+    background:
+      radial-gradient(ellipse 90% 70% at 15% 25%, rgba(99, 102, 241, 0.14), transparent 55%),
+      radial-gradient(ellipse 80% 60% at 85% 75%, rgba(34, 211, 238, 0.1), transparent 50%),
+      radial-gradient(ellipse 70% 55% at 55% 10%, rgba(168, 85, 247, 0.09), transparent 45%);
+  }
+
+  .bg-ambient-layer {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  html[data-visual-quality="high"] .bg-ambient-layer {
+    filter: blur(72px);
+  }
+
+  html[data-visual-quality="medium"] .bg-ambient-layer {
+    filter: blur(52px);
+  }
+
+  .bg-ambient-orb {
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at center,
+      rgba(var(--orb-color), 0.55) 0%,
+      rgba(var(--orb-color), 0.2) 38%,
+      transparent 72%
+    );
+    opacity: 0.85;
+  }
+
+  html[data-visual-quality="medium"] .bg-ambient-orb {
+    opacity: 0.75;
+  }
+
+  .bg-ambient-vignette {
+    background: radial-gradient(
+      ellipse 120% 90% at 50% 50%,
+      transparent 35%,
+      rgba(10, 14, 26, 0.55) 100%
+    );
+  }
+
   .bg-orb-drift {
     animation: bg-orb-drift ease-in-out infinite;
     will-change: transform;
@@ -136,6 +209,20 @@ body {
 
   .text-balance {
     text-wrap: balance;
+  }
+
+  .coin-animate-gain {
+    animation: coin-pulse-gain 0.55s ease-out;
+  }
+
+  .coin-animate-loss {
+    animation: coin-shake-loss 0.55s ease-out;
+  }
+
+  html[data-visual-quality="low"] .bg-orb-drift,
+  html[data-visual-quality="low"] .bg-particle-float,
+  html[data-visual-quality="low"] .slot-idle-track {
+    animation: none;
   }
 }
 
@@ -198,6 +285,45 @@ body {
 .album-card-slot {
   content-visibility: auto;
   contain-intrinsic-size: 120px 160px;
+}
+
+@keyframes coin-pulse-gain {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes coin-shake-loss {
+  0%,
+  100% {
+    transform: translateX(0) scale(1);
+  }
+  25% {
+    transform: translateX(-2px) scale(0.96);
+  }
+  75% {
+    transform: translateX(2px) scale(0.96);
+  }
+}
+
+@keyframes reward-coin-burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--burst-x, 0)), calc(-50% + var(--burst-y, 0)))
+      scale(1.2) rotate(180deg);
+  }
+}
+
+.reward-coin-burst {
+  animation: reward-coin-burst 0.8s ease-out forwards;
 }
 
 /* Scrollbar customizada */

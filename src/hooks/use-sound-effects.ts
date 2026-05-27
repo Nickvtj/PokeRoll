@@ -1,99 +1,43 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
+import { getAudioContext, playTone } from "@/lib/sound-engine";
 
 /** Efeitos sonoros estilo caça-níquel via Web Audio API */
 export function useSoundEffects() {
-  const audioContext = useRef<AudioContext | null>(null);
+  const playCoinClink = useCallback(async (delay = 0, pitch = 1800) => {
+    const ctx = await getAudioContext();
+    if (!ctx) return;
 
-  const getContext = useCallback(async () => {
-    if (typeof window === "undefined") return null;
+    const start = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
 
-    if (!audioContext.current) {
-      audioContext.current = new AudioContext();
-    }
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(pitch, start);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 0.5, start + 0.08);
 
-    // Necessário após interação do usuário (política de autoplay)
-    if (audioContext.current.state === "suspended") {
-      await audioContext.current.resume();
-    }
+    gain.gain.setValueAtTime(0.18, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.1);
 
-    return audioContext.current;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.1);
   }, []);
 
-  const playTone = useCallback(
-    async (
-      frequency: number,
-      duration: number,
-      type: OscillatorType = "sine",
-      volume = 0.15,
-      delay = 0
-    ) => {
-      const ctx = await getContext();
-      if (!ctx) return;
-
-      const start = ctx.currentTime + delay;
-      const oscillator = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(ctx.destination);
-
-      oscillator.frequency.value = frequency;
-      oscillator.type = type;
-
-      gainNode.gain.setValueAtTime(volume, start);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, start + duration);
-
-      oscillator.start(start);
-      oscillator.stop(start + duration);
-    },
-    [getContext]
-  );
-
-  /** Som de moeda caindo — clink curto */
-  const playCoinClink = useCallback(
-    async (delay = 0, pitch = 1800) => {
-      const ctx = await getContext();
-      if (!ctx) return;
-
-      const start = ctx.currentTime + delay;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(pitch, start);
-      osc.frequency.exponentialRampToValueAtTime(pitch * 0.5, start + 0.08);
-
-      gain.gain.setValueAtTime(0.18, start);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.1);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(start);
-      osc.stop(start + 0.1);
-    },
-    [getContext]
-  );
-
-  /** Roleta girando — ticks rápidos */
   const playSpin = useCallback(async () => {
     await playTone(220, 0.08, "square", 0.1);
     await playTone(280, 0.08, "square", 0.1, 0.08);
     await playTone(330, 0.1, "square", 0.12, 0.16);
-  }, [playTone]);
+  }, []);
 
-  /**
-   * Vitória de Pokémon NOVO — jingle clássico de caça-níquel
-   * Melodia ascendente + cascata de moedas
-   */
   const playNewPokemonWin = useCallback(async () => {
-    const ctx = await getContext();
+    const ctx = await getAudioContext();
     if (!ctx) return;
 
     const now = ctx.currentTime;
 
-    // Melodia "jackpot" ascendente
     const melody: { freq: number; time: number; dur: number; type: OscillatorType }[] = [
       { freq: 392, time: 0, dur: 0.1, type: "square" },
       { freq: 494, time: 0.09, dur: 0.1, type: "square" },
@@ -117,7 +61,6 @@ export function useSoundEffects() {
       osc.stop(now + note.time + note.dur);
     }
 
-    // Acorde final de vitória
     [784, 988, 1175].forEach((freq) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -132,29 +75,25 @@ export function useSoundEffects() {
       osc.stop(now + 1.0);
     });
 
-    // Cascata de moedas
     const coinDelays = [0.3, 0.38, 0.46, 0.54, 0.62, 0.7, 0.78, 0.86];
     coinDelays.forEach((d, i) => {
       void playCoinClink(d, 1400 + i * 120);
     });
-  }, [getContext, playCoinClink]);
+  }, [playCoinClink]);
 
-  /** Som suave para duplicata — tom baixo curto */
   const playDuplicate = useCallback(async () => {
     await playTone(220, 0.15, "sine", 0.08);
     await playTone(185, 0.2, "sine", 0.06, 0.1);
-  }, [playTone]);
+  }, []);
 
-  /** Vitória genérica (fallback) */
   const playWin = useCallback(async () => {
     await playTone(523, 0.15, "triangle", 0.12);
     await playTone(659, 0.15, "triangle", 0.12, 0.12);
     await playTone(784, 0.25, "triangle", 0.14, 0.24);
-  }, [playTone]);
+  }, []);
 
-  /** Lendário — fanfarra épica + moedas extras */
   const playLegendary = useCallback(async () => {
-    const ctx = await getContext();
+    const ctx = await getAudioContext();
     if (!ctx) return;
 
     const now = ctx.currentTime;
@@ -177,7 +116,7 @@ export function useSoundEffects() {
     for (let i = 0; i < 12; i++) {
       void playCoinClink(0.5 + i * 0.07, 1200 + i * 80);
     }
-  }, [getContext, playCoinClink]);
+  }, [playCoinClink]);
 
   return {
     playSpin,
@@ -187,3 +126,5 @@ export function useSoundEffects() {
     playLegendary,
   };
 }
+
+export { playSpinTick } from "@/lib/sound-engine";

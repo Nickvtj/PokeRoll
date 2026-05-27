@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
 import { Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEconomyStore } from "@/stores/economy-store";
@@ -27,17 +26,12 @@ export function CoinCounter({
   };
 
   return (
-    <motion.div
-      animate={
-        coinAnimation === "gain"
-          ? { scale: [1, 1.15, 1], color: ["#fbbf24", "#fde68a", "#fbbf24"] }
-          : coinAnimation === "loss"
-            ? { scale: [1, 0.9, 1], x: [0, -2, 2, 0] }
-            : {}
-      }
+    <div
       className={cn(
         "inline-flex items-center rounded-xl glass border border-amber-500/30 font-bold text-amber-400 shadow-lg shadow-amber-500/10",
         sizes[size],
+        coinAnimation === "gain" && "coin-animate-gain",
+        coinAnimation === "loss" && "coin-animate-loss",
         className
       )}
     >
@@ -48,7 +42,7 @@ export function CoinCounter({
           +{freeSpins}🎰
         </span>
       )}
-    </motion.div>
+    </div>
   );
 }
 

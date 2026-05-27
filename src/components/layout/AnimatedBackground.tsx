@@ -1,18 +1,19 @@
 "use client";
 
 import { memo, useEffect, useState } from "react";
+import { useVisualQuality } from "@/components/layout/VisualQualityProvider";
 
-/** Valor pseudo-aleatório estável (mesmo no SSR e no cliente) */
 function seededUnit(index: number, salt: number) {
   const x = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;
   return x - Math.floor(x);
 }
 
+/** Orbs grandes com gradiente radial — bordas suaves sem parecer “bolas sólidas” */
 const ORBS = [
-  { color: "#6366f1", size: 400, x: "10%", y: "20%", duration: 12, delay: 0 },
-  { color: "#22d3ee", size: 300, x: "70%", y: "60%", duration: 14, delay: 2 },
-  { color: "#a855f7", size: 350, x: "50%", y: "10%", duration: 16, delay: 4 },
-  { color: "#f59e0b", size: 200, x: "80%", y: "30%", duration: 13, delay: 1 },
+  { rgb: "99, 102, 241", size: 560, x: "5%", y: "12%", duration: 14, delay: 0 },
+  { rgb: "34, 211, 238", size: 480, x: "62%", y: "55%", duration: 16, delay: 2 },
+  { rgb: "168, 85, 247", size: 520, x: "42%", y: "0%", duration: 18, delay: 4 },
+  { rgb: "245, 158, 11", size: 380, x: "78%", y: "22%", duration: 15, delay: 1 },
 ] as const;
 
 const PARTICLE_COUNT = 6;
@@ -25,11 +26,15 @@ const PARTICLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
 }));
 
 export const AnimatedBackground = memo(function AnimatedBackground() {
+  const quality = useVisualQuality();
   const [particlesReady, setParticlesReady] = useState(false);
 
   useEffect(() => {
     setParticlesReady(true);
   }, []);
+
+  const showAnimatedOrbs = quality !== "low";
+  const showParticles = quality === "high" && particlesReady;
 
   return (
     <div
@@ -38,21 +43,28 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
     >
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a0e1a] via-[#121829] to-[#0a0e1a]" />
 
-      {ORBS.map((orb, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full opacity-20 blur-xl bg-orb-drift"
-          style={{
-            width: orb.size,
-            height: orb.size,
-            backgroundColor: orb.color,
-            left: orb.x,
-            top: orb.y,
-            animationDuration: `${orb.duration}s`,
-            animationDelay: `${orb.delay}s`,
-          }}
-        />
-      ))}
+      {/* Wash estático — identidade visual mesmo em low */}
+      <div className="absolute inset-0 bg-ambient-wash" />
+
+      {showAnimatedOrbs && (
+        <div className="absolute inset-0 bg-ambient-layer">
+          {ORBS.map((orb, i) => (
+            <div
+              key={i}
+              className="absolute bg-ambient-orb bg-orb-drift"
+              style={{
+                width: orb.size,
+                height: orb.size,
+                left: orb.x,
+                top: orb.y,
+                ["--orb-color" as string]: orb.rgb,
+                animationDuration: `${orb.duration}s`,
+                animationDelay: `${orb.delay}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       <div
         className="absolute inset-0 opacity-[0.03]"
@@ -63,7 +75,9 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
         }}
       />
 
-      {particlesReady &&
+      <div className="absolute inset-0 bg-ambient-vignette" />
+
+      {showParticles &&
         PARTICLES.map((p, i) => (
           <div
             key={`particle-${i}`}

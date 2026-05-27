@@ -12,6 +12,7 @@ interface SpinMachineProps {
   isSpinning: boolean;
   result?: SpinResult | null;
   onSpinComplete: () => void;
+  onReelTick?: () => void;
   compact?: boolean;
   reelIndex?: number;
 }
@@ -21,24 +22,37 @@ export function SpinMachine({
   isSpinning,
   result,
   onSpinComplete,
+  onReelTick,
   compact = false,
   reelIndex = 0,
 }: SpinMachineProps) {
   const [displayPokemon, setDisplayPokemon] = useState<Pokemon | null>(null);
   const [localSpinning, setLocalSpinning] = useState(false);
-  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const rafRef = useRef<number | null>(null);
+  const startTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasCompletedRef = useRef(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const dotsRef = useRef<(HTMLDivElement | null)[]>([]);
   const spinningRef = useRef(false);
+  const onReelTickRef = useRef(onReelTick);
+  const onSpinCompleteRef = useRef(onSpinComplete);
 
-  const clearAllTimeouts = useCallback(() => {
-    timeoutsRef.current.forEach(clearTimeout);
-    timeoutsRef.current = [];
+  onReelTickRef.current = onReelTick;
+  onSpinCompleteRef.current = onSpinComplete;
+
+  const cancelSpinLoop = useCallback(() => {
+    if (startTimerRef.current) {
+      clearTimeout(startTimerRef.current);
+      startTimerRef.current = null;
+    }
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
   }, []);
 
-  const applyPokemonToDom = useCallback((pokemon: Pokemon) => {
+  const applyPokemonToDom = useCallback((pokemon: Pokemon, playTick = false) => {
     if (imgRef.current) {
       imgRef.current.src = pokemon.image;
       imgRef.current.alt = pokemon.name;
@@ -58,6 +72,7 @@ export function SpinMachine({
       dot.style.transform = active ? "scale(1.3)" : "scale(1)";
       dot.style.boxShadow = active ? `0 0 8px ${RARITY_CONFIG[r].glowColor}` : "none";
     });
+    if (playTick) onReelTickRef.current?.();
   }, []);
 
   useEffect(() => {
@@ -67,41 +82,57 @@ export function SpinMachine({
     }
 
     hasCompletedRef.current = false;
-    clearAllTimeouts();
+    cancelSpinLoop();
     spinningRef.current = true;
     setLocalSpinning(true);
 
     const finalPokemon = sequence[sequence.length - 1];
+    const totalSteps = sequence.length;
+    let index = 0;
+    let delay = 80 + reelIndex * 30;
+    let accumulated = 0;
+    let lastTime = 0;
+
     applyPokemonToDom(sequence[0]);
 
-    let index = 0;
-    const totalSteps = sequence.length;
-    let delay = 80 + reelIndex * 30;
-
-    const schedule = (fn: () => void, ms: number) => {
-      const id = setTimeout(fn, ms);
-      timeoutsRef.current.push(id);
+    const finish = () => {
+      if (hasCompletedRef.current) return;
+      hasCompletedRef.current = true;
+      spinningRef.current = false;
+      setLocalSpinning(false);
+      setDisplayPokemon(finalPokemon);
+      onSpinCompleteRef.current();
     };
 
-    const tick = () => {
-      if (index < totalSteps) {
-        applyPokemonToDom(sequence[index]);
+    const step = (time: number) => {
+      if (lastTime === 0) lastTime = time;
+      accumulated += time - lastTime;
+      lastTime = time;
+
+      while (accumulated >= delay && index < totalSteps) {
+        applyPokemonToDom(sequence[index], index > 0);
         index++;
+        accumulated -= delay;
         delay = Math.min(delay + 15, 350);
-        schedule(tick, delay);
-      } else if (!hasCompletedRef.current) {
-        hasCompletedRef.current = true;
-        spinningRef.current = false;
-        setLocalSpinning(false);
-        setDisplayPokemon(finalPokemon);
-        onSpinComplete();
       }
+
+      if (index >= totalSteps) {
+        finish();
+        return;
+      }
+
+      rafRef.current = requestAnimationFrame(step);
     };
 
-    schedule(tick, 100 + reelIndex * 150);
+    startTimerRef.current = setTimeout(() => {
+      startTimerRef.current = null;
+      lastTime = 0;
+      accumulated = 0;
+      rafRef.current = requestAnimationFrame(step);
+    }, 100 + reelIndex * 150);
 
-    return () => clearAllTimeouts();
-  }, [isSpinning, sequence, onSpinComplete, reelIndex, clearAllTimeouts, applyPokemonToDom]);
+    return cancelSpinLoop;
+  }, [isSpinning, sequence, reelIndex, cancelSpinLoop, applyPokemonToDom]);
 
   const pokemon = displayPokemon ?? sequence[0];
 

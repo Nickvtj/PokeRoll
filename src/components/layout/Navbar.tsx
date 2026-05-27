@@ -29,7 +29,7 @@ export function Navbar() {
 
   return (
     <>
-      <header className="hidden lg:flex fixed top-0 left-0 right-0 z-40 items-center justify-between px-6 py-3 glass border-b border-white/10">
+      <header className="hidden lg:flex fixed top-0 left-0 right-0 z-40 items-center justify-between px-6 py-3 glass glass-blur border-b border-white/10">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
             <PokeballIcon size={22} />
@@ -87,7 +87,7 @@ export function Navbar() {
       </header>
 
       {/* Mobile bottom nav — 6 items */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-white/10">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass glass-blur border-t border-white/10">
         <div className="grid grid-cols-6 items-center py-1 px-0.5">
           {navItems.map(({ href, label, icon: Icon }) => {
             const active =
