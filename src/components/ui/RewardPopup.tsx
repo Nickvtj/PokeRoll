@@ -1,14 +1,32 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Star, Gift } from "lucide-react";
+import { Coins, Star, Gift, RotateCcw } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { useEconomyStore } from "@/stores/economy-store";
+import { playCoinGain, playReward } from "@/lib/sound-engine";
 
 export function RewardPopup() {
   const show = useEconomyStore((s) => s.showReward);
   const reward = useEconomyStore((s) => s.lastReward);
+  const onPlayAgain = useEconomyStore((s) => s.rewardPlayAgain);
   const close = useEconomyStore((s) => s.closeRewardPopup);
+
+  useEffect(() => {
+    if (!show || !reward) return;
+    if (reward.coins && reward.coins > 0) {
+      void playCoinGain();
+    } else {
+      void playReward();
+    }
+  }, [show, reward]);
+
+  const handlePlayAgain = () => {
+    const replay = onPlayAgain;
+    close();
+    replay?.();
+  };
 
   return (
     <AnimatePresence>
@@ -40,7 +58,7 @@ export function RewardPopup() {
             <h3 className="text-xl font-bold text-amber-400">Recompensa!</h3>
             <p className="text-white/70 text-sm">{reward.message}</p>
 
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-4 flex-wrap">
               {reward.coins != null && reward.coins > 0 && (
                 <div className="flex items-center gap-1 text-amber-400 font-bold">
                   <Coins className="w-5 h-5" />
@@ -58,9 +76,25 @@ export function RewardPopup() {
               )}
             </div>
 
-            <AnimatedButton variant="gold" onClick={close} className="w-full">
-              Coletar
-            </AnimatedButton>
+            <div className="flex flex-col gap-2">
+              {onPlayAgain && (
+                <AnimatedButton
+                  variant="gold"
+                  onClick={handlePlayAgain}
+                  icon={<RotateCcw className="w-4 h-4" />}
+                  className="w-full"
+                >
+                  Jogar novamente
+                </AnimatedButton>
+              )}
+              <AnimatedButton
+                variant={onPlayAgain ? "secondary" : "gold"}
+                onClick={close}
+                className="w-full"
+              >
+                {onPlayAgain ? "Fechar" : "Coletar"}
+              </AnimatedButton>
+            </div>
           </motion.div>
         </motion.div>
       )}

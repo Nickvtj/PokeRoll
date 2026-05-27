@@ -35,3 +35,6 @@ export interface RewardPayload {
   freeSpin?: boolean;
   message: string;
 }
+
+/** Callback efêmero — não persiste no storage */
+export type RewardPlayAgainFn = () => void;

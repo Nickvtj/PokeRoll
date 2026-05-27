@@ -98,77 +98,88 @@ export function AlbumGrid() {
       </div>
 
       {!isSearching && (
-        <div className="glass-card p-4 space-y-4">
+        <div className="glass-card p-4 space-y-3">
           <div className="flex items-center gap-2 text-white/70">
             <Filter className="w-4 h-4" />
             <span className="text-sm font-medium">Filtros</span>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                { value: "all", label: "Todos" },
-                { value: "found", label: "Encontrados" },
-                { value: "missing", label: "Faltando" },
-              ] as const
-            ).map(({ value, label }) => (
-              <FilterChip
-                key={value}
-                active={albumFilter.status === value}
-              onClick={() => setAlbumFilter({ status: value })}
-            >
-              {label}
-            </FilterChip>
-          ))}
-        </div>
-
-        {(albumFilter.rarity !== "all" ||
-          albumFilter.status !== "all" ||
-          albumFilter.generation !== "all") && (
-          <button
-            type="button"
-            onClick={() => {
-              setAlbumFilter({ rarity: "all", status: "all", generation: "all" });
-              setVisibleCount(ALBUM_PAGE_SIZE);
-            }}
-            className="text-xs text-indigo-400 hover:text-indigo-300"
-          >
-            Limpar filtros
-          </button>
-        )}
-
-          <div className="flex flex-wrap gap-2">
-            <FilterChip
-              active={albumFilter.rarity === "all"}
-              onClick={() => setAlbumFilter({ rarity: "all" })}
-            >
-              Todas raridades
-            </FilterChip>
-            {RARITY_ORDER.map((r) => (
-              <FilterChip
-                key={r}
-                active={albumFilter.rarity === r}
-                onClick={() => setAlbumFilter({ rarity: r as Rarity })}
-                color={RARITY_CONFIG[r].color}
-              >
-                {RARITY_CONFIG[r].label}
-              </FilterChip>
-            ))}
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">Status</p>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  { value: "all", label: "Todos" },
+                  { value: "found", label: "Encontrados" },
+                  { value: "missing", label: "Faltando" },
+                ] as const
+              ).map(({ value, label }) => (
+                <FilterChip
+                  key={value}
+                  active={albumFilter.status === value}
+                  onClick={() => setAlbumFilter({ status: value })}
+                >
+                  {label}
+                </FilterChip>
+              ))}
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <FilterChip
-              active={albumFilter.generation === "all"}
-              onClick={() => setAlbumFilter({ generation: "all" })}
-            >
-              Todas gens
-            </FilterChip>
-            <FilterChip
-              active={albumFilter.generation === 1}
-              onClick={() => setAlbumFilter({ generation: 1 })}
-            >
-              Gen 1
-            </FilterChip>
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">Raridade</p>
+            <div className="flex flex-wrap gap-2">
+              <FilterChip
+                active={albumFilter.rarity === "all"}
+                onClick={() => setAlbumFilter({ rarity: "all" })}
+              >
+                Todas
+              </FilterChip>
+              {RARITY_ORDER.map((r) => (
+                <FilterChip
+                  key={r}
+                  active={albumFilter.rarity === r}
+                  onClick={() => setAlbumFilter({ rarity: r as Rarity })}
+                  color={RARITY_CONFIG[r].color}
+                >
+                  {RARITY_CONFIG[r].label}
+                </FilterChip>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-end justify-between gap-3 flex-wrap">
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">Geração</p>
+              <div className="flex flex-wrap gap-2">
+                <FilterChip
+                  active={albumFilter.generation === "all"}
+                  onClick={() => setAlbumFilter({ generation: "all" })}
+                >
+                  Todas gens
+                </FilterChip>
+                <FilterChip
+                  active={albumFilter.generation === 1}
+                  onClick={() => setAlbumFilter({ generation: 1 })}
+                >
+                  Gen 1
+                </FilterChip>
+              </div>
+            </div>
+
+            {(albumFilter.rarity !== "all" ||
+              albumFilter.status !== "all" ||
+              albumFilter.generation !== "all") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAlbumFilter({ rarity: "all", status: "all", generation: "all" });
+                  setVisibleCount(ALBUM_PAGE_SIZE);
+                }}
+                className="text-xs text-indigo-400 hover:text-indigo-300 pb-1"
+              >
+                Limpar filtros
+              </button>
+            )}
           </div>
         </div>
       )}

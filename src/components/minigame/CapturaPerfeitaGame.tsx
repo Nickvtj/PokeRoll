@@ -3,13 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { Target } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import {
-  CAPTURE_SHAKE_MS,
-} from "@/data/economy-balance";
-import {
-  calcCaptureReward,
+  calcStreakReward,
   evaluateCaptureHit,
   getCaptureConfig,
   getCaptureCoinsForRarity,
@@ -18,12 +16,20 @@ import {
   rollZoneCenter,
   type CaptureHitQuality,
 } from "@/lib/capture-minigame-engine";
+import {
+  playCaptureHit,
+  playCaptureMiss,
+  playCapturePerfect,
+  playCaptureThrow,
+} from "@/lib/sound-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import type { Pokemon } from "@/types";
 import { cn } from "@/lib/utils";
 
 export interface CaptureGameResult {
   captured: boolean;
+  streak: number;
+  caughtPokemon: Pokemon[];
   goodHits: number;
   perfectHits: number;
   totalShakes: number;
@@ -31,81 +37,105 @@ export interface CaptureGameResult {
   accountXp: number;
   bonusPokemonXp: number;
   pokemon: Pokemon;
+  endedOnMiss: boolean;
 }
 
 interface CapturaPerfeitaGameProps {
   onComplete: (result: CaptureGameResult) => void;
+  onReady?: (restart: () => void) => void;
 }
 
-type Phase = "idle" | "playing" | "shake" | "done";
+type Phase = "idle" | "playing" | "animating" | "done";
 
-export function CapturaPerfeitaGame({ onComplete }: CapturaPerfeitaGameProps) {
+type BallAnim = "none" | "hit" | "miss";
+
+export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGameProps) {
   const team = useEconomyStore((s) => s.team);
   const bonuses = getEconomyBonuses(team);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [wild, setWild] = useState<Pokemon | null>(null);
-  const [round, setRound] = useState(0);
+  const [caught, setCaught] = useState<Pokemon[]>([]);
   const [goodHits, setGoodHits] = useState(0);
   const [perfectHits, setPerfectHits] = useState(0);
   const [cursor, setCursor] = useState(50);
   const [zoneCenter, setZoneCenter] = useState(50);
   const [lastQuality, setLastQuality] = useState<CaptureHitQuality | null>(null);
-  const [captured, setCaptured] = useState(false);
+  const [ballAnim, setBallAnim] = useState<BallAnim>("none");
+  const [pokemonKey, setPokemonKey] = useState(0);
 
   const cursorRef = useRef(50);
   const rafRef = useRef<number | null>(null);
   const endedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
+  const caughtRef = useRef<Pokemon[]>([]);
+  const goodRef = useRef(0);
+  const perfectRef = useRef(0);
 
   onCompleteRef.current = onComplete;
+  caughtRef.current = caught;
+  goodRef.current = goodHits;
+  perfectRef.current = perfectHits;
 
   const config = wild ? getCaptureConfig(wild.rarity) : null;
 
+  const spawnNext = useCallback(() => {
+    const pokemon = pickWildPokemon();
+    setWild(pokemon);
+    setZoneCenter(rollZoneCenter());
+    setCursor(50);
+    cursorRef.current = 50;
+    setBallAnim("none");
+    setLastQuality(null);
+    setPokemonKey((k) => k + 1);
+    setPhase("playing");
+  }, []);
+
   const finishGame = useCallback(
-    (success: boolean, hits: number, perfects: number, pokemon: Pokemon, shakes: number) => {
+    (missed: boolean, lastPokemon: Pokemon) => {
       if (endedRef.current) return;
       endedRef.current = true;
 
-      const { coins, accountXp, bonusPokemonXp } = calcCaptureReward(
-        success,
-        pokemon.rarity,
-        perfects,
-        shakes,
+      const streak = caughtRef.current;
+      const { coins, accountXp, bonusPokemonXp } = calcStreakReward(
+        streak,
+        perfectRef.current,
         bonuses.coinBonus
       );
 
-      setCaptured(success);
       setPhase("done");
 
       onCompleteRef.current({
-        captured: success,
-        goodHits: hits,
-        perfectHits: perfects,
-        totalShakes: shakes,
+        captured: streak.length > 0,
+        streak: streak.length,
+        caughtPokemon: [...streak],
+        goodHits: goodRef.current,
+        perfectHits: perfectRef.current,
+        totalShakes: streak.length,
         coins,
         accountXp,
         bonusPokemonXp,
-        pokemon,
+        pokemon: lastPokemon,
+        endedOnMiss: missed,
       });
     },
     [bonuses.coinBonus]
   );
 
-  const startGame = () => {
-    const pokemon = pickWildPokemon();
+  const startGame = useCallback(() => {
     endedRef.current = false;
-    setWild(pokemon);
-    setRound(0);
+    setCaught([]);
+    caughtRef.current = [];
     setGoodHits(0);
     setPerfectHits(0);
-    setLastQuality(null);
-    setCaptured(false);
-    setZoneCenter(rollZoneCenter());
-    setCursor(50);
-    cursorRef.current = 50;
-    setPhase("playing");
-  };
+    goodRef.current = 0;
+    perfectRef.current = 0;
+    spawnNext();
+  }, [spawnNext]);
+
+  useEffect(() => {
+    onReady?.(startGame);
+  }, [onReady, startGame]);
 
   useEffect(() => {
     if (phase !== "playing" || !wild || !config) return;
@@ -125,53 +155,60 @@ export function CapturaPerfeitaGame({ onComplete }: CapturaPerfeitaGameProps) {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [phase, round, wild, config]);
+  }, [phase, wild, config, pokemonKey]);
 
   const handleTap = () => {
     if (phase !== "playing" || !wild || !config || endedRef.current) return;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
+    void playCaptureThrow();
+
     const quality = evaluateCaptureHit(cursorRef.current, zoneCenter, config.zonePct);
     setLastQuality(quality);
-    setPhase("shake");
+    setPhase("animating");
 
     if (quality === "miss") {
-      setTimeout(() => {
-        finishGame(false, goodHits, perfectHits, wild, config.shakes);
-      }, CAPTURE_SHAKE_MS + 200);
+      setBallAnim("miss");
+      void playCaptureMiss();
+      setTimeout(() => finishGame(true, wild), 650);
       return;
     }
 
-    const nextGood = goodHits + 1;
-    const nextPerfect = perfectHits + (quality === "perfect" ? 1 : 0);
+    if (quality === "perfect") {
+      void playCapturePerfect();
+    } else {
+      void playCaptureHit();
+    }
+
+    setBallAnim("hit");
+
+    const nextGood = goodRef.current + 1;
+    const nextPerfect = perfectRef.current + (quality === "perfect" ? 1 : 0);
+    goodRef.current = nextGood;
+    perfectRef.current = nextPerfect;
     setGoodHits(nextGood);
     setPerfectHits(nextPerfect);
 
-    const isLastRound = round + 1 >= config.shakes;
+    const nextCaught = [...caughtRef.current, wild];
+    caughtRef.current = nextCaught;
+    setCaught(nextCaught);
 
-    setTimeout(() => {
-      if (isLastRound) {
-        finishGame(true, nextGood, nextPerfect, wild, config.shakes);
-        return;
-      }
-      setRound((r) => r + 1);
-      setZoneCenter(rollZoneCenter());
-      setLastQuality(null);
-      setPhase("playing");
-    }, CAPTURE_SHAKE_MS);
+    setTimeout(() => spawnNext(), 700);
   };
 
   if (phase === "idle") {
     return (
       <div className="glass-card p-8 text-center space-y-4">
-        <PokeballIcon size={48} className="mx-auto" />
+        <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+          <Target className="w-7 h-7 text-emerald-400" />
+        </div>
         <h3 className="text-xl font-bold">Captura Perfeita</h3>
         <p className="text-white/50 text-sm leading-relaxed">
-          Um Pokémon selvagem aparece. Acerte o timing na zona verde enquanto a Pokébola
-          balança — quanto mais raro, mais difícil e mais moedas.
+          Acerte o timing e capture Pokémon em sequência. Quanto mais você pegar seguidos,
+          mais moedas ganha. Errou? A sequência termina.
         </p>
         <p className="text-xs text-amber-400/90">
-          Recompensa ao capturar: Comum 1 · Incomum 2 · Raro 3 · Épico 4 · Lendário 5 🪙
+          Cada captura: Comum 1 · Incomum 2 · Raro 3 · Épico 4 · Lendário 5 🪙
         </p>
         <motion.button
           whileHover={{ scale: 1.03 }}
@@ -189,112 +226,114 @@ export function CapturaPerfeitaGame({ onComplete }: CapturaPerfeitaGameProps) {
 
   const zoneHalf = config.zonePct / 2;
   const perfectHalf = zoneHalf * 0.38;
+  const streak = caught.length;
 
   return (
     <div className="space-y-4">
-      <div className="glass-card p-4 flex items-center justify-between">
+      <div className="glass-card p-4 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] text-white/40 uppercase tracking-wider">Selvagem</p>
-          <p className="font-bold">{wild.name}</p>
+          <p className="text-[10px] text-white/40 uppercase tracking-wider">Sequência</p>
+          <p className="text-2xl font-black text-emerald-400">{streak}</p>
+        </div>
+        <div className="text-center flex-1 min-w-0">
+          <p className="font-bold truncate">{wild.name}</p>
           <RarityBadge rarity={wild.rarity} size="sm" />
         </div>
         <div className="text-right text-xs text-white/50">
-          <p>
-            Balanço {Math.min(round + (phase === "shake" ? 1 : 0), config.shakes)}/{config.shakes}
-          </p>
           <p className={getRarityColor(wild.rarity)}>
-            {config.shakes} acertos · captura = {getCaptureCoinsForRarity(wild.rarity)} 🪙
+            +{getCaptureCoinsForRarity(wild.rarity)} 🪙
           </p>
+          {perfectHits > 0 && (
+            <p className="text-amber-400">{perfectHits} perfeito{perfectHits > 1 ? "s" : ""}</p>
+          )}
         </div>
       </div>
 
-      <div className="glass-card p-6 relative overflow-hidden min-h-[280px] flex flex-col items-center justify-center gap-4">
+      {streak > 0 && (
+        <div className="flex gap-1 justify-center flex-wrap px-2">
+          {caught.slice(-6).map((p) => (
+            <Image
+              key={`${p.id}-${p.name}`}
+              src={p.image}
+              alt={p.name}
+              width={32}
+              height={32}
+              className="object-contain opacity-80"
+              unoptimized
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="glass-card p-6 relative overflow-hidden min-h-[260px] flex flex-col items-center justify-center">
         <AnimatePresence mode="wait">
-          {phase !== "done" ? (
-            <motion.div
-              key="wild"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{
-                scale: phase === "shake" ? [1, 1.05, 0.98, 1.02, 1] : 1,
-                opacity: 1,
-                x: phase === "shake" && lastQuality === "miss" ? [0, -8, 8, -4, 0] : 0,
-              }}
-              transition={{ duration: phase === "shake" ? 0.5 : 0.3 }}
-              className="relative"
-            >
-              <Image
-                src={wild.image}
-                alt={wild.name}
-                width={120}
-                height={120}
-                className="object-contain drop-shadow-lg"
-                priority
-              />
-              {phase === "shake" && (
-                <motion.div
-                  initial={{ scale: 0, y: 20 }}
-                  animate={{ scale: 1, y: 60 }}
-                  className="absolute left-1/2 -translate-x-1/2"
-                >
-                  <PokeballIcon size={36} />
-                </motion.div>
-              )}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="result"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-center space-y-3"
-            >
-              <Image
-                src={wild.image}
-                alt={wild.name}
-                width={96}
-                height={96}
-                className={cn("object-contain mx-auto", !captured && "opacity-60 grayscale")}
-              />
-              <p className={cn("text-lg font-bold", captured ? "text-emerald-400" : "text-orange-400")}>
-                {captured ? "Capturado!" : "O Pokémon fugiu!"}
-              </p>
-              <p className="text-xs text-white/50">
-                {goodHits}/{config.shakes} acertos
-                {perfectHits > 0 && ` · ${perfectHits} perfeito${perfectHits > 1 ? "s" : ""}`}
-              </p>
-            </motion.div>
-          )}
+          <motion.div
+            key={pokemonKey}
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{
+              scale: ballAnim === "hit" ? 0 : 1,
+              opacity: ballAnim === "hit" ? 0 : 1,
+              x: ballAnim === "miss" ? [0, 30, 80] : 0,
+            }}
+            transition={{ duration: ballAnim === "hit" ? 0.45 : 0.35 }}
+            className="relative flex flex-col items-center"
+          >
+            <Image
+              src={wild.image}
+              alt={wild.name}
+              width={120}
+              height={120}
+              className="object-contain drop-shadow-lg"
+              priority
+            />
+          </motion.div>
         </AnimatePresence>
 
-        {phase === "playing" && (
-          <p className="text-xs text-cyan-300/80 animate-pulse">Toque na zona verde!</p>
+        {ballAnim !== "none" && (
+          <motion.div
+            initial={{ y: -40, x: "-50%", opacity: 1, scale: 1 }}
+            animate={
+              ballAnim === "hit"
+                ? { y: 20, opacity: 0, scale: 0.5 }
+                : { y: 10, x: "calc(-50% + 90px)", opacity: 0, rotate: 45 }
+            }
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="absolute left-1/2 top-1/2 pointer-events-none"
+          >
+            <PokeballIcon size={40} />
+          </motion.div>
         )}
 
-        {phase === "shake" && lastQuality && (
+        {phase === "playing" && ballAnim === "none" && (
+          <p className="text-xs text-cyan-300/80 animate-pulse mt-3">Toque na zona verde!</p>
+        )}
+
+        {lastQuality && phase === "animating" && (
           <motion.p
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-              "text-sm font-bold",
+              "text-sm font-bold mt-2",
               lastQuality === "perfect" && "text-amber-400",
               lastQuality === "good" && "text-emerald-400",
               lastQuality === "miss" && "text-red-400"
             )}
           >
             {lastQuality === "perfect" && "Perfeito! ✨"}
-            {lastQuality === "good" && "Boa captura!"}
+            {lastQuality === "good" && "Capturado!"}
             {lastQuality === "miss" && "Escapou..."}
           </motion.p>
         )}
       </div>
 
-      {(phase === "playing" || phase === "shake") && (
+      {(phase === "playing" || phase === "animating") && (
         <button
           type="button"
           onClick={handleTap}
-          disabled={phase === "shake"}
+          disabled={phase === "animating"}
           className={cn(
             "w-full glass-card p-4 touch-none select-none transition-opacity",
-            phase === "shake" && "opacity-60 pointer-events-none"
+            phase === "animating" && "opacity-60 pointer-events-none"
           )}
         >
           <p className="text-[10px] text-white/40 mb-2 text-center uppercase tracking-wider">
@@ -320,21 +359,7 @@ export function CapturaPerfeitaGame({ onComplete }: CapturaPerfeitaGameProps) {
               style={{ left: `calc(${cursor}% - 3px)` }}
             />
           </div>
-          <p className="text-[10px] text-white/35 mt-2 text-center">
-            Centro dourado = timing perfeito · verde = captura ok
-          </p>
         </button>
-      )}
-
-      {phase === "done" && (
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={startGame}
-          className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-500 font-bold text-slate-900"
-        >
-          Jogar novamente
-        </motion.button>
       )}
     </div>
   );

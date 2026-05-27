@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { MousePointerClick } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import {
   GreatBallIcon,
@@ -26,13 +27,15 @@ import {
   type SpawnedBall,
 } from "@/lib/minigame-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
+import { playClickCombo, playClickPop, playClickRare } from "@/lib/sound-engine";
 import { cn } from "@/lib/utils";
 
 interface ClickMinigameProps {
   onComplete: (score: number, coins: number, maxCombo: number) => void;
+  onReady?: (restart: () => void) => void;
 }
 
-export function ClickMinigame({ onComplete }: ClickMinigameProps) {
+export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
   const [playing, setPlaying] = useState(false);
   const [timeLeft, setTimeLeft] = useState(CLICK_GAME_DURATION_SEC);
   const [score, setScore] = useState(0);
@@ -47,6 +50,7 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
   const maxComboRef = useRef(0);
   const endedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
+  const rareSpawnCooldown = useRef(0);
 
   const team = useEconomyStore((s) => s.team);
   const bonuses = getEconomyBonuses(team);
@@ -64,7 +68,7 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
     onCompleteRef.current(scoreRef.current, coins, maxComboRef.current);
   }, [bonuses.coinBonus]);
 
-  const start = () => {
+  const start = useCallback(() => {
     endedRef.current = false;
     setPlaying(true);
     setTimeLeft(CLICK_GAME_DURATION_SEC);
@@ -76,7 +80,12 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
     setPopups([]);
     scoreRef.current = 0;
     maxComboRef.current = 0;
-  };
+    rareSpawnCooldown.current = 0;
+  }, []);
+
+  useEffect(() => {
+    onReady?.(start);
+  }, [onReady, start]);
 
   useEffect(() => {
     if (!playing) return;
@@ -102,14 +111,29 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
       const now = Date.now();
       setBalls((prev) => {
         const alive = prev.filter((b) => now - b.createdAt < b.lifetime);
-        return Math.random() < 0.55 ? [...alive.slice(-10), spawnBall()] : alive;
+        return Math.random() < 0.32 ? [...alive.slice(-8), spawnBall()] : alive;
       });
+    }, 520);
+
+    return () => clearInterval(interval);
+  }, [playing]);
+
+  useEffect(() => {
+    if (!playing) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
       setRareEvents((prev) => {
         const alive = prev.filter((r) => now - r.createdAt < r.lifetime);
+        if (alive.length > 0 || now < rareSpawnCooldown.current) return alive;
         const rare = maybeSpawnRareEvent();
-        return rare ? [...alive.slice(-2), rare] : alive;
+        if (rare) {
+          rareSpawnCooldown.current = now + 4000;
+          return [rare];
+        }
+        return alive;
       });
-    }, 280);
+    }, 800);
 
     return () => clearInterval(interval);
   }, [playing]);
@@ -128,8 +152,11 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
   };
 
   const handleBallClick = (ball: SpawnedBall) => {
-    const points = calcClickScore(ball.type, combo + 1, bonuses.comboBonus);
     const newCombo = combo + 1;
+    void playClickPop();
+    if (newCombo >= 3 && newCombo % 3 === 0) void playClickCombo(newCombo);
+
+    const points = calcClickScore(ball.type, newCombo, bonuses.comboBonus);
     setScore((s) => {
       const next = s + points;
       scoreRef.current = next;
@@ -150,6 +177,7 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
   };
 
   const handleRareClick = (event: RareEvent) => {
+    void playClickRare();
     setScore((s) => {
       const next = s + 50;
       scoreRef.current = next;
@@ -165,11 +193,16 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
   if (!playing) {
     return (
       <div className="glass-card p-8 text-center space-y-4">
-        <PokeballIcon size={48} className="mx-auto" />
-        <h3 className="text-xl font-bold">Click Rush!</h3>
-        <p className="text-white/50 text-sm">
-          Clique nas Pokébolas em {CLICK_GAME_DURATION_SEC}s · Ganhe {CLICK_BASE_COINS_MIN}~
-          {CLICK_BASE_COINS_MAX} moedas
+        <div className="mx-auto w-14 h-14 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center">
+          <MousePointerClick className="w-7 h-7 text-cyan-400" />
+        </div>
+        <h3 className="text-xl font-bold">Click Rush</h3>
+        <p className="text-white/50 text-sm leading-relaxed">
+          Pokébolas aparecem na tela. Clique o máximo que conseguir em{" "}
+          {CLICK_GAME_DURATION_SEC} segundos. Combos aumentam sua pontuação!
+        </p>
+        <p className="text-xs text-amber-400/90">
+          Recompensa: {CLICK_BASE_COINS_MIN}~{CLICK_BASE_COINS_MAX} moedas
         </p>
         <motion.button
           whileHover={{ scale: 1.03 }}
@@ -218,18 +251,15 @@ export function ClickMinigame({ onComplete }: ClickMinigameProps) {
             const pokemon = POKEMON_MAP[event.pokemonId];
             if (!pokemon) return null;
             return (
-              <motion.button
+              <button
                 key={event.id}
-                initial={{ x: "-100%" }}
-                animate={{ x: `${event.x}%` }}
-                exit={{ opacity: 0 }}
                 onClick={() => handleRareClick(event)}
-                className="absolute flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 border border-amber-400/50"
-                style={{ top: `${event.y}%` }}
+                className="absolute flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 animate-pulse hover:scale-105 transition-transform"
+                style={{ left: `${event.x}%`, top: `${event.y}%` }}
               >
                 <Image src={pokemon.image} alt="" width={32} height={32} unoptimized />
                 <span className="text-[10px] text-amber-400 font-bold">RARO!</span>
-              </motion.button>
+              </button>
             );
           })}
           {popups.map((p) => (

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { Brain } from "lucide-react";
 import { PokeMemoryGame, type MemoryGameResult } from "@/components/minigame/PokeMemoryGame";
 import { GamePageShell } from "@/components/minigame/GamePageShell";
@@ -20,6 +21,7 @@ export default function MemoryGamePage() {
   const showRewardPopup = useEconomyStore((s) => s.showRewardPopup);
   const team = useEconomyStore((s) => s.team);
   const bonuses = getEconomyBonuses(team);
+  const restartRef = useRef<(() => void) | null>(null);
 
   const handleComplete = (result: MemoryGameResult) => {
     const { coins, accountXp } = calcMemoryReward(
@@ -40,11 +42,14 @@ export default function MemoryGamePage() {
         ? `Tempo esgotado · ${result.pairsFound}/${result.totalPairs} pares`
         : `${result.pairsFound} pares`;
 
-    showRewardPopup({
-      coins,
-      xp: accountXp,
-      message: `Poké-Memory: ${label} → +${coins} moedas`,
-    });
+    showRewardPopup(
+      {
+        coins,
+        xp: accountXp,
+        message: `Poké-Memory: ${label} → +${coins} moedas`,
+      },
+      () => restartRef.current?.()
+    );
   };
 
   return (
@@ -54,7 +59,7 @@ export default function MemoryGamePage() {
       icon={<Brain className="w-7 h-7 text-violet-400 shrink-0" />}
       tips={
         <>
-          <p>⏱️ {MEMORY_GAME_DURATION_SEC}s para achar todos os pares · erro desvira as cartas</p>
+          <p>Memorize a posição dos Pokémon. Erros desviram as cartas e custam tempo.</p>
           {bonuses.coinBonus > 0 && (
             <p className="text-amber-400">
               Meowth no time: +{Math.round(bonuses.coinBonus * 100)}% moedas
@@ -63,7 +68,12 @@ export default function MemoryGamePage() {
         </>
       }
     >
-      <PokeMemoryGame onComplete={handleComplete} />
+      <PokeMemoryGame
+        onComplete={handleComplete}
+        onReady={(restart) => {
+          restartRef.current = restart;
+        }}
+      />
     </GamePageShell>
   );
 }

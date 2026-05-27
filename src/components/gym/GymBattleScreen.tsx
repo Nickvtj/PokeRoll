@@ -13,6 +13,9 @@ import { initGymBattle } from "@/lib/gym-battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
 import { POKEMON_MAP } from "@/data/pokemon";
+import {
+  playBattleHit,
+} from "@/lib/sound-engine";
 import type { BattleState } from "@/types/battle";
 import type { GymId } from "@/types/gym";
 import type { PerfectRunBonus } from "@/types/gym";
@@ -38,16 +41,21 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
   } | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const battleStateRef = useRef<BattleState | null>(null);
+  const lastLogLenRef = useRef(0);
   battleStateRef.current = battleState;
 
-  const startStage = (s: number) => {
-    if (team.length < 3) return;
-    const pokemon = team.map((id) => POKEMON_MAP[id]).filter(Boolean);
-    if (pokemon.length < 3) return;
-    setStage(s);
-    setBattleState(initGymBattle(gymId, s, pokemon, getPokemonLevelsMap()));
-    setFighting(true);
-  };
+  const startStage = useCallback(
+    (s: number) => {
+      if (team.length < 3) return;
+      const pokemon = team.map((id) => POKEMON_MAP[id]).filter(Boolean);
+      if (pokemon.length < 3) return;
+      lastLogLenRef.current = 0;
+      setStage(s);
+      setBattleState(initGymBattle(gymId, s, pokemon, getPokemonLevelsMap()));
+      setFighting(true);
+    },
+    [team, gymId, getPokemonLevelsMap]
+  );
 
   const processTurns = useCallback(() => {
     const prev = battleStateRef.current;
@@ -58,6 +66,11 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
       battleDamage: bonuses.battleDamage,
       critChance: bonuses.critChance,
     });
+
+    if (state.log.length > lastLogLenRef.current) {
+      lastLogLenRef.current = state.log.length;
+      void playBattleHit();
+    }
 
     if (!done) {
       setBattleState(state);
@@ -99,15 +112,30 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
     };
   }, [fighting, processTurns]);
 
+  const resetBattle = () => {
+    setBattleState(null);
+    setFighting(false);
+  };
+
   const handleContinue = () => {
     const won = battleState?.phase === "victory";
     const currentStage = stage;
-    setBattleState(null);
-    setFighting(false);
+    resetBattle();
     if (won && currentStage < 5 && !badgeReward) {
       startStage(currentStage + 1);
     } else if (battleState?.phase === "defeat") {
       onExit();
+    }
+  };
+
+  const handlePlayAgain = () => {
+    const currentStage = stage;
+    const won = battleState?.phase === "victory";
+    resetBattle();
+    if (won && currentStage < 5) {
+      startStage(currentStage + 1);
+    } else {
+      startStage(won ? 1 : currentStage);
     }
   };
 
@@ -141,7 +169,11 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
       )}
 
       {(fighting || battleState) && (
-        <BattleArena state={battleState} onContinue={handleContinue} />
+        <BattleArena
+          state={battleState}
+          onContinue={handleContinue}
+          onPlayAgain={handlePlayAgain}
+        />
       )}
 
       <BadgeRewardAnimation

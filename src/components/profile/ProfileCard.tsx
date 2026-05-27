@@ -72,7 +72,7 @@ export function ProfileCard() {
     <div className="space-y-4">
       <ProfileSection
         title="Treinador"
-        description="Visão geral da sua conta."
+        description="Seu progresso na jornada."
         icon={User}
       >
         <ProfileIdentityCard />

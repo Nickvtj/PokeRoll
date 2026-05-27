@@ -10,9 +10,10 @@ import type { BattleState } from "@/types/battle";
 interface BattleArenaProps {
   state: BattleState | null;
   onContinue?: () => void;
+  onPlayAgain?: () => void;
 }
 
-export function BattleArena({ state, onContinue }: BattleArenaProps) {
+export function BattleArena({ state, onContinue, onPlayAgain }: BattleArenaProps) {
   if (!state) {
     return (
       <div className="glass-card p-12 text-center text-white/40">
@@ -120,7 +121,13 @@ export function BattleArena({ state, onContinue }: BattleArenaProps) {
         )}
       </div>
 
-      {showModal && <BattleResultModal state={state} onContinue={onContinue} />}
+      {showModal && (
+        <BattleResultModal
+          state={state}
+          onContinue={onContinue}
+          onPlayAgain={onPlayAgain}
+        />
+      )}
     </>
   );
 }

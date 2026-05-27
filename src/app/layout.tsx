@@ -27,7 +27,7 @@ export default function RootLayout({
           <AnimatedBackground />
           <GameProvider>
             <Navbar />
-            <main className="min-h-dvh pt-10 md:pt-0 lg:pt-16 pb-20 md:pb-8">
+            <main className="page-shell pt-10 md:pt-0 lg:pt-16 pb-20 md:pb-8">
               {children}
             </main>
           </GameProvider>

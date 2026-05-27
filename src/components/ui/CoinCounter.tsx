@@ -28,7 +28,7 @@ export function CoinCounter({
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-xl glass border border-amber-500/30 font-bold text-amber-400 shadow-lg shadow-amber-500/10",
+        "inline-flex items-center flex-nowrap whitespace-nowrap shrink-0 rounded-xl glass border border-amber-500/30 font-bold text-amber-400 shadow-lg shadow-amber-500/10",
         sizes[size],
         coinAnimation === "gain" && "coin-animate-gain",
         coinAnimation === "loss" && "coin-animate-loss",
@@ -38,8 +38,8 @@ export function CoinCounter({
       <Coins className={cn(size === "sm" ? "w-3.5 h-3.5" : "w-4 h-4")} />
       <span>{coins.toLocaleString("pt-BR")}</span>
       {showFreeSpins && freeSpins > 0 && (
-        <span className="text-[10px] text-cyan-400 font-semibold ml-1">
-          +{freeSpins}🎰
+        <span className="text-[10px] text-cyan-400 font-semibold whitespace-nowrap">
+          +{freeSpins} 🎰
         </span>
       )}
     </div>

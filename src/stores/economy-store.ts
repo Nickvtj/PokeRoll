@@ -36,12 +36,13 @@ import {
 } from "@/lib/economy-supabase";
 import { mergeEconomyState } from "@/lib/economy-merge";
 import { useGymStore } from "@/stores/gym-store";
-import type { EconomyState, RewardPayload } from "@/types/economy";
+import type { EconomyState, RewardPayload, RewardPlayAgainFn } from "@/types/economy";
 import type { PokemonLevelUpResult } from "@/types/battle";
 
 interface EconomyStore extends EconomyState {
   lastReward: RewardPayload | null;
   showReward: boolean;
+  rewardPlayAgain: RewardPlayAgainFn | null;
   coinAnimation: "gain" | "loss" | null;
 
   initializeEconomy: () => void;
@@ -73,7 +74,7 @@ interface EconomyStore extends EconomyState {
   incrementMission: (type: string, amount?: number) => void;
   claimMission: (missionId: string) => boolean;
 
-  showRewardPopup: (reward: RewardPayload) => void;
+  showRewardPopup: (reward: RewardPayload, onPlayAgain?: RewardPlayAgainFn) => void;
   closeRewardPopup: () => void;
   claimWelcomePackage: () => void;
   refreshAchievements: (stats: AchievementStats) => void;
@@ -93,6 +94,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
   ...getDefaultEconomy(),
   lastReward: null,
   showReward: false,
+  rewardPlayAgain: null,
   coinAnimation: null,
 
   initializeEconomy: () => {
@@ -438,8 +440,10 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     return true;
   },
 
-  showRewardPopup: (reward) => set({ lastReward: reward, showReward: true }),
-  closeRewardPopup: () => set({ showReward: false, lastReward: null }),
+  showRewardPopup: (reward, onPlayAgain) =>
+    set({ lastReward: reward, showReward: true, rewardPlayAgain: onPlayAgain ?? null }),
+  closeRewardPopup: () =>
+    set({ showReward: false, lastReward: null, rewardPlayAgain: null }),
 
   claimWelcomePackage: () => {
     if (get().welcomeClaimed) return;

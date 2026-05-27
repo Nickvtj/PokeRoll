@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { Brain } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import {
   MEMORY_COINS_MAX,
@@ -16,6 +17,7 @@ import {
   isMemoryMatch,
   type MemoryCard,
 } from "@/lib/memory-minigame-engine";
+import { playCardFlip, playMemoryMatch, playMemoryMismatch } from "@/lib/sound-engine";
 import { cn } from "@/lib/utils";
 
 export interface MemoryGameResult {
@@ -28,9 +30,10 @@ export interface MemoryGameResult {
 
 interface PokeMemoryGameProps {
   onComplete: (result: MemoryGameResult) => void;
+  onReady?: (restart: () => void) => void;
 }
 
-export function PokeMemoryGame({ onComplete }: PokeMemoryGameProps) {
+export function PokeMemoryGame({ onComplete, onReady }: PokeMemoryGameProps) {
   const [started, setStarted] = useState(false);
   const [cards, setCards] = useState<MemoryCard[]>([]);
   const [flipped, setFlipped] = useState<string[]>([]);
@@ -61,7 +64,7 @@ export function PokeMemoryGame({ onComplete }: PokeMemoryGameProps) {
     onCompleteRef.current(result);
   }, []);
 
-  const start = () => {
+  const start = useCallback(() => {
     const deck = buildMemoryDeck();
     endedRef.current = false;
     resolvingRef.current = false;
@@ -77,7 +80,11 @@ export function PokeMemoryGame({ onComplete }: PokeMemoryGameProps) {
     setTimedOut(false);
     setResolving(false);
     setStarted(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    onReady?.(start);
+  }, [onReady, start]);
 
   useEffect(() => {
     if (!started || done) return;
@@ -110,6 +117,7 @@ export function PokeMemoryGame({ onComplete }: PokeMemoryGameProps) {
 
     const nextFlipped = [...flipped, uid];
     setFlipped(nextFlipped);
+    void playCardFlip();
 
     if (nextFlipped.length < 2) return;
 
@@ -124,6 +132,7 @@ export function PokeMemoryGame({ onComplete }: PokeMemoryGameProps) {
 
     if (cardA && cardB && isMemoryMatch(cardA, cardB)) {
       window.setTimeout(() => {
+        void playMemoryMatch();
         const nextMatched = [...matchedRef.current, nextFlipped[0], nextFlipped[1]];
         matchedRef.current = nextMatched;
         setMatched(nextMatched);
@@ -143,6 +152,7 @@ export function PokeMemoryGame({ onComplete }: PokeMemoryGameProps) {
       }, 450);
     } else {
       window.setTimeout(() => {
+        void playMemoryMismatch();
         setFlipped([]);
         resolvingRef.current = false;
         setResolving(false);
@@ -153,11 +163,13 @@ export function PokeMemoryGame({ onComplete }: PokeMemoryGameProps) {
   if (!started) {
     return (
       <div className="glass-card p-8 text-center space-y-4">
-        <PokeballIcon size={48} className="mx-auto" />
+        <div className="mx-auto w-14 h-14 rounded-2xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center">
+          <Brain className="w-7 h-7 text-violet-400" />
+        </div>
         <h3 className="text-xl font-bold">Poké-Memory</h3>
         <p className="text-white/50 text-sm leading-relaxed">
           Encontre os {MEMORY_PAIR_COUNT} pares em {MEMORY_GAME_DURATION_SEC} segundos. Errou?
-          As cartas viram de novo — continue até acabar o tempo.
+          As cartas viram de novo. Continue até acabar o tempo.
         </p>
         <p className="text-xs text-violet-400/90">
           Recompensa: {MEMORY_COINS_MIN}~{MEMORY_COINS_MAX} moedas ao completar
@@ -217,7 +229,7 @@ export function PokeMemoryGame({ onComplete }: PokeMemoryGameProps) {
       </div>
 
       {done && (
-        <div className="text-center space-y-3">
+        <div className="text-center">
           <p
             className={cn(
               "text-sm font-semibold",
@@ -228,16 +240,6 @@ export function PokeMemoryGame({ onComplete }: PokeMemoryGameProps) {
               ? `Tempo esgotado! ${matched.length / 2}/${MEMORY_PAIR_COUNT} pares`
               : `Completo em ${moves} jogadas!`}
           </p>
-          <motion.button
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={start}
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-violet-400 to-purple-500 font-bold text-slate-900"
-          >
-            Jogar novamente
-          </motion.button>
         </div>
       )}
     </div>

@@ -9,6 +9,7 @@ import { POKEMON_MAP } from "@/data/pokemon";
 import { executeBattleTurn, initBattle } from "@/lib/battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordBattleToSupabase } from "@/lib/economy-supabase";
+import { playBattleHit } from "@/lib/sound-engine";
 import type { BattleState } from "@/types/battle";
 
 export function TrainingPanel() {
@@ -25,14 +26,22 @@ export function TrainingPanel() {
   const [fighting, setFighting] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const battleStateRef = useRef<BattleState | null>(null);
+  const lastLogLenRef = useRef(0);
   battleStateRef.current = battleState;
 
-  const startBattle = () => {
-    if (team.length < 3) return;
+  const beginBattle = useCallback(() => {
+    if (team.length < 3) return null;
     const pokemon = team.map((id) => POKEMON_MAP[id]).filter(Boolean);
-    if (pokemon.length < 3) return;
-    setBattleState(initBattle(pokemon, 1, getPokemonLevelsMap()));
+    if (pokemon.length < 3) return null;
+    lastLogLenRef.current = 0;
+    const state = initBattle(pokemon, 1, getPokemonLevelsMap());
+    setBattleState(state);
     setFighting(true);
+    return state;
+  }, [team, getPokemonLevelsMap]);
+
+  const startBattle = () => {
+    beginBattle();
   };
 
   const processTurns = useCallback(() => {
@@ -44,6 +53,11 @@ export function TrainingPanel() {
       battleDamage: bonuses.battleDamage,
       critChance: bonuses.critChance,
     });
+
+    if (state.log.length > lastLogLenRef.current) {
+      lastLogLenRef.current = state.log.length;
+      void playBattleHit();
+    }
 
     if (!done) {
       setBattleState(state);
@@ -69,6 +83,7 @@ export function TrainingPanel() {
       recordBattleLoss();
       void recordBattleToSupabase(false, 0, 6, false, state.wave, team);
     }
+
     setBattleState(finalState);
   }, [team, addCoins, addXp, recordBattleWin, recordBattleLoss, grantFreeSpin, grantPokemonBattleXp]);
 
@@ -83,13 +98,19 @@ export function TrainingPanel() {
     };
   }, [fighting, processTurns]);
 
+  const resetBattle = () => {
+    setBattleState(null);
+    setFighting(false);
+  };
+
   if (fighting || battleState) {
     return (
       <BattleArena
         state={battleState}
-        onContinue={() => {
-          setBattleState(null);
-          setFighting(false);
+        onContinue={resetBattle}
+        onPlayAgain={() => {
+          resetBattle();
+          setTimeout(() => beginBattle(), 50);
         }}
       />
     );
@@ -108,10 +129,6 @@ export function TrainingPanel() {
       >
         {team.length < 3 ? "Selecione 3 Pokémon" : "INICIAR TREINO"}
       </AnimatedButton>
-      <div className="glass-card p-4 text-xs text-white/40 space-y-1">
-        <p>⚔️ Farm de moedas e XP · batalhas repetíveis</p>
-        <p>🪙 Recompensa: 3~8 moedas + XP conta + spin grátis</p>
-      </div>
     </div>
   );
 }

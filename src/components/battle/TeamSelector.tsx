@@ -215,7 +215,7 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
         </select>
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-72 overflow-y-auto pr-1">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-72 overflow-y-auto p-1 -m-1 pr-2">
         {filtered.map((pokemon) => {
           const selected = team.includes(pokemon.id);
           const isFavorite = favoriteSet.has(pokemon.id);
@@ -239,16 +239,17 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
                 }
               }}
               className={cn(
-                "glass-card p-2 relative text-center transition-all cursor-pointer",
-                selected && "ring-2 ring-indigo-400",
-                isFavorite && !selected && "ring-1 ring-pink-400/40",
+                "relative text-center transition-all cursor-pointer rounded-xl border p-2 bg-white/[0.04]",
+                selected ? "border-2" : "border-white/10 hover:border-white/20",
+                isFavorite && !selected && "border-pink-400/30",
                 disabled && "opacity-30 cursor-not-allowed"
               )}
               style={
                 selected
                   ? {
-                      borderColor: `${config.color}60`,
-                      boxShadow: `0 0 15px ${config.glowColor}`,
+                      borderColor: config.color,
+                      backgroundColor: `${config.color}18`,
+                      boxShadow: `0 0 14px ${config.glowColor}`,
                     }
                   : undefined
               }

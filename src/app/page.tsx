@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Play, Sparkles, Swords, Gamepad2, Coins } from "lucide-react";
+import { Play, Swords, Gamepad2, Disc3 } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
-import { CoinCounter } from "@/components/ui/CoinCounter";
 import { useGameStore } from "@/stores/game-store";
-import { useEconomyStore } from "@/stores/economy-store";
 import { POKEMON_LIST } from "@/data/pokemon";
 
 const featuredPokemon = [
@@ -21,7 +19,7 @@ const gameModes = [
     href: "/battle",
     icon: Swords,
     title: "Batalha",
-    desc: "4~7 moedas · Principal progressão",
+    desc: "Treine seu time e conquiste insígnias",
     color: "from-red-500/20 to-orange-500/20 border-red-500/30",
     iconColor: "text-red-400",
   },
@@ -29,15 +27,15 @@ const gameModes = [
     href: "/games",
     icon: Gamepad2,
     title: "Jogos",
-    desc: "3 minigames · 1~3 moedas cada",
+    desc: "Minigames rápidos para farmar moedas",
     color: "from-indigo-500/20 to-violet-500/20 border-indigo-500/30",
     iconColor: "text-indigo-400",
   },
   {
     href: "/spin",
-    icon: Coins,
+    icon: Disc3,
     title: "Roleta",
-    desc: "5 moedas/spin · Colete Pokémon",
+    desc: "Gire e complete seu álbum",
     color: "from-indigo-500/20 to-purple-500/20 border-indigo-500/30",
     iconColor: "text-indigo-400",
   },
@@ -46,11 +44,9 @@ const gameModes = [
 export default function HomePage() {
   const getUniqueCount = useGameStore((s) => s.getUniqueCount);
   const getProgress = useGameStore((s) => s.getProgress);
-  const level = useEconomyStore((s) => s.level);
-  const rank = useEconomyStore((s) => s.rank);
 
   return (
-    <div className="relative min-h-[calc(100dvh-5rem)] flex flex-col items-center justify-center px-4 py-12 overflow-hidden">
+    <div className="page-fit relative px-4 overflow-hidden">
       {featuredPokemon.map((pokemon, i) => (
         <motion.div
           key={pokemon.id}
@@ -73,17 +69,8 @@ export default function HomePage() {
         </motion.div>
       ))}
 
-      <div className="relative z-10 text-center max-w-2xl mx-auto space-y-8">
-        <div className="space-y-4">
-          <div className="flex justify-center">
-            <CoinCounter size="lg" />
-          </div>
-
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-sm text-indigo-300 border border-indigo-500/30">
-            <Sparkles className="w-4 h-4" />
-            Nível {level} · Rank {rank}
-          </div>
-
+      <div className="relative z-10 text-center max-w-2xl mx-auto space-y-6 w-full">
+        <div className="space-y-3">
           <h1 className="text-5xl md:text-7xl font-black tracking-tight">
             <span className="neon-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
               PokéRoll
@@ -91,16 +78,16 @@ export default function HomePage() {
           </h1>
 
           <p className="text-lg md:text-xl text-white/60 text-balance max-w-md mx-auto">
-            Ganhe moedas, batalhe, clique e gire a roleta para completar seu álbum!
+            Ganhe moedas, batalhe, jogue minigames e gire a roleta para completar seu álbum!
           </p>
         </div>
 
         <div className="flex items-center justify-center gap-4 flex-wrap">
-          <div className="glass-card px-5 py-3 text-center">
+          <div className="glass-card px-5 py-3 text-center min-w-[7rem]">
             <p className="text-2xl font-bold text-cyan-400">{getUniqueCount()}</p>
             <p className="text-xs text-white/50">Coletados</p>
           </div>
-          <div className="glass-card px-5 py-3 text-center">
+          <div className="glass-card px-5 py-3 text-center min-w-[7rem]">
             <p className="text-2xl font-bold text-indigo-400">{getProgress()}%</p>
             <p className="text-xs text-white/50">Progresso</p>
           </div>
@@ -116,7 +103,7 @@ export default function HomePage() {
               >
                 <Icon className={`w-6 h-6 ${iconColor} mb-2`} />
                 <p className="font-bold text-sm">{title}</p>
-                <p className="text-[10px] text-white/40 mt-1">{desc}</p>
+                <p className="text-[10px] text-white/40 mt-1 leading-snug">{desc}</p>
               </motion.div>
             </Link>
           ))}

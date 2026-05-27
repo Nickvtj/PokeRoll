@@ -39,11 +39,21 @@ export interface BattleFighter {
 
 export type BattlePhase = "idle" | "fighting" | "victory" | "defeat";
 
+export type BattleHitEffectiveness = "super" | "weak" | "immune" | "normal";
+
+export interface BattleHitSound {
+  attackType: string;
+  secondaryType?: string;
+  isCrit: boolean;
+  effectiveness: BattleHitEffectiveness;
+}
+
 export interface BattleLogEntry {
   id: string;
   message: string;
   type: "attack" | "ability" | "damage" | "ko" | "info";
   timestamp: number;
+  hitSound?: BattleHitSound;
 }
 
 export interface BattleReward {

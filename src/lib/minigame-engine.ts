@@ -43,12 +43,12 @@ export function spawnBall(): SpawnedBall {
     x: 10 + Math.random() * 80,
     y: 15 + Math.random() * 65,
     createdAt: Date.now(),
-    lifetime: 700 + Math.random() * 600,
+    lifetime: 1400 + Math.random() * 900,
   };
 }
 
 export function maybeSpawnRareEvent(): RareEvent | null {
-  if (Math.random() > 0.04) return null;
+  if (Math.random() > 0.012) return null;
   const rareIds = [144, 145, 150, 6, 25, 131];
   return {
     id: `rare-${++spawnId}`,
@@ -56,7 +56,7 @@ export function maybeSpawnRareEvent(): RareEvent | null {
     x: 5 + Math.random() * 70,
     y: 20 + Math.random() * 50,
     createdAt: Date.now(),
-    lifetime: 1800,
+    lifetime: 3200,
   };
 }
 

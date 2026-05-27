@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { MousePointerClick } from "lucide-react";
 import { ClickMinigame } from "@/components/minigame/ClickMinigame";
 import { GamePageShell } from "@/components/minigame/GamePageShell";
@@ -18,6 +19,7 @@ export default function ClickRushGamePage() {
   const showRewardPopup = useEconomyStore((s) => s.showRewardPopup);
   const team = useEconomyStore((s) => s.team);
   const bonuses = getEconomyBonuses(team);
+  const restartRef = useRef<(() => void) | null>(null);
 
   const handleComplete = (score: number, coins: number, maxCombo: number) => {
     const xp = Math.max(4, Math.round(score / 15));
@@ -25,21 +27,24 @@ export default function ClickRushGamePage() {
     addXp(xp);
     recordClickGame(coins);
     void recordMinigameToSupabase(score, coins, maxCombo);
-    showRewardPopup({
-      coins,
-      xp,
-      message: `Click Rush: ${score} pts · combo ${maxCombo} → +${coins} moedas`,
-    });
+    showRewardPopup(
+      {
+        coins,
+        xp,
+        message: `Click Rush: ${score} pts · combo ${maxCombo} → +${coins} moedas`,
+      },
+      () => restartRef.current?.()
+    );
   };
 
   return (
     <GamePageShell
       title="Click Rush"
-      subtitle={`${CLICK_GAME_DURATION_SEC}s · ${CLICK_BASE_COINS_MIN}~${CLICK_BASE_COINS_MAX} moedas`}
+      subtitle={`${CLICK_GAME_DURATION_SEC}s de cliques rápidos · ${CLICK_BASE_COINS_MIN}~${CLICK_BASE_COINS_MAX} moedas`}
       icon={<MousePointerClick className="w-7 h-7 text-cyan-400 shrink-0" />}
       tips={
         <>
-          <p>⚡ Faça combos clicando sem pausa · bolas raras valem mais pontos</p>
+          <p>Faça combos clicando sem pausa. Bolas raras valem mais pontos.</p>
           {bonuses.coinBonus > 0 && (
             <p className="text-amber-400">
               Meowth no time: +{Math.round(bonuses.coinBonus * 100)}% moedas
@@ -53,7 +58,12 @@ export default function ClickRushGamePage() {
         </>
       }
     >
-      <ClickMinigame onComplete={handleComplete} />
+      <ClickMinigame
+        onComplete={handleComplete}
+        onReady={(restart) => {
+          restartRef.current = restart;
+        }}
+      />
     </GamePageShell>
   );
 }

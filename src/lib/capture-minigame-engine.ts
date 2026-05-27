@@ -93,6 +93,31 @@ export function calcCaptureReward(
   return { coins, accountXp, bonusPokemonXp };
 }
 
+/** Recompensa por sequência de capturas (streak) */
+export function calcStreakReward(
+  caught: Pokemon[],
+  perfectHits: number,
+  coinBonus = 0
+): { coins: number; accountXp: number; bonusPokemonXp: number } {
+  if (caught.length === 0) {
+    return { coins: 0, accountXp: 2, bonusPokemonXp: 0 };
+  }
+
+  let coins = caught.reduce(
+    (sum, p) => sum + applyMinigameCoinBonus(CAPTURE_COINS_BY_RARITY[p.rarity], coinBonus),
+    0
+  );
+
+  if (caught.length >= 3) coins += Math.floor(caught.length / 3);
+  if (caught.length >= 5) coins += 2;
+
+  const accountXp = 4 + caught.length * 4 + perfectHits * 2;
+  const bonusPokemonXp =
+    perfectHits >= 3 && caught.length >= 3 ? 10 + perfectHits : caught.length >= 2 ? 6 : 0;
+
+  return { coins, accountXp, bonusPokemonXp };
+}
+
 export function getRarityColor(rarity: Rarity): string {
   const colors: Record<Rarity, string> = {
     common: "text-white/60",

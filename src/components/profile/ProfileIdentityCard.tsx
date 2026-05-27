@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Crown, Pencil, Check, X, Star } from "lucide-react";
+import { Calendar, Pencil, Check, X, Star } from "lucide-react";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { TrainerAvatarDisplay } from "@/components/profile/TrainerAvatarDisplay";
 import { useGameStore } from "@/stores/game-store";
@@ -17,7 +17,6 @@ export function ProfileIdentityCard() {
   const level = useEconomyStore((s) => s.level);
   const rank = useEconomyStore((s) => s.rank);
   const xp = useEconomyStore((s) => s.xp);
-  const freeSpins = useEconomyStore((s) => s.freeSpins);
   const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
 
   const [editingName, setEditingName] = useState(false);
@@ -44,16 +43,13 @@ export function ProfileIdentityCard() {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-      <div className="relative shrink-0">
-        <TrainerAvatarDisplay
-          avatarId={selectedAvatarId}
-          username={profile.username}
-          size="lg"
-          className="w-20 h-20 shadow-xl"
-        />
-        <Crown className="absolute -top-1.5 -right-1.5 w-6 h-6 text-amber-400 drop-shadow-lg" />
-      </div>
+    <div className="flex flex-col sm:flex-row items-center gap-5">
+      <TrainerAvatarDisplay
+        avatarId={selectedAvatarId}
+        username={profile.username}
+        size="lg"
+        className="w-20 h-20 shadow-xl shrink-0"
+      />
 
       <div className="flex-1 w-full text-center sm:text-left space-y-3">
         {editingName ? (
@@ -88,7 +84,7 @@ export function ProfileIdentityCard() {
           </div>
         ) : (
           <div className="flex items-center justify-center sm:justify-start gap-2">
-            <h2 className="text-xl font-bold">{profile.username}</h2>
+            <h2 className="text-2xl font-bold">{profile.username}</h2>
             <button
               type="button"
               onClick={() => {
@@ -111,26 +107,21 @@ export function ProfileIdentityCard() {
           <span className="px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-300 font-semibold">
             Rank {rank}
           </span>
-          {freeSpins > 0 && (
-            <span className="px-2.5 py-1 rounded-lg bg-cyan-500/15 text-cyan-300 font-semibold">
-              🎰 {freeSpins} grátis
-            </span>
-          )}
         </div>
 
         <div className="flex items-center justify-center sm:justify-start gap-1.5 text-white/40 text-xs">
           <Calendar className="w-3.5 h-3.5" />
-          Treinador desde {new Date(profile.createdAt).toLocaleDateString("pt-BR")}
+          Desde {new Date(profile.createdAt).toLocaleDateString("pt-BR")}
         </div>
 
         {highestRarity && (
           <div className="flex items-center justify-center sm:justify-start gap-2">
-            <span className="text-xs text-white/50">Maior raridade:</span>
+            <span className="text-xs text-white/45">Melhor drop:</span>
             <RarityBadge rarity={highestRarity} size="sm" />
           </div>
         )}
 
-        <div className="space-y-1 max-w-sm mx-auto sm:mx-0">
+        <div className="space-y-1 max-w-xs mx-auto sm:mx-0">
           <div className="flex justify-between text-[10px] text-white/40">
             <span>XP da conta</span>
             <span>

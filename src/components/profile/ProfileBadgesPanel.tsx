@@ -21,11 +21,6 @@ export function ProfileBadgesPanel() {
       icon={Award}
       iconClassName="text-amber-400"
     >
-      <div className="flex items-center justify-between px-1">
-        <span className="text-xs text-white/50">Progresso da liga</span>
-        <span className="text-sm font-bold text-indigo-300">{badges.length}/8</span>
-      </div>
-
       {earned.length > 0 && (
         <div className="space-y-2">
           <p className="text-[10px] text-emerald-400/80 uppercase tracking-wider font-semibold">

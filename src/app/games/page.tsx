@@ -1,216 +1,108 @@
 "use client";
 
-
-
 import Link from "next/link";
-
-import { Gamepad2, Target, MousePointerClick, Brain, Coins } from "lucide-react";
-
-import { CoinCounter } from "@/components/ui/CoinCounter";
-
+import { Gamepad2, Target, MousePointerClick, Brain, Coins, Sparkles } from "lucide-react";
 import {
-
   CAPTURE_COINS_MAX,
-
   CAPTURE_COINS_MIN,
-
   CLICK_BASE_COINS_MAX,
-
   CLICK_BASE_COINS_MIN,
-
   MEMORY_COINS_MAX,
-
   MEMORY_COINS_MIN,
-
 } from "@/data/economy-balance";
-
 import { useEconomyStore } from "@/stores/economy-store";
-
 import { cn } from "@/lib/utils";
 
-
-
 const GAMES = [
-
   {
-
     href: "/games/captura",
-
     title: "Captura Perfeita",
-
-    desc: "Acerte o timing na Pokébola enquanto ela balança.",
-
-    reward: "1~5 moedas (por raridade)",
-
+    desc: "Acerte o timing na zona verde enquanto a Pokébola balança.",
+    reward: `${CAPTURE_COINS_MIN}~${CAPTURE_COINS_MAX} moedas`,
     icon: Target,
-
-    color: "from-emerald-500/25 to-cyan-500/15 border-emerald-500/30",
-
+    color: "from-emerald-500/20 to-cyan-500/10 border-emerald-500/25",
     iconColor: "text-emerald-400",
-
+    iconBg: "bg-emerald-500/15",
   },
-
   {
-
     href: "/games/click-rush",
-
     title: "Click Rush",
-
-    desc: "Clique nas Pokébolas em 30s e faça combos.",
-
+    desc: "Clique nas Pokébolas o máximo que puder em 30 segundos.",
     reward: `${CLICK_BASE_COINS_MIN}~${CLICK_BASE_COINS_MAX} moedas`,
-
     icon: MousePointerClick,
-
-    color: "from-cyan-500/25 to-blue-500/15 border-cyan-500/30",
-
+    color: "from-cyan-500/20 to-blue-500/10 border-cyan-500/25",
     iconColor: "text-cyan-400",
-
+    iconBg: "bg-cyan-500/15",
   },
-
   {
-
     href: "/games/memory",
-
     title: "Poké-Memory",
-
-    desc: "Encontre pares de Pokémon no jogo da memória.",
-
+    desc: "Vire as cartas e encontre todos os pares antes do tempo acabar.",
     reward: `${MEMORY_COINS_MIN}~${MEMORY_COINS_MAX} moedas`,
-
     icon: Brain,
-
-    color: "from-violet-500/25 to-purple-500/15 border-violet-500/30",
-
+    color: "from-violet-500/20 to-purple-500/10 border-violet-500/25",
     iconColor: "text-violet-400",
-
+    iconBg: "bg-violet-500/15",
   },
-
 ] as const;
 
-
-
 export default function GamesHubPage() {
-
   const gamesPlayed = useEconomyStore((s) => s.clickGamesPlayed);
-
   const gamesToday = useEconomyStore((s) => s.clickGamesToday);
 
-
-
   return (
-
     <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
-
-      <div className="flex items-center justify-between">
-
-        <div>
-
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-
-            <Gamepad2 className="w-8 h-8 text-indigo-400" />
-
-            Jogos
-
-          </h1>
-
-          <p className="text-white/50 text-sm mt-1">
-
-            Minigames casuais · farm leve de moedas
-
-          </p>
-
-        </div>
-
-        <CoinCounter size="sm" />
-
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Gamepad2 className="w-8 h-8 text-indigo-400" />
+          Jogos
+        </h1>
+        <p className="text-white/55 text-sm leading-relaxed">
+          Três minigames rápidos para ganhar moedas entre as batalhas. Sem limite diário, jogue
+          quando quiser!
+        </p>
       </div>
 
-
-
-      <div className="glass-card p-4 flex items-center justify-between text-xs">
-
-        <span className="text-white/45">Partidas totais: {gamesPlayed}</span>
-
-        <span className="text-white/45">Hoje: {gamesToday}</span>
-
+      <div className="glass-card px-4 py-3 flex items-center justify-between text-xs text-white/45">
+        <span className="flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          {gamesPlayed} partidas no total
+        </span>
+        <span>{gamesToday} hoje</span>
       </div>
 
-
-
-      <div className="flex flex-col gap-4">
-
+      <div className="flex flex-col gap-3">
         {GAMES.map((game) => (
-
-          <Link key={game.href} href={game.href} className="block">
-
+          <Link key={game.href} href={game.href} className="block group">
             <div
-
               className={cn(
-
-                "glass-card p-5 border bg-gradient-to-br transition-transform hover:scale-[1.01] active:scale-[0.99]",
-
+                "glass-card p-4 border bg-gradient-to-br transition-all",
+                "group-hover:scale-[1.01] group-active:scale-[0.99]",
                 game.color
-
               )}
-
             >
-
-              <div className="flex items-start gap-4">
-
+              <div className="flex items-start gap-3">
                 <div
-
                   className={cn(
-
-                    "w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0",
-
-                    game.iconColor
-
+                    "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border border-white/10",
+                    game.iconBg
                   )}
-
                 >
-
-                  <game.icon className="w-6 h-6" />
-
+                  <game.icon className={cn("w-5 h-5", game.iconColor)} />
                 </div>
-
-                <div className="flex-1 min-w-0">
-
-                  <h2 className="font-bold text-lg">{game.title}</h2>
-
-                  <p className="text-white/50 text-sm mt-0.5">{game.desc}</p>
-
-                  <p className="text-xs text-amber-400/90 mt-2 flex items-center gap-1">
-
+                <div className="flex-1 min-w-0 space-y-1">
+                  <h2 className="font-bold">{game.title}</h2>
+                  <p className="text-white/50 text-sm leading-snug">{game.desc}</p>
+                  <p className="text-[11px] text-amber-400/90 flex items-center gap-1 pt-0.5">
                     <Coins className="w-3 h-3" />
-
                     {game.reward}
-
                   </p>
-
                 </div>
-
               </div>
-
             </div>
-
           </Link>
-
         ))}
-
       </div>
-
-
-
-      <p className="text-[11px] text-white/35 text-center leading-relaxed px-2">
-
-        Batalhas ainda rendem mais (4~7 moedas). Sem limite diário — jogue o quanto quiser.
-
-      </p>
-
     </div>
-
   );
-
 }
-

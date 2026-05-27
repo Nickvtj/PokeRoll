@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { Target } from "lucide-react";
 import { CapturaPerfeitaGame, type CaptureGameResult } from "@/components/minigame/CapturaPerfeitaGame";
 import { GamePageShell } from "@/components/minigame/GamePageShell";
@@ -15,9 +16,10 @@ export default function CapturaGamePage() {
   const showRewardPopup = useEconomyStore((s) => s.showRewardPopup);
   const team = useEconomyStore((s) => s.team);
   const bonuses = getEconomyBonuses(team);
+  const restartRef = useRef<(() => void) | null>(null);
 
   const handleComplete = (result: CaptureGameResult) => {
-    const { captured, goodHits, perfectHits, totalShakes, coins, accountXp, bonusPokemonXp, pokemon } =
+    const { streak, caughtPokemon, perfectHits, coins, accountXp, bonusPokemonXp, pokemon, endedOnMiss } =
       result;
 
     if (coins > 0) addCoins(coins);
@@ -31,24 +33,42 @@ export default function CapturaGamePage() {
     }
 
     recordClickGame(coins);
-    const score = captured ? 200 + perfectHits * 50 + goodHits * 20 : goodHits * 30;
+    const score = streak * 100 + perfectHits * 50;
     void recordMinigameToSupabase(score, coins, perfectHits);
 
-    showRewardPopup({
-      coins,
-      xp: accountXp,
-      message: `${captured ? "Capturado" : "Escapou"}: ${pokemon.name} (${goodHits}/${totalShakes}) → +${coins} 🪙${bonusMsg}`,
-    });
+    const names =
+      caughtPokemon.length > 0
+        ? caughtPokemon
+            .slice(-3)
+            .map((p) => p.name)
+            .join(", ")
+        : pokemon.name;
+
+    const headline =
+      streak === 0
+        ? `Errou! Nenhuma captura desta vez.`
+        : endedOnMiss
+          ? `Sequência de ${streak}! Parou em ${pokemon.name}.`
+          : `Sequência de ${streak} Pokémon!`;
+
+    showRewardPopup(
+      {
+        coins,
+        xp: accountXp,
+        message: `${headline} ${names} → +${coins} 🪙${bonusMsg}`,
+      },
+      () => restartRef.current?.()
+    );
   };
 
   return (
     <GamePageShell
       title="Captura Perfeita"
-      subtitle="1~5 moedas conforme raridade capturada"
+      subtitle="Capture em sequência · moedas por raridade"
       icon={<Target className="w-7 h-7 text-emerald-400 shrink-0" />}
       tips={
         <>
-          <p>✨ Moedas pela raridade: Comum 1 · Incomum 2 · Raro 3 · Épico 4 · Lendário 5</p>
+          <p>Centro dourado = timing perfeito. Cada acerto traz um novo Pokémon na sequência.</p>
           {bonuses.coinBonus > 0 && (
             <p className="text-amber-400">
               Meowth no time: +{Math.round(bonuses.coinBonus * 100)}% moedas
@@ -57,7 +77,12 @@ export default function CapturaGamePage() {
         </>
       }
     >
-      <CapturaPerfeitaGame onComplete={handleComplete} />
+      <CapturaPerfeitaGame
+        onComplete={handleComplete}
+        onReady={(restart) => {
+          restartRef.current = restart;
+        }}
+      />
     </GamePageShell>
   );
 }

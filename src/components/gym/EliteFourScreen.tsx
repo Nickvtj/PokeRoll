@@ -11,6 +11,7 @@ import { initEliteBattle } from "@/lib/gym-battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
 import { POKEMON_MAP } from "@/data/pokemon";
+import { playBattleHit } from "@/lib/sound-engine";
 import type { BattleState } from "@/types/battle";
 import type { EliteId } from "@/types/gym";
 import { cn } from "@/lib/utils";
@@ -31,19 +32,24 @@ export function EliteFourScreen() {
   const [fighting, setFighting] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const battleStateRef = useRef<BattleState | null>(null);
+  const lastLogLenRef = useRef(0);
   battleStateRef.current = battleState;
 
   const leagueUnlocked = isEliteUnlocked();
 
-  const startElite = (eliteId: EliteId) => {
-    if (!leagueUnlocked || !isEliteMemberUnlocked(eliteId, eliteProgress)) return;
-    if (team.length < 3) return;
-    const pokemon = team.map((id) => POKEMON_MAP[id]).filter(Boolean);
-    if (pokemon.length < 3) return;
-    setActiveElite(eliteId);
-    setBattleState(initEliteBattle(eliteId, pokemon, getPokemonLevelsMap()));
-    setFighting(true);
-  };
+  const startElite = useCallback(
+    (eliteId: EliteId) => {
+      if (!leagueUnlocked || !isEliteMemberUnlocked(eliteId, eliteProgress)) return;
+      if (team.length < 3) return;
+      const pokemon = team.map((id) => POKEMON_MAP[id]).filter(Boolean);
+      if (pokemon.length < 3) return;
+      lastLogLenRef.current = 0;
+      setActiveElite(eliteId);
+      setBattleState(initEliteBattle(eliteId, pokemon, getPokemonLevelsMap()));
+      setFighting(true);
+    },
+    [leagueUnlocked, eliteProgress, team, getPokemonLevelsMap]
+  );
 
   const processTurns = useCallback(() => {
     const prev = battleStateRef.current;
@@ -54,6 +60,11 @@ export function EliteFourScreen() {
       battleDamage: bonuses.battleDamage,
       critChance: bonuses.critChance,
     });
+
+    if (state.log.length > lastLogLenRef.current) {
+      lastLogLenRef.current = state.log.length;
+      void playBattleHit();
+    }
 
     if (!done) {
       setBattleState(state);
@@ -91,14 +102,23 @@ export function EliteFourScreen() {
     };
   }, [fighting, processTurns]);
 
+  const resetBattle = () => {
+    setBattleState(null);
+    setFighting(false);
+  };
+
   if (fighting || battleState) {
     return (
       <BattleArena
         state={battleState}
         onContinue={() => {
-          setBattleState(null);
-          setFighting(false);
+          resetBattle();
           setActiveElite(null);
+        }}
+        onPlayAgain={() => {
+          const elite = activeElite;
+          resetBattle();
+          if (elite) setTimeout(() => startElite(elite), 50);
         }}
       />
     );

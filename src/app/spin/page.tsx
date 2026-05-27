@@ -72,8 +72,14 @@ export default function SpinPage() {
     finishReelSpin();
   }, [finishReelSpin]);
 
+  const lastTickRef = useRef(0);
+
   const handleReelTick = useCallback(() => {
-    if (soundEnabled) void playSpinTick();
+    if (!soundEnabled) return;
+    const now = Date.now();
+    if (now - lastTickRef.current < 90) return;
+    lastTickRef.current = now;
+    void playSpinTick();
   }, [soundEnabled]);
 
   useEffect(() => {
@@ -123,17 +129,15 @@ export default function SpinPage() {
     : Array.from({ length: spinMultiplier }, () => [] as typeof spinSequences[0]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
-          <Disc3 className="w-8 h-8 text-indigo-400 animate-spinSlow" />
+    <div className="max-w-3xl mx-auto px-4 py-6 flex flex-col min-h-[calc(100dvh-7rem)] lg:min-h-[calc(100dvh-5rem)]">
+      {/* Header compacto */}
+      <div className="text-center space-y-2 mb-4 shrink-0">
+        <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
+          <Disc3 className="w-6 h-6 text-indigo-400" />
           Roleta PokéRoll
         </h1>
-        <p className="text-white/50 text-sm">
-          Spins realizados:{" "}
-          <span className="text-indigo-400 font-semibold">{profile.totalSpins}</span>
-          {" · "}
-          <span className="text-amber-400">{coins} moedas</span>
+        <p className="text-white/40 text-xs">
+          {profile.totalSpins} spins realizados
         </p>
 
         {noCoinsMsg && (
@@ -142,21 +146,21 @@ export default function SpinPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-red-400 text-sm font-semibold"
           >
-            Moedas insuficientes! Jogue batalhas ou os minigames para ganhar 🪙
+            Moedas insuficientes! Jogue batalhas ou minigames para ganhar 🪙
           </motion.p>
         )}
 
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-1.5">
           {MULTIPLIERS.map((m) => (
             <button
               key={m}
               onClick={() => setSpinMultiplier(m)}
               disabled={isSpinning}
               className={cn(
-                "px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200 border",
+                "px-4 py-1.5 rounded-lg text-xs font-bold transition-all border",
                 spinMultiplier === m
-                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 border-indigo-400/50 text-white shadow-lg shadow-indigo-500/30 scale-105"
-                  : "glass border-white/10 text-white/50 hover:text-white hover:bg-white/5",
+                  ? "bg-indigo-500/25 border-indigo-400/50 text-indigo-200"
+                  : "glass border-white/10 text-white/45 hover:text-white",
                 isSpinning && "opacity-50 cursor-not-allowed"
               )}
             >
@@ -166,77 +170,81 @@ export default function SpinPage() {
         </div>
       </div>
 
-      <div
-        className={cn(
-          "grid gap-4 mx-auto",
-          spinMultiplier === 1 && "max-w-md grid-cols-1",
-          spinMultiplier === 2 && "max-w-lg grid-cols-2",
-          spinMultiplier === 3 && "max-w-2xl grid-cols-3"
-        )}
-      >
-        {reels.slice(0, spinMultiplier).map((sequence, i) => (
-          <SpinMachine
-            key={`reel-${i}-${spinSessionId}`}
-            sequence={sequence}
-            isSpinning={isSpinning && sequence.length > 0}
-            result={lastSpinResults[i] ?? null}
-            onSpinComplete={handleReelComplete}
-            onReelTick={handleReelTick}
-            compact={spinMultiplier > 1}
-            reelIndex={i}
-          />
-        ))}
-      </div>
-
-      <div className="flex flex-col items-center gap-4">
-        <AnimatedButton
-          variant="gold"
-          size="xl"
-          onClick={handleSpin}
-          disabled={isSpinning || showReveal || !canAfford}
-          loading={isSpinning}
-          icon={!isSpinning ? <Disc3 className="w-6 h-6" /> : undefined}
-          className="w-full max-w-sm flex-col !gap-1 !py-4"
-        >
-          {isSpinning ? (
-            "GIRANDO..."
-          ) : willUseFreeSpin ? (
-            <span className="flex flex-col items-center leading-tight">
-              <span>GIRAR GRÁTIS</span>
-              <span className="text-xs font-normal opacity-80">
-                {freeSpins} spin{freeSpins > 1 ? "s" : ""} restante{freeSpins > 1 ? "s" : ""}
-              </span>
-            </span>
-          ) : (
-            <span className="flex flex-col items-center leading-tight">
-              <span>GIRAR {spinMultiplier > 1 ? `${spinMultiplier}x` : ""}</span>
-              <span className={cn("text-sm font-bold", canAfford ? "opacity-90" : "text-red-200")}>
-                {canAfford
-                  ? `Custa ${spinCost} moedas`
-                  : `Precisa de ${spinCost} moedas`}
-              </span>
-            </span>
+      {/* Roleta — protagonista */}
+      <div className="flex-1 flex flex-col items-center justify-center min-h-0 py-2">
+        <div
+          className={cn(
+            "grid gap-3 w-full mx-auto",
+            spinMultiplier === 1 && "max-w-md grid-cols-1",
+            spinMultiplier === 2 && "max-w-xl grid-cols-2",
+            spinMultiplier === 3 && "max-w-2xl grid-cols-3"
           )}
-        </AnimatedButton>
-
-        <button
-          onClick={() => setSoundEnabled(!soundEnabled)}
-          className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors"
         >
-          {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          Som {soundEnabled ? "ligado" : "desligado"}
-        </button>
+          {reels.slice(0, spinMultiplier).map((sequence, i) => (
+            <SpinMachine
+              key={`reel-${i}-${spinSessionId}`}
+              sequence={sequence}
+              isSpinning={isSpinning && sequence.length > 0}
+              result={lastSpinResults[i] ?? null}
+              onSpinComplete={handleReelComplete}
+              onReelTick={handleReelTick}
+              compact={spinMultiplier > 1}
+              reelIndex={i}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="glass-card p-5 space-y-3">
-        <h3 className="text-sm font-semibold text-white/70">Chances de Drop</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          {RARITY_ORDER.map((r) => (
-            <div key={r} className="text-center space-y-1">
-              <RarityBadge rarity={r} size="sm" />
-              <p className="text-xs text-white/40">{RARITY_CONFIG[r].chance}%</p>
-            </div>
-          ))}
+      {/* Controles compactos */}
+      <div className="shrink-0 space-y-3 pt-2">
+        <div className="flex flex-col items-center gap-2">
+          <AnimatedButton
+            variant="gold"
+            size="lg"
+            onClick={handleSpin}
+            disabled={isSpinning || showReveal || !canAfford}
+            loading={isSpinning}
+            icon={!isSpinning ? <Disc3 className="w-5 h-5" /> : undefined}
+            className="w-full max-w-xs flex-col !gap-0.5 !py-3"
+          >
+            {isSpinning ? (
+              "GIRANDO..."
+            ) : willUseFreeSpin ? (
+              <span className="flex flex-col items-center leading-tight">
+                <span>GIRAR GRÁTIS</span>
+                <span className="text-[10px] font-normal opacity-80">
+                  {freeSpins} restante{freeSpins > 1 ? "s" : ""}
+                </span>
+              </span>
+            ) : (
+              <span className="flex flex-col items-center leading-tight">
+                <span>GIRAR {spinMultiplier > 1 ? `${spinMultiplier}x` : ""}</span>
+                <span className={cn("text-[10px] font-bold", canAfford ? "opacity-80" : "text-red-200")}>
+                  {canAfford ? `${spinCost} moedas` : `Precisa de ${spinCost}`}
+                </span>
+              </span>
+            )}
+          </AnimatedButton>
+
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className="flex items-center gap-1.5 text-[11px] text-white/35 hover:text-white/60 transition-colors"
+          >
+            {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+            Som {soundEnabled ? "ligado" : "desligado"}
+          </button>
+        </div>
+
+        <div className="glass-card px-4 py-3">
+          <p className="text-[10px] text-white/40 mb-2 font-medium">Chances de drop</p>
+          <div className="flex items-center justify-between gap-1">
+            {RARITY_ORDER.map((r) => (
+              <div key={r} className="flex-1 text-center space-y-0.5 min-w-0">
+                <RarityBadge rarity={r} size="sm" />
+                <p className="text-[10px] text-white/35">{RARITY_CONFIG[r].chance}%</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

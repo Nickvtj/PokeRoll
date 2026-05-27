@@ -1,7 +1,8 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Lock, Copy } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { RARITY_CONFIG } from "@/data/rarity";
@@ -17,9 +18,9 @@ interface PokemonCardProps {
 }
 
 const sizeConfig = {
-  sm: { card: "p-2", image: 84, imageBox: "h-[7.5rem]", text: "text-xs", lock: "w-7 h-7" },
-  md: { card: "p-3", image: 96, imageBox: "h-28", text: "text-sm", lock: "w-8 h-8" },
-  lg: { card: "p-4", image: 128, imageBox: "h-36", text: "text-base", lock: "w-10 h-10" },
+  sm: { card: "p-2", image: 84, imageBox: "h-[7.5rem]", text: "text-xs", lock: "w-6 h-6" },
+  md: { card: "p-3", image: 96, imageBox: "h-28", text: "text-sm", lock: "w-7 h-7" },
+  lg: { card: "p-4", image: 128, imageBox: "h-36", text: "text-base", lock: "w-9 h-9" },
 };
 
 export function PokemonCard({
@@ -37,25 +38,22 @@ export function PokemonCard({
     "glass-card relative overflow-hidden group",
     sizes.card,
     collected && `rarity-glow-${pokemon.rarity}`,
-    !collected && "opacity-75",
+    !collected && "opacity-80",
     onClick && collected && "cursor-pointer",
     animate && collected && "transition-transform duration-300 hover:scale-[1.03] hover:-translate-y-1"
   );
 
-  const cardStyle = collected
-    ? { borderColor: `${config.color}30` }
-    : undefined;
+  const cardStyle = collected ? { borderColor: `${config.color}30` } : undefined;
 
   return (
     <div onClick={onClick} className={cardClassName} style={cardStyle}>
       {duplicateCount > 1 && (
         <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-xs text-amber-400">
-          <Copy className="w-3 h-3" />
           x{duplicateCount}
         </div>
       )}
 
-      <span className="absolute top-2 left-2 text-xs text-white/40 font-mono">
+      <span className="absolute top-2 left-2 text-xs text-white/40 font-mono z-10">
         #{String(pokemon.id).padStart(3, "0")}
       </span>
 
@@ -70,23 +68,24 @@ export function PokemonCard({
             className="object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
           />
         ) : (
-          <div
-            className={cn(
-              "pokemon-missing-slot flex flex-col items-center justify-center gap-1 w-full max-w-[85%] aspect-square"
-            )}
-            aria-hidden
-          >
-            <span className="text-2xl font-black text-white/10 select-none">?</span>
-            <Lock className={cn("text-white/25", sizes.lock)} />
+          <div className="relative flex flex-col items-center justify-center gap-2" aria-hidden>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-b from-indigo-500/10 via-transparent to-purple-500/10 blur-xl scale-125" />
+            <div className="relative w-16 h-16 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
+              <Lock className={cn("text-white/20", sizes.lock)} />
+            </div>
+            <Sparkles className="w-3 h-3 text-white/15 absolute top-2 right-4" />
           </div>
         )}
       </div>
 
       <div className="text-center space-y-1.5">
-        <p className={cn("font-semibold truncate", sizes.text)}>
-          {collected ? pokemon.name : "???"}
+        <p className={cn("font-semibold truncate", sizes.text, !collected && "text-white/25")}>
+          {collected ? pokemon.name : "—"}
         </p>
         {collected && <RarityBadge rarity={pokemon.rarity} size="sm" />}
+        {!collected && (
+          <p className="text-[10px] text-white/20 uppercase tracking-widest">Não encontrado</p>
+        )}
       </div>
 
       {collected && pokemon.rarity === "legendary" && (
