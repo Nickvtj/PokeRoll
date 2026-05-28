@@ -118,12 +118,43 @@ export function useSoundEffects() {
     }
   }, [playCoinClink]);
 
+  const playShinyEpic = useCallback(async () => {
+    const ctx = await getAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const fanfare = [659, 784, 988, 1175, 1319, 1568, 1760, 2093];
+
+    fanfare.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = i % 2 === 0 ? "square" : "triangle";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + i * 0.09);
+      gain.gain.linearRampToValueAtTime(0.15, now + i * 0.09 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.09 + 0.32);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + i * 0.09);
+      osc.stop(now + i * 0.09 + 0.35);
+    });
+
+    for (let i = 0; i < 16; i++) {
+      void playCoinClink(0.55 + i * 0.06, 1500 + i * 90);
+    }
+
+    [2093, 2637, 3136].forEach((freq, i) => {
+      void playTone(freq, 0.12, "sine", 0.06, 1.1 + i * 0.08);
+    });
+  }, [playCoinClink]);
+
   return {
     playSpin,
     playWin,
     playNewPokemonWin,
     playDuplicate,
     playLegendary,
+    playShinyEpic,
   };
 }
 

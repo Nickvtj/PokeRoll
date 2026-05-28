@@ -1,6 +1,13 @@
 import { RARITY_CHANCES } from "@/data/rarity";
+import { SHINY_CHANCE } from "@/data/pokemon-sprites";
 import { getPokemonByRarity, POKEMON_LIST } from "@/data/pokemon";
+import { getSpinResultImage } from "@/lib/pokemon-display";
 import type { Pokemon, Rarity, SpinResult } from "@/types";
+
+/** 0,1% de chance de shiny por giro */
+export function rollShiny(): boolean {
+  return Math.random() < SHINY_CHANCE;
+}
 
 /**
  * Sorteia uma raridade com base nas porcentagens configuráveis.
@@ -56,15 +63,21 @@ export function executeSpin(): Pokemon {
 /** Processa resultado do spin contra a coleção do jogador */
 export function processSpinResult(
   pokemon: Pokemon,
-  collectedIds: Set<number>
+  collectedIds: Set<number>,
+  isShiny: boolean,
+  alreadyHasShiny: boolean
 ): SpinResult {
   const isDuplicate = collectedIds.has(pokemon.id);
+  const isNewShinyUnlock = isShiny && !alreadyHasShiny;
+  const displayImage = getSpinResultImage(pokemon.id, isShiny);
 
   return {
-    pokemon,
+    pokemon: isShiny ? { ...pokemon, image: displayImage } : pokemon,
     isNew: !isDuplicate,
     isDuplicate,
     rarity: pokemon.rarity,
+    isShiny,
+    isNewShinyUnlock,
   };
 }
 

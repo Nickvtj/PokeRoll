@@ -12,6 +12,7 @@ import {
   type LevelFilterId,
 } from "@/data/pokemon-battle-level";
 import { useGameStore } from "@/stores/game-store";
+import { withDisplayImage } from "@/lib/pokemon-display";
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGymStore } from "@/stores/gym-store";
 import { cn } from "@/lib/utils";
@@ -241,7 +242,8 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
           const disabled = !selected && !canAddMore;
           const level = pokemonBattleXp[String(pokemon.id)]?.level ?? 1;
           const type = getPrimaryType(pokemon.id, pokemon.name);
-          const pokemonBadges = getHallOfFameBorder(pokemon.id);
+          const gymBadges = getHallOfFameBorder(pokemon.id);
+          const displayPokemon = withDisplayImage(pokemon, collection[pokemon.id]);
 
           return (
             <motion.div
@@ -307,7 +309,7 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
                 </div>
               )}
               <Image
-                src={pokemon.image}
+                src={displayPokemon.image}
                 alt={pokemon.name}
                 width={48}
                 height={48}
@@ -316,9 +318,9 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
               />
               <p className="text-[10px] font-semibold truncate mt-1">{pokemon.name}</p>
               <p className="text-[9px] text-white/40 capitalize">{type}</p>
-              {pokemonBadges.length > 0 && (
+              {gymBadges.length > 0 && (
                 <div className="mt-1">
-                  <PokemonGymBadges gymIds={pokemonBadges} size="xs" max={3} />
+                  <PokemonGymBadges gymIds={gymBadges} size="xs" max={3} />
                 </div>
               )}
             </motion.div>

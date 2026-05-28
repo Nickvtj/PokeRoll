@@ -23,6 +23,10 @@ export interface CollectedPokemon {
   collectedAt: string;
   isDuplicate: boolean;
   count: number;
+  /** Desbloqueou skin shiny na roleta */
+  hasShiny?: boolean;
+  /** Usar sprite shiny na batalha/UI */
+  useShiny?: boolean;
 }
 
 export interface PlayerProfile {
@@ -37,6 +41,10 @@ export interface SpinResult {
   isNew: boolean;
   isDuplicate: boolean;
   rarity: Rarity;
+  /** Resultado veio como shiny neste giro */
+  isShiny?: boolean;
+  /** Primeira vez desbloqueando shiny deste Pokémon */
+  isNewShinyUnlock?: boolean;
 }
 
 export type SpinMultiplier = 1 | 2 | 3;

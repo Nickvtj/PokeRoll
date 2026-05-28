@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { fireCelebrationConfetti } from "@/lib/confetti";
+import { fireCelebrationConfetti, fireShinyConfetti } from "@/lib/confetti";
 import type { Rarity } from "@/types";
 
 export function useConfetti() {
@@ -9,5 +9,9 @@ export function useConfetti() {
     fireCelebrationConfetti(rarity, isNew);
   }, []);
 
-  return { fireConfetti };
+  const fireShiny = useCallback(() => {
+    fireShinyConfetti();
+  }, []);
+
+  return { fireConfetti, fireShiny };
 }

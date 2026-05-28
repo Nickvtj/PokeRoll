@@ -12,6 +12,7 @@ interface PokemonCardProps {
   pokemon: Pokemon;
   collected?: boolean;
   duplicateCount?: number;
+  hasShiny?: boolean;
   onClick?: () => void;
   size?: "sm" | "md" | "lg";
   animate?: boolean;
@@ -27,6 +28,7 @@ export const PokemonCard = memo(function PokemonCard({
   pokemon,
   collected = false,
   duplicateCount = 0,
+  hasShiny = false,
   onClick,
   size = "md",
   animate = true,
@@ -91,6 +93,12 @@ export const PokemonCard = memo(function PokemonCard({
           <p className="relative text-[10px] text-white/25 uppercase tracking-widest font-medium">
             Não encontrado
           </p>
+        </div>
+      )}
+
+      {hasShiny && (
+        <div className="absolute bottom-2 right-2 z-10 text-[10px] text-amber-300 font-bold">
+          ✨
         </div>
       )}
 

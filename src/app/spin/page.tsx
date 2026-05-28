@@ -53,8 +53,9 @@ export default function SpinPage() {
 
   const [noCoinsMsg, setNoCoinsMsg] = useState(false);
 
-  const { playSpin, playNewPokemonWin, playDuplicate, playLegendary } = useSoundEffects();
-  const { fireConfetti } = useConfetti();
+  const { playSpin, playNewPokemonWin, playDuplicate, playLegendary, playShinyEpic } =
+    useSoundEffects();
+  const { fireConfetti, fireShiny } = useConfetti();
 
   const handleSpin = useCallback(async () => {
     if (isSpinning) return;
@@ -85,24 +86,36 @@ export default function SpinPage() {
   useEffect(() => {
     if (!showReveal || lastSpinResults.length === 0) return;
 
-    const soundKey = lastSpinResults.map((r) => r.pokemon.id).join("-");
+    const soundKey = lastSpinResults
+      .map((r) => `${r.pokemon.id}-${r.isShiny ? "s" : "n"}-${r.isNewShinyUnlock ? "u" : ""}`)
+      .join("-");
     if (lastSoundKeyRef.current === soundKey) return;
     lastSoundKeyRef.current = soundKey;
 
+    const hasNewShiny = lastSpinResults.some((r) => r.isNewShinyUnlock);
     const hasNew = lastSpinResults.some((r) => r.isNew);
     const hasLegendaryNew = lastSpinResults.some(
-      (r) => r.isNew && r.rarity === "legendary"
+      (r) => r.isNew && r.rarity === "legendary" && !r.isNewShinyUnlock
     );
-    const allDuplicate = lastSpinResults.every((r) => r.isDuplicate);
+    const allDuplicate = lastSpinResults.every(
+      (r) => r.isDuplicate && !r.isNewShinyUnlock
+    );
 
     if (soundEnabled) {
-      if (hasLegendaryNew) {
+      if (hasNewShiny) {
+        void playShinyEpic();
+      } else if (hasLegendaryNew) {
         void playLegendary();
       } else if (hasNew) {
         void playNewPokemonWin();
       } else if (allDuplicate) {
         void playDuplicate();
       }
+    }
+
+    if (hasNewShiny) {
+      setTimeout(() => fireShiny(), 150);
+      return;
     }
 
     const rarityOrder = ["common", "uncommon", "rare", "epic", "legendary"] as const;
@@ -121,7 +134,9 @@ export default function SpinPage() {
     playNewPokemonWin,
     playDuplicate,
     playLegendary,
+    playShinyEpic,
     fireConfetti,
+    fireShiny,
   ]);
 
   const reels = spinSequences.length > 0
@@ -245,6 +260,9 @@ export default function SpinPage() {
               </div>
             ))}
           </div>
+          <p className="text-[10px] text-amber-400/80 text-center mt-2">
+            ✨ Shiny: 0,1% por giro (skin alternativa)
+          </p>
         </div>
       </div>
 

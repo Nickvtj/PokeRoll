@@ -1,7 +1,14 @@
 import { POKEMON_LIST } from "@/data/pokemon";
-import { getPokemonSpriteUrl, POKEMON_SPRITE_CDN_URL } from "@/data/pokemon-sprites";
+import {
+  getPokemonSpriteUrl,
+  POKEMON_SPRITE_CDN_URL,
+  getPokemonShinySpriteUrl,
+  POKEMON_SHINY_SPRITE_CDN_URL,
+} from "@/data/pokemon-sprites";
+import type { SpinResult } from "@/types";
 
 const preloadedIds = new Set<number>();
+const preloadedShinyIds = new Set<number>();
 let priorityPreloadStarted = false;
 
 const BATCH_SIZE = 24;
@@ -30,7 +37,10 @@ export function preloadPokemonSprites(ids?: number[]): void {
 }
 
 /** Precarrega sprites usados nas sequências da roleta antes da animação. */
-export function preloadSpinSprites(sequences: { id: number }[][]): void {
+export function preloadSpinSprites(
+  sequences: { id: number }[][],
+  results: Pick<SpinResult, "isShiny" | "pokemon">[] = []
+): void {
   const ids = new Set<number>();
   for (const sequence of sequences) {
     for (const pokemon of sequence) {
@@ -38,6 +48,31 @@ export function preloadSpinSprites(sequences: { id: number }[][]): void {
     }
   }
   preloadPokemonSprites([...ids]);
+
+  for (const result of results) {
+    if (result.isShiny) {
+      preloadShinySprite(result.pokemon.id);
+    }
+  }
+}
+
+function preloadShinySprite(id: number): void {
+  if (preloadedShinyIds.has(id)) return;
+  preloadedShinyIds.add(id);
+
+  const img = new Image();
+  img.decoding = "async";
+  img.src = getPokemonShinySpriteUrl(id);
+  img.onerror = () => {
+    preloadedShinyIds.delete(id);
+    const fallback = new Image();
+    fallback.decoding = "async";
+    fallback.src = POKEMON_SHINY_SPRITE_CDN_URL(id);
+  };
+}
+
+export function preloadShinySprites(ids: number[]): void {
+  for (const id of ids) preloadShinySprite(id);
 }
 
 function scheduleIdle(work: () => void, timeout = 3000): void {

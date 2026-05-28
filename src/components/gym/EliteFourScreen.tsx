@@ -10,7 +10,7 @@ import { executeBattleTurn } from "@/lib/battle-engine";
 import { initEliteBattle } from "@/lib/gym-battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
-import { POKEMON_MAP } from "@/data/pokemon";
+import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
 import { playNewBattleHitSounds } from "@/lib/battle-sound-utils";
 import { useBattleCoinFlip } from "@/hooks/use-battle-coin-flip";
 import type { BattleState } from "@/types/battle";
@@ -44,7 +44,7 @@ export function EliteFourScreen() {
     (eliteId: EliteId) => {
       if (!leagueUnlocked || !isEliteMemberUnlocked(eliteId, eliteProgress)) return;
       if (team.length < 3) return;
-      const pokemon = team.map((id) => POKEMON_MAP[id]).filter(Boolean);
+      const pokemon = getTeamPokemonForBattle(team);
       if (pokemon.length < 3) return;
       lastLogLenRef.current = 0;
       setActiveElite(eliteId);

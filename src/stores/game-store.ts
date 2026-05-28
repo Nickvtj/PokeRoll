@@ -5,12 +5,15 @@ import {
   executeSpin,
   processSpinResult,
   generateSpinSequence,
+  rollShiny,
 } from "@/lib/spin-algorithm";
 import {
   loadCollection,
   loadProfile,
+  persistLocalCollection,
   persistLocalProfile,
   syncProfileToSupabase,
+  syncCollectionUseShiny,
 } from "@/lib/storage";
 import { queueSpinPersistence } from "@/lib/game-sync-scheduler";
 import { preloadSpinSprites } from "@/lib/sprite-preload";
@@ -55,22 +58,32 @@ interface GameState {
   isCollected: (id: number) => boolean;
   getFilteredPokemon: () => Pokemon[];
   getSearchableCollected: () => Pokemon[];
+  getShinyCount: () => number;
+  toggleUseShiny: (pokemonId: number) => void;
 }
 
 function applyCollectionEntry(
   collection: Record<number, CollectedPokemon>,
-  pokemonId: number
+  pokemonId: number,
+  isShiny: boolean
 ): Record<number, CollectedPokemon> {
   const now = new Date().toISOString();
   const existing = collection[pokemonId];
 
   const newEntry: CollectedPokemon = existing
-    ? { ...existing, count: existing.count + 1, isDuplicate: true }
+    ? {
+        ...existing,
+        count: existing.count + 1,
+        isDuplicate: true,
+        hasShiny: existing.hasShiny || isShiny,
+      }
     : {
         pokemonId,
         collectedAt: now,
         isDuplicate: false,
         count: 1,
+        hasShiny: isShiny,
+        useShiny: false,
       };
 
   return { ...collection, [pokemonId]: newEntry };
@@ -131,11 +144,18 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     for (let i = 0; i < spinMultiplier; i++) {
       const pokemon = executeSpin();
+      const isShiny = rollShiny();
       const collectedIds = new Set(Object.keys(collection).map(Number));
-      const result = processSpinResult(pokemon, collectedIds);
+      const existing = collection[pokemon.id];
+      const result = processSpinResult(
+        pokemon,
+        collectedIds,
+        isShiny,
+        existing?.hasShiny ?? false
+      );
       results.push(result);
       sequences.push(generateSpinSequence(pokemon));
-      collection = applyCollectionEntry(collection, pokemon.id);
+      collection = applyCollectionEntry(collection, pokemon.id, isShiny);
 
       if (result.isDuplicate) {
         const { getDuplicateXp } = await import("@/data/duplicate-xp");
@@ -165,7 +185,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       profile: newProfile,
     });
 
-    preloadSpinSprites(sequences);
+    preloadSpinSprites(sequences, results);
 
     queueSpinPersistence({
       collection,
@@ -305,6 +325,22 @@ export const useGameStore = create<GameState>((set, get) => ({
         get().isCollected(p.id) &&
         p.name.toLowerCase().includes(query)
     );
+  },
+
+  getShinyCount: () =>
+    Object.values(get().collection).filter((c) => c.hasShiny).length,
+
+  toggleUseShiny: (pokemonId) => {
+    const entry = get().collection[pokemonId];
+    if (!entry?.hasShiny) return;
+
+    const collection = {
+      ...get().collection,
+      [pokemonId]: { ...entry, useShiny: !entry.useShiny },
+    };
+    set({ collection });
+    persistLocalCollection(collection);
+    void syncCollectionUseShiny(pokemonId, !entry.useShiny);
   },
 }));
 

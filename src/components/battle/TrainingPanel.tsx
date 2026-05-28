@@ -5,7 +5,7 @@ import { Shield } from "lucide-react";
 import { BattleArena } from "@/components/battle/BattleArena";
 import { TeamSelector } from "@/components/battle/TeamSelector";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
-import { POKEMON_MAP } from "@/data/pokemon";
+import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
 import { executeBattleTurn, initBattle } from "@/lib/battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordBattleToSupabase } from "@/lib/economy-supabase";
@@ -34,7 +34,7 @@ export function TrainingPanel() {
 
   const beginBattle = useCallback(() => {
     if (team.length < 3) return null;
-    const pokemon = team.map((id) => POKEMON_MAP[id]).filter(Boolean);
+    const pokemon = getTeamPokemonForBattle(team);
     if (pokemon.length < 3) return null;
     lastLogLenRef.current = 0;
     const state = initBattle(pokemon, 1, getPokemonLevelsMap());

@@ -37,6 +37,8 @@ export async function loadCollection(): Promise<
         collectedAt: row.first_collected_at,
         isDuplicate: row.count > 1,
         count: row.count,
+        hasShiny: row.has_shiny ?? false,
+        useShiny: row.use_shiny ?? false,
       };
     }
     return collection;
@@ -93,6 +95,7 @@ export async function saveCollectionEntry(
         .update({
           count: existing.count + 1,
           last_collected_at: new Date().toISOString(),
+          has_shiny: entry.hasShiny || existing.has_shiny,
         })
         .eq("id", existing.id);
     } else {
@@ -100,12 +103,31 @@ export async function saveCollectionEntry(
         user_id: userId,
         pokemon_id: entry.pokemonId,
         count: entry.count,
+        has_shiny: entry.hasShiny ?? false,
+        use_shiny: entry.useShiny ?? false,
       });
     }
     return;
   }
 
   saveLocalCollectionEntry(entry);
+}
+
+export async function syncCollectionUseShiny(
+  pokemonId: number,
+  useShiny: boolean
+): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const supabase = getSupabase();
+  if (!supabase) return;
+
+  const userId = getLocalUserId();
+  await supabase
+    .from("collections")
+    .update({ use_shiny: useShiny })
+    .eq("user_id", userId)
+    .eq("pokemon_id", pokemonId);
 }
 
 function saveLocalCollectionEntry(entry: CollectedPokemon): void {

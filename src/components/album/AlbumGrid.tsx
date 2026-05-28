@@ -8,6 +8,7 @@ import { PokedexModal } from "@/components/album/PokedexModal";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { RARITY_ORDER, RARITY_CONFIG } from "@/data/rarity";
 import { TOTAL_POKEMON } from "@/data/pokemon";
+import { withDisplayImage } from "@/lib/pokemon-display";
 import { useGameStore } from "@/stores/game-store";
 import { cn } from "@/lib/utils";
 import type { Pokemon, Rarity } from "@/types";
@@ -197,12 +198,14 @@ export function AlbumGrid() {
       >
         {visiblePokemon.map((pokemon) => {
           const entry = collection[pokemon.id];
+          const displayPokemon = entry ? withDisplayImage(pokemon, entry) : pokemon;
           return (
             <div key={pokemon.id} className="album-card-slot">
               <PokemonCard
-                pokemon={pokemon}
+                pokemon={displayPokemon}
                 collected={!!entry}
                 duplicateCount={entry?.count}
+                hasShiny={entry?.hasShiny}
                 size="sm"
                 animate={false}
                 onClick={

@@ -12,6 +12,45 @@ function confettiScale(): number {
   return 1;
 }
 
+/** Confetti épico dourado — desbloqueio shiny */
+export function fireShinyConfetti() {
+  const scale = confettiScale();
+  const base = { zIndex: CONFETTI_Z, disableForReducedMotion: true };
+  const colors = ["#fde047", "#fbbf24", "#f59e0b", "#ffffff", "#fef3c7", "#a855f7"];
+  const duration = 4500;
+  const end = Date.now() + duration;
+
+  const frame = () => {
+    confetti({
+      ...base,
+      particleCount: Math.round(8 * scale),
+      angle: 60,
+      spread: 70,
+      origin: { x: 0, y: 0.6 },
+      colors,
+    });
+    confetti({
+      ...base,
+      particleCount: Math.round(8 * scale),
+      angle: 120,
+      spread: 70,
+      origin: { x: 1, y: 0.6 },
+      colors,
+    });
+    confetti({
+      ...base,
+      particleCount: Math.round(6 * scale),
+      spread: 120,
+      origin: { x: 0.5, y: 0.45 },
+      colors,
+      shapes: ["star"],
+    });
+
+    if (Date.now() < end) requestAnimationFrame(frame);
+  };
+  frame();
+}
+
 export function fireCelebrationConfetti(rarity: Rarity, isNew: boolean) {
   if (!isNew) return;
 
@@ -76,7 +115,6 @@ export function fireCelebrationConfetti(rarity: Rarity, isNew: boolean) {
     return;
   }
 
-  // Comum / Incomum — burst menor mas visível
   confetti({
     ...base,
     particleCount: Math.round(50 * scale),

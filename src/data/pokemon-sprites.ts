@@ -8,6 +8,22 @@ export function POKEMON_SPRITE_LOCAL_URL(id: number): string {
   return `/sprites/${id}.png`;
 }
 
+/** Chance de shiny por giro da roleta (0,1%) */
+export const SHINY_CHANCE = 0.001;
+
+/** Sprite servido localmente via /public/sprites/shiny */
+export function POKEMON_SHINY_SPRITE_LOCAL_URL(id: number): string {
+  return `/sprites/shiny/${id}.png`;
+}
+
+export function POKEMON_SHINY_SPRITE_CDN_URL(id: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${id}.png`;
+}
+
+export function getPokemonShinySpriteUrl(id: number): string {
+  return POKEMON_SHINY_SPRITE_LOCAL_URL(id);
+}
+
 export function getPokemonSpriteUrl(id: number): string {
   return POKEMON_SPRITE_LOCAL_URL(id);
 }

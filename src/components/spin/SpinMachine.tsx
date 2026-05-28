@@ -134,7 +134,8 @@ export function SpinMachine({
     return cancelSpinLoop;
   }, [isSpinning, sequence, reelIndex, cancelSpinLoop, applyPokemonToDom]);
 
-  const pokemon = displayPokemon ?? sequence[0];
+  const showResult = !localSpinning && !isSpinning && result;
+  const pokemon = showResult ? result.pokemon : (displayPokemon ?? sequence[0]);
 
   if (!pokemon) {
     return (
@@ -162,7 +163,6 @@ export function SpinMachine({
   }
 
   const config = RARITY_CONFIG[pokemon.rarity];
-  const showResult = !localSpinning && !isSpinning && result;
   const imgSize = compact ? 90 : 180;
 
   return (
@@ -174,7 +174,12 @@ export function SpinMachine({
 
           <div className={cn("relative mx-auto", compact ? "max-w-[140px]" : "max-w-[280px]")}>
             {showResult && (
-              <div className="absolute -top-2 -right-2 z-30">
+              <div className="absolute -top-2 -right-2 z-30 flex flex-col items-end gap-1">
+                {result.isNewShinyUnlock && (
+                  <span className="px-1.5 py-0.5 rounded-md bg-amber-500/30 border border-amber-400/40 text-[8px] font-black text-amber-200 uppercase">
+                    ✨ Shiny
+                  </span>
+                )}
                 <StickerBadge variant={result.isNew ? "new" : "duplicate"} size="sm" />
               </div>
             )}

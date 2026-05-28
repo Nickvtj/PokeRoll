@@ -10,9 +10,12 @@ import { RarityBadge } from "@/components/ui/RarityBadge";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { RARITY_CONFIG } from "@/data/rarity";
 import { getXpProgressFromTotal } from "@/data/pokemon-battle-level";
+import { getPokemonDisplayImage } from "@/lib/pokemon-display";
 import { useEconomyStore } from "@/stores/economy-store";
+import { useGameStore } from "@/stores/game-store";
 import { useGymStore } from "@/stores/gym-store";
 import { PokemonGymBadges } from "@/components/gym/GymBadge";
+import { cn } from "@/lib/utils";
 import type { CollectedPokemon, Pokemon } from "@/types";
 
 interface PokedexModalProps {
@@ -30,6 +33,7 @@ export function PokedexModal({
 }: PokedexModalProps) {
   const [mounted, setMounted] = useState(false);
   const pokemonBattleXp = useEconomyStore((s) => s.pokemonBattleXp);
+  const toggleUseShiny = useGameStore((s) => s.toggleUseShiny);
   const getHallOfFameBorder = useGymStore((s) => s.getHallOfFameBorder);
 
   useEffect(() => setMounted(true), []);
@@ -50,6 +54,8 @@ export function PokedexModal({
   const xpData = pokemonBattleXp[String(pokemon.id)] ?? { level: 1, xp: 0 };
   const xpProgress = getXpProgressFromTotal(xpData.xp);
   const gymBadges = getHallOfFameBorder(pokemon.id);
+  const displayImage = getPokemonDisplayImage(pokemon.id, collection);
+  const usingShiny = Boolean(collection.hasShiny && collection.useShiny);
 
   const modal = (
     <AnimatePresence>
@@ -146,7 +152,7 @@ export function PokedexModal({
                       style={{ backgroundColor: config.color }}
                     />
                     <Image
-                      src={pokemon.image}
+                      src={displayImage}
                       alt={pokemon.name}
                       width={112}
                       height={112}
@@ -175,6 +181,41 @@ export function PokedexModal({
                   />
                 </div>
               </div>
+
+              {/* Shiny toggle */}
+              {collection.hasShiny && (
+                <div className="px-5 py-3 border-b border-white/10">
+                  <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider mb-2">
+                    Aparência na batalha
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => collection.useShiny && toggleUseShiny(pokemon.id)}
+                      className={cn(
+                        "flex-1 py-2 rounded-xl text-xs font-bold border transition-all",
+                        !usingShiny
+                          ? "border-indigo-400/50 bg-indigo-500/20 text-indigo-200"
+                          : "border-white/10 bg-white/5 text-white/50 hover:border-white/20"
+                      )}
+                    >
+                      Normal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => !collection.useShiny && toggleUseShiny(pokemon.id)}
+                      className={cn(
+                        "flex-1 py-2 rounded-xl text-xs font-bold border transition-all",
+                        usingShiny
+                          ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
+                          : "border-white/10 bg-white/5 text-white/50 hover:border-white/20"
+                      )}
+                    >
+                      ✨ Shiny
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* XP de batalha + insígnias */}
               <div className="px-5 py-4 border-b border-white/10 space-y-3">

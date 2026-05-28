@@ -10,6 +10,7 @@ import {
   Swords,
   User,
   BarChart3,
+  Stars,
 } from "lucide-react";
 import { TOTAL_POKEMON } from "@/data/pokemon";
 import { useGameStore } from "@/stores/game-store";
@@ -57,6 +58,7 @@ export function ProfileCard() {
   const getUniqueCount = useGameStore((s) => s.getUniqueCount);
   const getDuplicateCount = useGameStore((s) => s.getDuplicateCount);
   const getProgress = useGameStore((s) => s.getProgress);
+  const getShinyCount = useGameStore((s) => s.getShinyCount);
   const totalSpins = useGameStore((s) => s.profile.totalSpins);
 
   const coins = useEconomyStore((s) => s.coins);
@@ -68,6 +70,8 @@ export function ProfileCard() {
   const unique = getUniqueCount();
   const duplicates = getDuplicateCount();
   const progress = getProgress();
+  const shinyCount = getShinyCount();
+  const shinyProgress = Math.round((shinyCount / TOTAL_POKEMON) * 100);
 
   return (
     <div className="space-y-4">
@@ -99,6 +103,16 @@ export function ProfileCard() {
             animate={{ width: `${progress}%` }}
             transition={{ duration: 1.2, ease: "easeOut" }}
           />
+        </div>
+        <div className="flex items-center justify-between text-sm mt-3 pt-3 border-t border-white/10">
+          <span className="text-white/50 flex items-center gap-1">
+            <Stars className="w-3.5 h-3.5 text-amber-400" />
+            Shinies
+          </span>
+          <span className="font-bold text-amber-300">
+            {shinyCount}/{TOTAL_POKEMON}
+          </span>
+          <span className="text-white/50">{shinyProgress}%</span>
         </div>
       </ProfileSection>
 
@@ -157,6 +171,12 @@ export function ProfileCard() {
               label="Duplicatas"
               value={formatNumber(duplicates)}
               color="text-amber-400"
+            />
+            <StatItem
+              icon={Stars}
+              label="Shinies"
+              value={`${shinyCount}/${TOTAL_POKEMON}`}
+              color="text-amber-300"
             />
             <StatItem
               icon={Trophy}
