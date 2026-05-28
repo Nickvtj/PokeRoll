@@ -9,7 +9,6 @@ import type {
   GymId,
   GymProgressEntry,
   GymState,
-  HallOfFameEntry,
   PerfectRunBonus,
   SavedTeam,
 } from "@/types/gym";

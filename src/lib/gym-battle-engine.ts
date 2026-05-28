@@ -72,7 +72,7 @@ function buildEnemyTeamFromIds(
     const id = pokemonIds[slot] ?? pokemonIds[pokemonIds.length - 1];
     const pokemon = POKEMON_MAP[id];
     if (!pokemon) continue;
-    const enemyLevel = Math.max(1, (pokemonLevels[id] ?? gymEnemyLevelFallback(id)) + enemyLevelBoost);
+    const enemyLevel = Math.max(1, (pokemonLevels[id] ?? gymEnemyLevelFallback()) + enemyLevelBoost);
     const raw = createFighter(pokemon, false, enemyLevel, slot);
     enemies.push(normalizeEnemy(raw, playerAvg, baseDifficulty));
   }
@@ -80,7 +80,7 @@ function buildEnemyTeamFromIds(
   return enemies;
 }
 
-function gymEnemyLevelFallback(_id: number): number {
+function gymEnemyLevelFallback(): number {
   return 5;
 }
 

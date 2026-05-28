@@ -220,7 +220,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     persistEconomy(snap);
   },
 
-  addCoins: (amount, reason) => {
+  addCoins: (amount) => {
     if (amount <= 0) return;
     set((s) => ({
       coins: s.coins + amount,

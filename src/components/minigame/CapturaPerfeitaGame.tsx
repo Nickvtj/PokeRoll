@@ -146,7 +146,7 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
     if (phase !== "playing" || !wild || !config) return;
 
     const speed = config.speed;
-    let start = performance.now();
+    const start = performance.now();
 
     const tick = (now: number) => {
       const elapsed = (now - start) / 1000;
@@ -243,7 +243,7 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
         </div>
         <div className="text-right text-xs text-white/50">
           <p className={getRarityColor(wild.rarity)}>
-            +{getCaptureCoinsForRarity(wild.rarity)} 🪙
+            +{getCaptureCoinsForRarity()} 🪙
           </p>
           {perfectHits > 0 && (
             <p className="text-amber-400">{perfectHits} perfeito{perfectHits > 1 ? "s" : ""}</p>

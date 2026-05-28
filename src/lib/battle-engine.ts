@@ -397,7 +397,7 @@ export function executeBattleTurn(
 
   const ability = attacker.stats.ability;
   let damageMult = 1 + bonuses.battleDamage;
-  let logEntries = [...state.log];
+  const logEntries = [...state.log];
 
   if (ability?.type === "active" && ability.effect === "damage_boost") {
     damageMult *= ability.value;

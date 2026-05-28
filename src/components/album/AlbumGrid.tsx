@@ -31,7 +31,15 @@ export function AlbumGrid() {
   const displayedPokemon = useMemo(() => {
     if (isSearching) return getSearchableCollected();
     return getFilteredPokemon();
-  }, [isSearching, getSearchableCollected, getFilteredPokemon, albumFilter]);
+  }, [
+    isSearching,
+    getSearchableCollected,
+    getFilteredPokemon,
+    albumFilter.rarity,
+    albumFilter.status,
+    albumFilter.generation,
+    albumFilter.searchQuery,
+  ]);
 
   const visiblePokemon = useMemo(
     () => displayedPokemon.slice(0, visibleCount),

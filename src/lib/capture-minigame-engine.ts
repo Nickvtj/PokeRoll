@@ -31,7 +31,7 @@ export function getCaptureConfig(rarity: Rarity): CaptureConfig {
   return CAPTURE_BY_RARITY[rarity];
 }
 
-export function getCaptureCoinsForRarity(_rarity: Rarity): number {
+export function getCaptureCoinsForRarity(): number {
   return CAPTURE_COINS_PER_CATCH;
 }
 
@@ -70,7 +70,6 @@ export function evaluateCaptureHit(
 
 export function calcCaptureReward(
   captured: boolean,
-  _pokemonRarity: Rarity,
   perfectHits: number,
   totalShakes: number,
   coinBonus = 0
