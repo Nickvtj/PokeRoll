@@ -70,7 +70,7 @@ export function evaluateCaptureHit(
 
 export function calcCaptureReward(
   captured: boolean,
-  pokemonRarity: Rarity,
+  _pokemonRarity: Rarity,
   perfectHits: number,
   totalShakes: number,
   coinBonus = 0

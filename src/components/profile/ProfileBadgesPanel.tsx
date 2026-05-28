@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Award } from "lucide-react";
 import { GYMS } from "@/data/gyms";
 import { useGymStore } from "@/stores/gym-store";
