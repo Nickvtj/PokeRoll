@@ -13,13 +13,14 @@ interface BattleResultModalProps {
   state: BattleState;
   onContinue: () => void;
   onPlayAgain?: () => void;
+  continueLabel?: string;
 }
 
 type ModalPhase = "intro" | "results";
 
 const INTRO_HOLD_MS = 1600;
 
-export function BattleResultModal({ state, onContinue, onPlayAgain }: BattleResultModalProps) {
+export function BattleResultModal({ state, onContinue, onPlayAgain, continueLabel }: BattleResultModalProps) {
   const won = state.phase === "victory";
   const canReplay = !!onPlayAgain;
   const levelUps = state.levelUps ?? [];
@@ -171,7 +172,7 @@ export function BattleResultModal({ state, onContinue, onPlayAgain }: BattleResu
                     onClick={onContinue}
                     className="w-full"
                   >
-                    {canReplay ? "Voltar" : "Continuar"}
+                    {continueLabel ?? (canReplay ? "Voltar" : "Continuar")}
                   </AnimatedButton>
                 </div>
               </motion.div>

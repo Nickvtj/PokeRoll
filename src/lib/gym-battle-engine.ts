@@ -1,6 +1,6 @@
 import { ELITE_FOUR, GYM_MAP, GYM_TRAINER_STAGES } from "@/data/gyms";
 import { POKEMON_MAP } from "@/data/pokemon";
-import { createFighter } from "@/lib/battle-engine";
+import { buildTurnOrder, createFighter, performCoinFlip } from "@/lib/battle-engine";
 import type { BattleFighter, BattleLogEntry, BattleState } from "@/types/battle";
 import type { Pokemon } from "@/types";
 import type { EliteId, GymBattleMeta, GymId } from "@/types/gym";
@@ -11,15 +11,6 @@ function log(message: string, type: BattleLogEntry["type"]): BattleLogEntry {
 }
 
 const TEAM_SIZE = 3;
-
-function buildAlternatingTurnOrder(size = TEAM_SIZE): number[] {
-  const order: number[] = [];
-  for (let slot = 0; slot < size; slot++) {
-    order.push(slot);
-    order.push(TEAM_SIZE + slot);
-  }
-  return order;
-}
 
 function getPlayerAverages(fighters: BattleFighter[]) {
   const n = fighters.length || 1;
@@ -62,7 +53,6 @@ function buildEnemyTeamFromIds(
   pokemonIds: number[],
   playerTeam: BattleFighter[],
   baseDifficulty: number,
-  pokemonLevels: Record<number, number>,
   enemyLevelBoost = 0
 ): BattleFighter[] {
   const playerAvg = getPlayerAverages(playerTeam);
@@ -72,7 +62,9 @@ function buildEnemyTeamFromIds(
     const id = pokemonIds[slot] ?? pokemonIds[pokemonIds.length - 1];
     const pokemon = POKEMON_MAP[id];
     if (!pokemon) continue;
-    const enemyLevel = Math.max(1, (pokemonLevels[id] ?? gymEnemyLevelFallback()) + enemyLevelBoost);
+    const slotPlayer = playerTeam[slot];
+    const matchedLevel = Math.max(1, slotPlayer?.battleLevel ?? gymEnemyLevelFallback());
+    const enemyLevel = Math.max(1, matchedLevel + Math.floor(enemyLevelBoost / 2));
     const raw = createFighter(pokemon, false, enemyLevel, slot);
     enemies.push(normalizeEnemy(raw, playerAvg, baseDifficulty));
   }
@@ -110,7 +102,6 @@ export function initGymBattle(
     stageData.pokemonIds.slice(0, TEAM_SIZE),
     playerTeam,
     baseDifficulty,
-    pokemonLevels,
     enemyLevelBoost
   );
 
@@ -132,11 +123,13 @@ export function initGymBattle(
       ? ` ⚠️ Abaixo do Nv. recomendado (${gym.recommendedLevel})!`
       : "";
 
+  const playerStarts = performCoinFlip();
+
   return {
-    phase: "fighting",
+    phase: "coinFlip",
     playerTeam,
     enemyTeam,
-    turnOrder: buildAlternatingTurnOrder(),
+    turnOrder: buildTurnOrder(playerStarts),
     currentTurnIndex: 0,
     wave: stage,
     maxWaves: 5,
@@ -149,6 +142,8 @@ export function initGymBattle(
     gymMeta,
     playerDeaths: 0,
     turnCount: 0,
+    playerStarts,
+    battleEngagement: null,
   };
 }
 
@@ -177,7 +172,6 @@ export function initEliteBattle(
     ids,
     playerTeam,
     elite.difficultyScale * levelGapMod,
-    pokemonLevels,
     Math.max(0, Math.floor(elite.recommendedLevel - avgLevel))
   );
 
@@ -193,11 +187,13 @@ export function initEliteBattle(
     recommendedLevel: elite.recommendedLevel,
   };
 
+  const playerStarts = performCoinFlip();
+
   return {
-    phase: "fighting",
+    phase: "coinFlip",
     playerTeam,
     enemyTeam,
-    turnOrder: buildAlternatingTurnOrder(),
+    turnOrder: buildTurnOrder(playerStarts),
     currentTurnIndex: 0,
     wave: 1,
     maxWaves: 1,
@@ -210,5 +206,7 @@ export function initEliteBattle(
     gymMeta,
     playerDeaths: 0,
     turnCount: 0,
+    playerStarts,
+    battleEngagement: null,
   };
 }

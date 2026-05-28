@@ -1,7 +1,6 @@
 import { POKEMON_LIST } from "@/data/pokemon";
 import {
-  MEMORY_COINS_MAX,
-  MEMORY_COINS_MIN,
+  MEMORY_COINS_PER_PAIR,
   MEMORY_PAIR_COUNT,
 } from "@/data/economy-balance";
 import { applyMinigameCoinBonus } from "@/lib/minigame-rewards";
@@ -38,22 +37,13 @@ export function calcMemoryReward(
   let coins = 0;
 
   if (completed) {
-    const minMoves = MEMORY_PAIR_COUNT;
-    if (moves <= minMoves + 2) {
-      coins = MEMORY_COINS_MAX;
-    } else if (moves <= minMoves + 8) {
-      coins = MEMORY_COINS_MIN + 1;
-    } else {
-      coins = MEMORY_COINS_MIN;
-    }
-  } else if (pairsFound > 0) {
-    coins = Math.min(MEMORY_COINS_MIN, pairsFound);
+    coins = pairsFound * MEMORY_COINS_PER_PAIR;
   }
 
   coins = applyMinigameCoinBonus(coins, coinBonus);
 
   const accountXp = completed
-    ? 4 + Math.max(0, MEMORY_COINS_MAX - Math.floor((moves - MEMORY_PAIR_COUNT) / 3))
+    ? 4 + Math.max(0, MEMORY_PAIR_COUNT - Math.floor((moves - MEMORY_PAIR_COUNT) / 3))
     : pairsFound * 2;
 
   return { coins, accountXp };

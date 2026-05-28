@@ -6,10 +6,9 @@ import Image from "next/image";
 import { Brain } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import {
-  MEMORY_COINS_MAX,
-  MEMORY_COINS_MIN,
   MEMORY_GAME_DURATION_SEC,
   MEMORY_PAIR_COUNT,
+  MEMORY_COINS_PER_PAIR,
 } from "@/data/economy-balance";
 import {
   buildMemoryDeck,
@@ -208,7 +207,7 @@ export function PokeMemoryGame({ onComplete, onReady }: PokeMemoryGameProps) {
         </span>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 sm:gap-3">
         {cards.map((card) => {
           const isMatched = matched.includes(card.uid);
           const isFaceUp = flipped.includes(card.uid) || isMatched;
@@ -268,7 +267,7 @@ function MemoryCardTile({
       onClick={onFlip}
       aria-label={faceUp ? pokemon.name : "Carta virada"}
       className={cn(
-        "aspect-square w-full rounded-xl [perspective:900px] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50",
+        "aspect-[4/5] w-full min-h-[88px] sm:min-h-[100px] rounded-xl [perspective:900px] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50",
         !disabled && !faceUp && "hover:scale-[1.03] active:scale-95 transition-transform",
         disabled && !faceUp && "cursor-default"
       )}
@@ -293,7 +292,7 @@ function MemoryCardTile({
             "bg-gradient-to-br from-indigo-950/80 to-purple-950/60 border-white/15 shadow-inner"
           )}
         >
-          <PokeballIcon size={30} className="opacity-55" />
+          <PokeballIcon size={38} className="opacity-55" />
         </div>
 
         {/* Frente — Pokémon */}
@@ -308,9 +307,9 @@ function MemoryCardTile({
           <Image
             src={pokemon.image}
             alt={pokemon.name}
-            width={56}
-            height={56}
-            className="object-contain w-[78%] h-[78%] drop-shadow-md"
+            width={72}
+            height={72}
+            className="object-contain w-[82%] h-[82%] drop-shadow-md"
             loading="lazy"
           />
         </div>

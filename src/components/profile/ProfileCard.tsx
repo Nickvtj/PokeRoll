@@ -16,6 +16,7 @@ import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { ProfileIdentityCard } from "@/components/profile/ProfileIdentityCard";
+import { TrainerItemsPanel } from "@/components/profile/TrainerItemsPanel";
 import { formatNumber } from "@/lib/utils";
 
 interface StatItemProps {
@@ -77,6 +78,8 @@ export function ProfileCard() {
       >
         <ProfileIdentityCard />
       </ProfileSection>
+
+      <TrainerItemsPanel />
 
       <ProfileSection
         title="Álbum de Figurinhas"

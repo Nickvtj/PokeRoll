@@ -14,6 +14,7 @@ import {
 } from "@/data/economy-balance";
 import { getStatMultiplier } from "@/data/pokemon-battle-level";
 import type {
+  BattleEngagement,
   BattleFighter,
   BattleHitEffectiveness,
   BattleHitSound,
@@ -172,7 +173,6 @@ export function generateEnemyTeam(
 
   const levelBonus = (avgPokemonLevel - 1) * 0.018;
   const targetTier = Math.max(1, avgRarityTier + (wave - 1) * 0.25 + levelBonus * 2);
-  const targetLevel = Math.max(1, Math.round(avgPokemonLevel) + (wave - 1));
   const difficulty = 0.94 + wave * 0.03 + levelBonus + Math.random() * 0.05;
 
   const usedIds = new Set<number>();
@@ -207,8 +207,11 @@ export function generateEnemyTeam(
     if (!pokemon) continue;
 
     usedIds.add(pokemon.id);
-    const levelVariance = Math.floor(Math.random() * 3) - 1;
-    const slotLevel = Math.max(1, targetLevel + levelVariance);
+    const playerForSlot = playerPokemon[slot];
+    const slotLevel = Math.max(
+      1,
+      Math.round(pokemonLevels[playerForSlot?.id ?? 0] ?? avgPokemonLevel)
+    );
     enemies.push(
       normalizeEnemyToPlayer(
         createFighter(pokemon, false, slotLevel, slot),
@@ -221,13 +224,38 @@ export function generateEnemyTeam(
   return enemies;
 }
 
-function buildAlternatingTurnOrder(): number[] {
+export function buildTurnOrder(playerStarts: boolean): number[] {
   const order: number[] = [];
   for (let slot = 0; slot < TEAM_SIZE; slot++) {
-    order.push(slot);
-    order.push(TEAM_SIZE + slot);
+    if (playerStarts) {
+      order.push(slot);
+      order.push(TEAM_SIZE + slot);
+    } else {
+      order.push(TEAM_SIZE + slot);
+      order.push(slot);
+    }
   }
   return order;
+}
+
+export function performCoinFlip(): boolean {
+  return Math.random() < 0.5;
+}
+
+export function resolveCoinFlip(state: BattleState): BattleState {
+  const playerStarts = state.playerStarts ?? true;
+  return {
+    ...state,
+    phase: "fighting",
+    log: [
+      ...state.log,
+      log("🪙 Cara ou coroa...", "info"),
+      log(
+        playerStarts ? "Cara! Você começa atacando!" : "Coroa! O oponente começa atacando!",
+        "info"
+      ),
+    ],
+  };
 }
 
 export function initBattle(
@@ -244,23 +272,27 @@ export function initBattle(
   const tierLabel =
     avgRarityTier >= 4 ? "Elite" : avgRarityTier >= 3 ? "Avançado" : "Padrão";
 
+  const playerStarts = performCoinFlip();
+
   return {
-    phase: "fighting",
+    phase: "coinFlip",
     playerTeam,
     enemyTeam,
-    turnOrder: buildAlternatingTurnOrder(),
+    turnOrder: buildTurnOrder(playerStarts),
     currentTurnIndex: 0,
     wave,
     maxWaves: 1,
     log: [
       log("A batalha começou!", "info"),
-      log(`${tierLabel} — ataque frontal por posição`, "info"),
+      log(`${tierLabel} — 1v1 da frente; quem vence segue até cair`, "info"),
     ],
     reward: null,
     levelUps: [],
     mode: "training",
     playerDeaths: 0,
     turnCount: 0,
+    playerStarts,
+    battleEngagement: null,
   };
 }
 
@@ -272,43 +304,69 @@ function getLivingFighters(fighters: BattleFighter[]): BattleFighter[] {
   return fighters.filter((f) => f.currentHp > 0);
 }
 
-function findLivingAttacker(
+function fighterFlatIndex(f: BattleFighter): number {
+  return f.isPlayer ? (f.slotIndex ?? 0) : TEAM_SIZE + (f.slotIndex ?? 0);
+}
+
+function pickNextChampion(
   state: BattleState,
   all: BattleFighter[]
-): { attacker: BattleFighter; nextTurnIndex: number } | null {
+): { championFlat: number; nextTurnIndex: number } | null {
   const len = state.turnOrder.length;
-  if (len === 0) return null;
-
   for (let attempt = 0; attempt < len; attempt++) {
     const orderPos = (state.currentTurnIndex + attempt) % len;
-    const fighterIdx = state.turnOrder[orderPos];
-    const fighter = all[fighterIdx];
-    if (fighter && fighter.currentHp > 0) {
-      return { attacker: fighter, nextTurnIndex: orderPos + 1 };
+    const idx = state.turnOrder[orderPos];
+    if (all[idx]?.currentHp > 0) {
+      return { championFlat: idx, nextTurnIndex: orderPos + 1 };
     }
   }
   return null;
 }
 
-function findFrontTarget(
-  attacker: BattleFighter,
-  playerTeam: BattleFighter[],
-  enemyTeam: BattleFighter[]
-): BattleFighter | null {
-  const targets = attacker.isPlayer ? enemyTeam : playerTeam;
-  const living = getLivingFighters(targets);
-  if (living.length === 0) return null;
+function pickFrontOpponent(champion: BattleFighter, state: BattleState): BattleFighter | null {
+  const opponents = getLivingOpponents(champion, state);
+  if (opponents.length === 0) return null;
 
-  const preferredSlot = attacker.slotIndex ?? 0;
-  const direct = living.find((t) => t.slotIndex === preferredSlot);
-  if (direct) return direct;
+  const slot = champion.slotIndex ?? 0;
+  const sameSlot = opponents.find((o) => (o.slotIndex ?? 0) === slot);
+  if (sameSlot) return sameSlot;
 
-  living.sort((a, b) => {
-    const distA = Math.abs((a.slotIndex ?? 0) - preferredSlot);
-    const distB = Math.abs((b.slotIndex ?? 0) - preferredSlot);
-    return distA - distB;
+  opponents.sort((a, b) => (a.slotIndex ?? 0) - (b.slotIndex ?? 0));
+  return opponents[0];
+}
+
+function findFighterInAll(
+  all: BattleFighter[],
+  target: BattleFighter
+): BattleFighter | undefined {
+  return all.find(
+    (f) =>
+      f.isPlayer === target.isPlayer &&
+      f.slotIndex === target.slotIndex &&
+      f.pokemon.id === target.pokemon.id
+  );
+}
+
+function applyDamageToTarget(
+  all: BattleFighter[],
+  target: BattleFighter,
+  damage: number
+): BattleFighter[] {
+  return all.map((f) => {
+    if (
+      f.isPlayer !== target.isPlayer ||
+      f.slotIndex !== target.slotIndex ||
+      f.pokemon.id !== target.pokemon.id
+    ) {
+      return f;
+    }
+    return { ...f, currentHp: Math.max(0, f.currentHp - damage) };
   });
-  return living[0];
+}
+
+function getLivingOpponents(attacker: BattleFighter, state: BattleState): BattleFighter[] {
+  const team = attacker.isPlayer ? state.enemyTeam : state.playerTeam;
+  return getLivingFighters(team);
 }
 
 function calcDamage(
@@ -357,7 +415,7 @@ export function executeBattleTurn(
 ): BattleStepResult {
   if (state.phase !== "fighting") return { state, done: true };
 
-  const all = getAllFighters(state);
+  let all = getAllFighters(state);
   const livingPlayers = getLivingFighters(state.playerTeam);
   const livingEnemies = getLivingFighters(state.enemyTeam);
 
@@ -384,60 +442,116 @@ export function executeBattleTurn(
     };
   }
 
-  const found = findLivingAttacker(state, all);
-  if (!found) {
-    return { state: { ...state, currentTurnIndex: state.currentTurnIndex + 1 }, done: false };
+  let logEntries = [...state.log];
+  let turnIndex = state.currentTurnIndex;
+  let engagement = state.battleEngagement ?? null;
+
+  let championFlat = engagement?.championFlatIndex ?? null;
+  let champion = championFlat != null ? all[championFlat] : undefined;
+
+  if (!champion || champion.currentHp <= 0) {
+    const picked = pickNextChampion(state, all);
+    if (!picked) {
+      return { state: { ...state, currentTurnIndex: turnIndex + 1 }, done: false };
+    }
+    championFlat = picked.championFlat;
+    champion = all[championFlat];
+    turnIndex = picked.nextTurnIndex;
+    engagement = null;
+    logEntries.push(log(`${champion.pokemon.name} entra em combate!`, "info"));
   }
 
-  const { attacker, nextTurnIndex } = found;
-  const target = findFrontTarget(attacker, state.playerTeam, state.enemyTeam);
-  if (!target) {
-    return applyFighterUpdates(state, all, state.log, nextTurnIndex);
+  const battleSlice = {
+    ...state,
+    playerTeam: all.filter((f) => f.isPlayer),
+    enemyTeam: all.filter((f) => !f.isPlayer),
+  };
+
+  let targetFlat = engagement?.targetFlatIndex ?? null;
+  let target =
+    targetFlat != null && targetFlat >= 0 ? all[targetFlat] : undefined;
+
+  if (!target || target.currentHp <= 0) {
+    const newTarget = pickFrontOpponent(champion!, battleSlice);
+    if (!newTarget) {
+      return applyFighterUpdates(state, all, logEntries, turnIndex, null);
+    }
+    target = newTarget;
+    targetFlat = fighterFlatIndex(target);
+    engagement = {
+      championFlatIndex: championFlat!,
+      targetFlatIndex: targetFlat,
+      counterTurn: false,
+    };
+    logEntries.push(
+      log(`${champion!.pokemon.name} vs ${target.pokemon.name}`, "info")
+    );
+  } else if (!engagement) {
+    engagement = {
+      championFlatIndex: championFlat!,
+      targetFlatIndex: targetFlat!,
+      counterTurn: false,
+    };
   }
 
-  const ability = attacker.stats.ability;
+  const counterTurn = engagement.counterTurn;
+  const strikerFlat = counterTurn ? targetFlat! : championFlat!;
+  const victimFlat = counterTurn ? championFlat! : targetFlat!;
+  const striker = all[strikerFlat];
+  const victim = all[victimFlat];
+
+  if (!striker || !victim || striker.currentHp <= 0 || victim.currentHp <= 0) {
+    return applyFighterUpdates(state, all, logEntries, turnIndex, null);
+  }
+
   let damageMult = 1 + bonuses.battleDamage;
-  const logEntries = [...state.log];
+  const ability = striker.stats.ability;
 
   if (ability?.type === "active" && ability.effect === "damage_boost") {
     damageMult *= ability.value;
-    logEntries.push(
-      log(`${attacker.pokemon.name} usou ${ability.name}!`, "ability")
-    );
+    logEntries.push(log(`${striker.pokemon.name} usou ${ability.name}!`, "ability"));
   }
 
-  if (ability?.type === "active" && ability.effect === "aoe") {
-    const oppTeam = attacker.isPlayer ? state.enemyTeam : state.playerTeam;
-    const livingOpp = getLivingFighters(oppTeam);
-    const newAll = all.map((f) => {
-      const isTarget = livingOpp.some(
-        (t) => t.pokemon.id === f.pokemon.id && t.isPlayer === f.isPlayer
-      );
-      if (!isTarget) return f;
+  if (
+    ability?.type === "active" &&
+    ability.effect === "aoe" &&
+    strikerFlat === championFlat
+  ) {
+    const livingOpp = getLivingOpponents(striker, battleSlice);
+    for (const aoeTarget of livingOpp) {
+      const fresh = findFighterInAll(all, aoeTarget);
+      if (!fresh || fresh.currentHp <= 0) continue;
       const { damage, isCrit, typeLabel, typeMult } = calcDamage(
-        attacker,
-        f,
-        damageMult * ability!.value,
+        striker,
+        fresh,
+        damageMult * ability.value,
         bonuses.critChance
       );
       const suffix = typeLabel ? ` · ${typeLabel}!` : "";
       logEntries.push(
         log(
-          `${attacker.pokemon.name} atingiu ${f.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${suffix})`,
+          `${striker.pokemon.name} atingiu ${fresh.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${suffix})`,
           "damage",
-          buildHitSound(attacker, typeMult, isCrit)
+          buildHitSound(striker, typeMult, isCrit)
         )
       );
-      const newHp = Math.max(0, f.currentHp - damage);
-      if (newHp === 0) logEntries.push(log(`${f.pokemon.name} desmaiou!`, "ko"));
-      return { ...f, currentHp: newHp };
-    });
-    return applyFighterUpdates(state, newAll, logEntries, nextTurnIndex);
+      all = applyDamageToTarget(all, fresh, damage);
+      const after = findFighterInAll(all, fresh);
+      if (after && after.currentHp === 0) {
+        logEntries.push(log(`${fresh.pokemon.name} desmaiou!`, "ko"));
+      }
+    }
+    const nextEngagement: BattleEngagement = {
+      championFlatIndex: championFlat!,
+      targetFlatIndex: null,
+      counterTurn: false,
+    };
+    return applyFighterUpdates(state, all, logEntries, turnIndex, nextEngagement);
   }
 
   const { damage, isCrit, typeLabel, typeMult } = calcDamage(
-    attacker,
-    target,
+    striker,
+    victim,
     damageMult,
     bonuses.critChance
   );
@@ -445,20 +559,48 @@ export function executeBattleTurn(
   const typeSuffix = typeLabel ? ` · ${typeLabel}!` : "";
   logEntries.push(
     log(
-      `${attacker.pokemon.name} → ${target.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${typeSuffix})`,
+      `${striker.pokemon.name} → ${victim.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${typeSuffix})`,
       "attack",
-      buildHitSound(attacker, typeMult, isCrit)
+      buildHitSound(striker, typeMult, isCrit)
     )
   );
 
-  const newAll = all.map((f) => {
-    if (f.pokemon.id !== target.pokemon.id || f.isPlayer !== target.isPlayer) return f;
-    const newHp = Math.max(0, f.currentHp - damage);
-    if (newHp === 0) logEntries.push(log(`${f.pokemon.name} desmaiou!`, "ko"));
-    return { ...f, currentHp: newHp };
-  });
+  all = applyDamageToTarget(all, victim, damage);
+  const victimAfter = all[victimFlat];
+  const championAfter = all[championFlat!];
 
-  return applyFighterUpdates(state, newAll, logEntries, nextTurnIndex);
+  let nextEngagement: BattleEngagement | null = engagement;
+
+  if (!victimAfter || victimAfter.currentHp <= 0) {
+    logEntries.push(log(`${victim.pokemon.name} desmaiou!`, "ko"));
+
+    if (victimFlat === championFlat) {
+      nextEngagement = null;
+      const deadOrderPos = state.turnOrder.indexOf(championFlat!);
+      if (deadOrderPos >= 0) turnIndex = deadOrderPos + 1;
+    } else if (championAfter && championAfter.currentHp > 0) {
+      nextEngagement = {
+        championFlatIndex: championFlat!,
+        targetFlatIndex: null,
+        counterTurn: false,
+      };
+      logEntries.push(
+        log(`${championAfter.pokemon.name} avança para o próximo oponente!`, "info")
+      );
+    } else {
+      nextEngagement = null;
+    }
+  } else if (championAfter && championAfter.currentHp > 0) {
+    nextEngagement = {
+      championFlatIndex: championFlat!,
+      targetFlatIndex: targetFlat!,
+      counterTurn: !counterTurn,
+    };
+  } else {
+    nextEngagement = null;
+  }
+
+  return applyFighterUpdates(state, all, logEntries, turnIndex, nextEngagement);
 }
 
 function countNewPlayerDeaths(prev: BattleFighter[], next: BattleFighter[]): number {
@@ -466,7 +608,7 @@ function countNewPlayerDeaths(prev: BattleFighter[], next: BattleFighter[]): num
   for (let i = 0; i < prev.length; i++) {
     const before = prev[i];
     const after = next.find(
-      (f) => f.pokemon.id === before.pokemon.id && f.slotIndex === before.slotIndex
+      (f) => f.isPlayer === before.isPlayer && f.slotIndex === before.slotIndex
     );
     if (before.currentHp > 0 && after && after.currentHp <= 0) deaths++;
   }
@@ -477,10 +619,28 @@ function applyFighterUpdates(
   state: BattleState,
   all: BattleFighter[],
   logEntries: BattleLogEntry[],
-  nextTurnIndex: number
+  nextTurnIndex: number,
+  battleEngagement: BattleEngagement | null | undefined = state.battleEngagement
 ): BattleStepResult {
   const playerTeam = all.filter((f) => f.isPlayer);
   const enemyTeam = all.filter((f) => !f.isPlayer);
+
+  let resolved = battleEngagement ?? null;
+  if (resolved) {
+    const champion = all[resolved.championFlatIndex];
+    if (!champion || champion.currentHp <= 0) {
+      resolved = null;
+    } else if (resolved.targetFlatIndex != null) {
+      const target = all[resolved.targetFlatIndex];
+      if (!target || target.currentHp <= 0) {
+        resolved = {
+          championFlatIndex: resolved.championFlatIndex,
+          targetFlatIndex: null,
+          counterTurn: false,
+        };
+      }
+    }
+  }
 
   const newDeaths = countNewPlayerDeaths(state.playerTeam, playerTeam);
   const playerDeaths = (state.playerDeaths ?? 0) + newDeaths;
@@ -494,6 +654,7 @@ function applyFighterUpdates(
     log: logEntries,
     playerDeaths,
     turnCount,
+    battleEngagement: resolved,
   };
 
   const livingPlayers = getLivingFighters(playerTeam);
@@ -538,12 +699,28 @@ export function calcBattleReward(wave: number, coinBonus = 0): BattleReward {
 }
 
 export function getActiveFighterIndex(state: BattleState): number | null {
+  const eng = state.battleEngagement;
+  if (!eng) return null;
+
   const all = getAllFighters(state);
-  const len = state.turnOrder.length;
-  for (let attempt = 0; attempt < len; attempt++) {
-    const orderPos = (state.currentTurnIndex + attempt) % len;
-    const idx = state.turnOrder[orderPos];
-    if (all[idx]?.currentHp > 0) return idx;
+  if (eng.counterTurn && eng.targetFlatIndex != null) {
+    const target = all[eng.targetFlatIndex];
+    if (target?.currentHp > 0) return eng.targetFlatIndex;
   }
+  const champion = all[eng.championFlatIndex];
+  if (champion?.currentHp > 0) return eng.championFlatIndex;
   return null;
+}
+
+export function getDuelHighlightIndices(state: BattleState): number[] {
+  const eng = state.battleEngagement;
+  if (!eng) return [];
+
+  const all = getAllFighters(state);
+  const indices = [eng.championFlatIndex];
+  if (eng.targetFlatIndex != null) {
+    const target = all[eng.targetFlatIndex];
+    if (target?.currentHp > 0) indices.push(eng.targetFlatIndex);
+  }
+  return indices;
 }

@@ -12,6 +12,7 @@ import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
 import { POKEMON_MAP } from "@/data/pokemon";
 import { playNewBattleHitSounds } from "@/lib/battle-sound-utils";
+import { useBattleCoinFlip } from "@/hooks/use-battle-coin-flip";
 import type { BattleState } from "@/types/battle";
 import type { EliteId } from "@/types/gym";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,8 @@ export function EliteFourScreen() {
   const battleStateRef = useRef<BattleState | null>(null);
   const lastLogLenRef = useRef(0);
   battleStateRef.current = battleState;
+
+  useBattleCoinFlip(battleState, setBattleState);
 
   const leagueUnlocked = isEliteUnlocked();
 

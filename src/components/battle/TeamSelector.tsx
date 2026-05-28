@@ -49,6 +49,12 @@ function getPrimaryType(id: number, name: string): string {
   return getPokedexInfo(id, name).types[0].toLowerCase();
 }
 
+function getOwnedCount(collection: Record<number, { count?: number }>, id: number): number {
+  const entry = collection[id];
+  if (!entry) return 0;
+  return Math.max(1, entry.count ?? 1);
+}
+
 export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
   const collection = useGameStore((s) => s.collection);
   const team = useEconomyStore((s) => s.team);
@@ -109,10 +115,16 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
   ]);
 
   const toggle = (id: number) => {
-    if (team.includes(id)) {
-      setTeam(team.filter((t) => t !== id));
-    } else if (team.length < maxTeam) {
+    const countInTeam = team.filter((t) => t === id).length;
+    const owned = getOwnedCount(collection, id);
+
+    if (countInTeam < owned && team.length < maxTeam) {
       setTeam([...team, id]);
+      return;
+    }
+    if (countInTeam > 0) {
+      const idx = team.lastIndexOf(id);
+      setTeam([...team.slice(0, idx), ...team.slice(idx + 1)]);
     }
   };
 
@@ -147,6 +159,9 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
           <Users className="w-4 h-4 text-indigo-400" />
           Montar Time ({team.length}/{maxTeam})
         </h3>
+        <span className="text-[10px] text-white/40">
+          Duplicatas: clique de novo para adicionar outra cópia
+        </span>
         <span className="text-[10px] text-amber-400/80">
           Cap Nv.{getLevelCap()} · {badgeCount}🏅
         </span>
@@ -217,10 +232,13 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
 
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-72 overflow-y-auto p-1 -m-1 pr-2">
         {filtered.map((pokemon) => {
-          const selected = team.includes(pokemon.id);
+          const countInTeam = team.filter((t) => t === pokemon.id).length;
+          const selected = countInTeam > 0;
+          const owned = getOwnedCount(collection, pokemon.id);
+          const canAddMore = countInTeam < owned && team.length < maxTeam;
           const isFavorite = favoriteSet.has(pokemon.id);
           const config = RARITY_CONFIG[pokemon.rarity];
-          const disabled = !selected && team.length >= maxTeam;
+          const disabled = !selected && !canAddMore;
           const level = pokemonBattleXp[String(pokemon.id)]?.level ?? 1;
           const type = getPrimaryType(pokemon.id, pokemon.name);
           const pokemonBadges = getHallOfFameBorder(pokemon.id);
@@ -275,8 +293,17 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
                 Nv.{level}
               </div>
               {selected && (
-                <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
-                  <Check className="w-2.5 h-2.5 text-white" />
+                <div className="absolute bottom-1 right-1 min-w-4 h-4 px-0.5 rounded-full bg-indigo-500 flex items-center justify-center">
+                  {countInTeam > 1 ? (
+                    <span className="text-[8px] font-bold text-white">×{countInTeam}</span>
+                  ) : (
+                    <Check className="w-2.5 h-2.5 text-white" />
+                  )}
+                </div>
+              )}
+              {owned > 1 && (
+                <div className="absolute bottom-1 left-1 px-1 py-0.5 rounded-md bg-black/50 text-[8px] text-amber-400/90">
+                  ×{owned}
                 </div>
               )}
               <Image

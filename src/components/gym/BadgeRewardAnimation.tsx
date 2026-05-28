@@ -48,7 +48,7 @@ export function BadgeRewardAnimation({
           <motion.div
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 2, ease: "easeInOut" }}
-            className="mx-auto"
+            className="w-full flex justify-center"
           >
             <GymBadge gymId={gym.id} name={gym.badgeName} earned size="lg" color={gym.themeColor} />
           </motion.div>

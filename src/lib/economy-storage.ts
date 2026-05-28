@@ -30,6 +30,9 @@ export function getDefaultEconomy(): EconomyState {
     welcomeClaimed: false,
     unlockedAchievements: [],
     selectedAvatarId: "default",
+    luckyEggExpiresAt: null,
+    luckyEggCount: 0,
+    rareCandyCount: 0,
   };
 }
 

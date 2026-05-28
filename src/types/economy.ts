@@ -21,6 +21,11 @@ export interface EconomyState {
   welcomeClaimed?: boolean;
   unlockedAchievements: string[];
   selectedAvatarId: string;
+  /** Timestamp até quando Lucky Egg está ativo */
+  luckyEggExpiresAt?: number | null;
+  /** Lucky Eggs no inventário (ativar no header) */
+  luckyEggCount?: number;
+  rareCandyCount?: number;
 }
 
 export interface CoinTransaction {

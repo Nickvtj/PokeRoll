@@ -37,7 +37,7 @@ export interface BattleFighter {
   slotIndex?: number;
 }
 
-export type BattlePhase = "idle" | "fighting" | "victory" | "defeat";
+export type BattlePhase = "idle" | "coinFlip" | "fighting" | "victory" | "defeat";
 
 export type BattleHitEffectiveness = "super" | "weak" | "immune" | "normal";
 
@@ -77,6 +77,15 @@ export interface PokemonLevelUpResult {
   leveledUp: boolean;
 }
 
+export interface BattleEngagement {
+  /** Pokémon ativo até cair — se vencer, ataca o próximo da fila */
+  championFlatIndex: number;
+  /** Alvo atual (null = buscar o da frente no próximo golpe) */
+  targetFlatIndex: number | null;
+  /** true = próximo golpe é contra-ataque do alvo */
+  counterTurn: boolean;
+}
+
 export interface BattleState {
   phase: BattlePhase;
   playerTeam: BattleFighter[];
@@ -92,4 +101,8 @@ export interface BattleState {
   gymMeta?: GymBattleMeta;
   playerDeaths?: number;
   turnCount?: number;
+  /** true = jogador (cara) ataca primeiro */
+  playerStarts?: boolean;
+  /** Combate 1v1 — campeão luta até cair */
+  battleEngagement?: BattleEngagement | null;
 }

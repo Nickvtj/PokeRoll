@@ -8,35 +8,41 @@ import type { BattleFighter } from "@/types/battle";
 
 interface PokemonBattleCardProps {
   fighter: BattleFighter;
-  isActive?: boolean;
+  /** Destaque de turno — só quem vai atacar "sobe" */
+  turnHighlight?: "attack" | "none";
   compact?: boolean;
 }
 
 export function PokemonBattleCard({
   fighter,
-  isActive = false,
+  turnHighlight = "none",
   compact = false,
 }: PokemonBattleCardProps) {
   const config = RARITY_CONFIG[fighter.pokemon.rarity];
   const hpPercent = (fighter.currentHp / fighter.maxHp) * 100;
   const isKo = fighter.currentHp <= 0;
+  const isAttacking = turnHighlight === "attack" && !isKo;
+  const attackGlow = fighter.isPlayer
+    ? "0 0 28px rgba(34,211,238,0.75)"
+    : "0 0 28px rgba(248,113,113,0.75)";
 
   return (
     <motion.div
       animate={
-        isActive
-          ? { scale: 1.05, boxShadow: `0 0 30px ${config.glowColor}` }
-          : { scale: 1 }
+        isAttacking
+          ? { scale: 1.08, y: -4, boxShadow: attackGlow }
+          : { scale: 1, y: 0 }
       }
+      transition={{ type: "spring", stiffness: 420, damping: 24 }}
       className={cn(
         "glass-card relative overflow-hidden transition-all",
         compact ? "p-2" : "p-3",
         isKo && "opacity-40 grayscale",
-        isActive && "ring-2",
+        isAttacking && "ring-2 ring-offset-1 ring-offset-slate-950",
+        isAttacking && (fighter.isPlayer ? "ring-cyan-400" : "ring-red-400")
       )}
       style={{
         borderColor: `${config.color}40`,
-        ...(isActive ? { ringColor: config.color } : {}),
       }}
     >
       <div className={cn("relative mx-auto", compact ? "w-16 h-16" : "w-20 h-20")}>

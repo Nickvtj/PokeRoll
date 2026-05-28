@@ -10,16 +10,30 @@ export function MissionsPanel() {
   const missionProgress = useEconomyStore((s) => s.missionProgress);
   const missionsClaimed = useEconomyStore((s) => s.missionsClaimed);
   const claimMission = useEconomyStore((s) => s.claimMission);
+  const claimAllMissions = useEconomyStore((s) => s.claimAllMissions);
   const dailyStreak = useEconomyStore((s) => s.dailyStreak);
+
+  const claimableCount = DAILY_MISSIONS.filter(
+    (m) =>
+      !missionsClaimed.includes(m.id) &&
+      (missionProgress[m.id] ?? 0) >= m.target
+  ).length;
 
   return (
     <div className="glass-card p-5 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h3 className="font-bold flex items-center gap-2">
           <Gift className="w-5 h-5 text-indigo-400" />
           Missões Diárias
         </h3>
-        <span className="text-xs text-amber-400">🔥 Streak: {dailyStreak}d</span>
+        <div className="flex items-center gap-2">
+          {claimableCount > 0 && (
+            <AnimatedButton variant="primary" size="sm" onClick={() => claimAllMissions()}>
+              Coletar tudo ({claimableCount})
+            </AnimatedButton>
+          )}
+          <span className="text-xs text-amber-400">🔥 Streak: {dailyStreak}d</span>
+        </div>
       </div>
 
       <div className="space-y-2">

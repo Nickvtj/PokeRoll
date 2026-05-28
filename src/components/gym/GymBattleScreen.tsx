@@ -14,6 +14,7 @@ import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
 import { POKEMON_MAP } from "@/data/pokemon";
 import { playNewBattleHitSounds } from "@/lib/battle-sound-utils";
+import { useBattleCoinFlip } from "@/hooks/use-battle-coin-flip";
 import type { BattleState } from "@/types/battle";
 import type { GymId } from "@/types/gym";
 import type { PerfectRunBonus } from "@/types/gym";
@@ -41,6 +42,8 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
   const battleStateRef = useRef<BattleState | null>(null);
   const lastLogLenRef = useRef(0);
   battleStateRef.current = battleState;
+
+  useBattleCoinFlip(battleState, setBattleState);
 
   const startStage = useCallback(
     (s: number) => {
@@ -119,23 +122,26 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
     const won = battleState?.phase === "victory";
     const currentStage = stage;
     resetBattle();
-    if (won && currentStage < 5 && !badgeReward) {
+    if (won && currentStage < 5) {
       startStage(currentStage + 1);
-    } else if (battleState?.phase === "defeat") {
+    } else if (!won) {
+      onExit();
+    } else {
       onExit();
     }
   };
 
   const handlePlayAgain = () => {
-    const currentStage = stage;
-    const won = battleState?.phase === "victory";
     resetBattle();
-    if (won && currentStage < 5) {
-      startStage(currentStage + 1);
-    } else {
-      startStage(won ? 1 : currentStage);
-    }
+    startStage(stage);
   };
+
+  const gymContinueLabel =
+    battleState?.phase === "victory" && stage < 5
+      ? "Próxima Batalha"
+      : battleState?.phase === "victory" && stage >= 5
+        ? "Terminar"
+        : "Continuar";
 
   return (
     <div className="space-y-3">
@@ -170,7 +176,8 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
         <BattleArena
           state={battleState}
           onContinue={handleContinue}
-          onPlayAgain={handlePlayAgain}
+          onPlayAgain={battleState?.phase === "defeat" ? handlePlayAgain : undefined}
+          continueLabel={gymContinueLabel}
         />
       )}
 

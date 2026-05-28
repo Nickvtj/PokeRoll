@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { Home, Disc3, BookOpen, Swords, Gamepad2, ChevronRight } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { CoinCounter } from "@/components/ui/CoinCounter";
+import { TrainerItemsBar } from "@/components/layout/TrainerItemsBar";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
@@ -102,6 +103,7 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center justify-end gap-2 justify-self-end min-w-0">
+          <TrainerItemsBar />
           <CoinCounter size="sm" />
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass text-xs whitespace-nowrap shrink-0">
             <BookOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
@@ -136,7 +138,10 @@ export function Navbar() {
       </nav>
 
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-3 py-2 pointer-events-none">
-        <CoinCounter size="sm" className="pointer-events-auto shadow-xl" />
+        <div className="flex items-center gap-1.5 pointer-events-auto">
+          <TrainerItemsBar />
+          <CoinCounter size="sm" className="shadow-xl" />
+        </div>
         <ProfileButton className="pointer-events-auto shadow-xl" />
       </div>
     </>

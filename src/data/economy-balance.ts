@@ -16,7 +16,7 @@ export const CLICK_GAME_DURATION_SEC = 30;
 export const CLICK_BASE_COINS_MIN = 1;
 export const CLICK_BASE_COINS_MAX = 2;
 
-export const MEMORY_PAIR_COUNT = 8;
+export const MEMORY_PAIR_COUNT = 12;
 export const MEMORY_GAME_DURATION_SEC = 45;
 export const MEMORY_COINS_MIN = 1;
 export const MEMORY_COINS_MAX = 3;
@@ -37,9 +37,22 @@ export const BATTLE_XP_BASE = 22;
 export const BATTLE_DURATION_BASE_MS = 18000;
 export const BATTLE_DURATION_PER_WAVE_MS = 4000;
 
-/** Progressão */
-export const XP_PER_LEVEL = 120;
+/** Progressão — treinador sobe mais devagar */
+export const XP_PER_LEVEL = 180;
 export const MAX_LEVEL = 50;
+
+/** Lucky Egg: dobro de XP por 2 min (ativar manualmente no header) */
+export const LUCKY_EGG_DURATION_MS = 120_000;
+export const LUCKY_EGG_XP_MULTIPLIER = 2;
+export const LUCKY_EGG_PER_MILESTONE = 1;
+
+/** Poké-Memory: moedas só ao completar — 1 por par */
+export const MEMORY_COINS_PER_PAIR = 1;
+
+/** Rare Candy: a cada 5 níveis de treinador */
+export const RARE_CANDY_PER_MILESTONE = 3;
+export const TRAINER_LEVEL_MILESTONE = 5;
+export const RARE_CANDY_XP_BONUS = 100;
 
 /** Login / streak */
 export const DAILY_LOGIN_COINS = [3, 4, 5, 6, 8, 10, 12];

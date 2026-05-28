@@ -91,5 +91,11 @@ export function mergeEconomyState(
       mergeAchievementIds(remote.unlockedAchievements ?? [], remoteAchievementIds)
     ),
     selectedAvatarId: local.selectedAvatarId ?? remote.selectedAvatarId ?? "default",
+    luckyEggExpiresAt:
+      (local.luckyEggExpiresAt ?? 0) > (remote.luckyEggExpiresAt ?? 0)
+        ? local.luckyEggExpiresAt
+        : remote.luckyEggExpiresAt ?? null,
+    luckyEggCount: maxNum(local.luckyEggCount ?? 0, remote.luckyEggCount ?? 0),
+    rareCandyCount: maxNum(local.rareCandyCount ?? 0, remote.rareCandyCount ?? 0),
   };
 }

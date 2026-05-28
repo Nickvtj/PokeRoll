@@ -5,8 +5,7 @@ import { Brain } from "lucide-react";
 import { PokeMemoryGame, type MemoryGameResult } from "@/components/minigame/PokeMemoryGame";
 import { GamePageShell } from "@/components/minigame/GamePageShell";
 import {
-  MEMORY_COINS_MAX,
-  MEMORY_COINS_MIN,
+  MEMORY_COINS_PER_PAIR,
   MEMORY_GAME_DURATION_SEC,
   MEMORY_PAIR_COUNT,
 } from "@/data/economy-balance";
@@ -55,7 +54,7 @@ export default function MemoryGamePage() {
   return (
     <GamePageShell
       title="Poké-Memory"
-      subtitle={`${MEMORY_PAIR_COUNT} pares · ${MEMORY_GAME_DURATION_SEC}s · ${MEMORY_COINS_MIN}~${MEMORY_COINS_MAX} moedas`}
+      subtitle={`${MEMORY_PAIR_COUNT} pares · ${MEMORY_GAME_DURATION_SEC}s · ${MEMORY_COINS_PER_PAIR} moeda/par ao completar`}
       icon={<Brain className="w-7 h-7 text-violet-400 shrink-0" />}
       tips={
         <>

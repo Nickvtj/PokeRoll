@@ -10,6 +10,7 @@ import { executeBattleTurn, initBattle } from "@/lib/battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordBattleToSupabase } from "@/lib/economy-supabase";
 import { playNewBattleHitSounds } from "@/lib/battle-sound-utils";
+import { useBattleCoinFlip } from "@/hooks/use-battle-coin-flip";
 import type { BattleState } from "@/types/battle";
 
 export function TrainingPanel() {
@@ -28,6 +29,8 @@ export function TrainingPanel() {
   const battleStateRef = useRef<BattleState | null>(null);
   const lastLogLenRef = useRef(0);
   battleStateRef.current = battleState;
+
+  useBattleCoinFlip(battleState, setBattleState);
 
   const beginBattle = useCallback(() => {
     if (team.length < 3) return null;

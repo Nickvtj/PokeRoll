@@ -253,9 +253,9 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
 
       {streak > 0 && (
         <div className="flex gap-1 justify-center flex-wrap px-2">
-          {caught.slice(-6).map((p) => (
+          {caught.slice(-6).map((p, i) => (
             <Image
-              key={`${p.id}-${p.name}`}
+              key={`catch-${caught.length - 6 + i}-${p.id}`}
               src={p.image}
               alt={p.name}
               width={32}

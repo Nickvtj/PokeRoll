@@ -91,18 +91,17 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
     if (!playing) return;
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          finishGame();
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [playing, finishGame]);
+  }, [playing]);
+
+  useEffect(() => {
+    if (playing && timeLeft === 0) {
+      finishGame();
+    }
+  }, [playing, timeLeft, finishGame]);
 
   useEffect(() => {
     if (!playing) return;
@@ -110,10 +109,16 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
     const interval = setInterval(() => {
       const now = Date.now();
       setBalls((prev) => {
-        const alive = prev.filter((b) => now - b.createdAt < b.lifetime);
-        return Math.random() < 0.32 ? [...alive.slice(-8), spawnBall()] : alive;
+        let alive = prev.filter((b) => now - b.createdAt < b.lifetime);
+        while (alive.length < 3) {
+          alive = [...alive, spawnBall()];
+        }
+        if (Math.random() < 0.38) {
+          alive = [...alive.slice(-10), spawnBall()];
+        }
+        return alive;
       });
-    }, 520);
+    }, 480);
 
     return () => clearInterval(interval);
   }, [playing]);

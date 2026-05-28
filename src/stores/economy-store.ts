@@ -8,6 +8,11 @@ import {
   WELCOME_PACKAGE_COINS,
   STREAK_BONUS_COINS,
   XP_PER_LEVEL,
+  LUCKY_EGG_DURATION_MS,
+  LUCKY_EGG_XP_MULTIPLIER,
+  LUCKY_EGG_PER_MILESTONE,
+  RARE_CANDY_PER_MILESTONE,
+  TRAINER_LEVEL_MILESTONE,
 } from "@/data/economy-balance";
 import type { AchievementStats } from "@/data/achievements";
 import {
@@ -21,6 +26,7 @@ import {
   getXpProgressFromTotal,
   migrateLegacyTotalXp,
   calcPokemonLevelFromTotalXp,
+  totalXpForLevel,
   POKEMON_BATTLE_XP_LOSS,
   POKEMON_BATTLE_XP_WIN,
   GYM_BATTLE_XP_WIN,
@@ -73,6 +79,7 @@ interface EconomyStore extends EconomyState {
   resetDailyIfNeeded: () => void;
   incrementMission: (type: string, amount?: number) => void;
   claimMission: (missionId: string) => boolean;
+  claimAllMissions: () => number;
 
   showRewardPopup: (reward: RewardPayload, onPlayAgain?: RewardPlayAgainFn) => void;
   closeRewardPopup: () => void;
@@ -80,6 +87,10 @@ interface EconomyStore extends EconomyState {
   refreshAchievements: (stats: AchievementStats) => void;
   setSelectedAvatar: (avatarId: string) => void;
   sync: () => void;
+  isLuckyEggActive: () => boolean;
+  activateLuckyEgg: () => boolean;
+  useRareCandyOnPokemon: (pokemonId: number, count?: number) => boolean;
+  splitRareCandyOnTeam: () => boolean;
 }
 
 function todayStr() {
@@ -165,7 +176,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
   },
 
   grantPokemonBattleXp: (pokemonIds, won, mode = "training") => {
-    const amount =
+    let amount =
       mode === "elite"
         ? won
           ? ELITE_BATTLE_XP_WIN
@@ -178,12 +189,20 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
             ? POKEMON_BATTLE_XP_WIN
             : POKEMON_BATTLE_XP_LOSS;
 
+    const luckyActive =
+      get().luckyEggExpiresAt != null && Date.now() < (get().luckyEggExpiresAt ?? 0);
+    if (luckyActive) {
+      amount = Math.round(amount * LUCKY_EGG_XP_MULTIPLIER);
+    }
+
     const levelCap = get().getLevelCap();
     const results: PokemonLevelUpResult[] = [];
 
     set((s) => {
       const pokemonBattleXp = { ...s.pokemonBattleXp };
-      for (const id of pokemonIds) {
+      const uniqueIds = [...new Set(pokemonIds)];
+
+      for (const id of uniqueIds) {
         const key = String(id);
         const pokemon = POKEMON_MAP[id];
         if (!pokemon) continue;
@@ -208,6 +227,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
           leveledUp,
         });
       }
+
       return { pokemonBattleXp };
     });
 
@@ -243,11 +263,31 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
 
   addXp: (amount) => {
     if (!Number.isFinite(amount) || amount <= 0) return;
+
+    const luckyActive =
+      get().luckyEggExpiresAt != null && Date.now() < (get().luckyEggExpiresAt ?? 0);
+    const xpGain = luckyActive
+      ? Math.round(amount * LUCKY_EGG_XP_MULTIPLIER)
+      : amount;
+
     set((s) => {
-      const xp = (Number.isFinite(s.xp) ? s.xp : 0) + amount;
+      const oldLevel = calcLevel(Number.isFinite(s.xp) ? s.xp : 0);
+      const xp = (Number.isFinite(s.xp) ? s.xp : 0) + xpGain;
       const level = calcLevel(xp);
       const rank = Math.floor(level / 5) + 1;
-      return { xp, level, rank };
+      let rareCandyCount = s.rareCandyCount ?? 0;
+      let luckyEggCount = s.luckyEggCount ?? 0;
+
+      if (level > oldLevel) {
+        for (let l = oldLevel + 1; l <= level; l++) {
+          if (l % TRAINER_LEVEL_MILESTONE === 0) {
+            rareCandyCount += RARE_CANDY_PER_MILESTONE;
+            luckyEggCount += LUCKY_EGG_PER_MILESTONE;
+          }
+        }
+      }
+
+      return { xp, level, rank, rareCandyCount, luckyEggCount };
     });
     get().sync();
   },
@@ -440,6 +480,31 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     return true;
   },
 
+  claimAllMissions: () => {
+    const { missionProgress, missionsClaimed } = get();
+    const toClaim = DAILY_MISSIONS.filter(
+      (m) =>
+        !missionsClaimed.includes(m.id) &&
+        (missionProgress[m.id] ?? 0) >= m.target
+    );
+    if (toClaim.length === 0) return 0;
+
+    const totalCoins = toClaim.reduce((sum, m) => sum + m.reward, 0);
+    set((s) => ({
+      missionsClaimed: [
+        ...s.missionsClaimed,
+        ...toClaim.map((m) => m.id),
+      ],
+    }));
+    get().addCoins(totalCoins);
+    get().showRewardPopup({
+      coins: totalCoins,
+      message: `${toClaim.length} missão(ões) resgatadas · +${totalCoins} moedas`,
+    });
+    get().sync();
+    return totalCoins;
+  },
+
   showRewardPopup: (reward, onPlayAgain) =>
     set({ lastReward: reward, showReward: true, rewardPlayAgain: onPlayAgain ?? null }),
   closeRewardPopup: () =>
@@ -468,6 +533,67 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     set({ selectedAvatarId: avatarId });
     get().sync();
   },
+
+  isLuckyEggActive: () => {
+    const exp = get().luckyEggExpiresAt;
+    return exp != null && Date.now() < exp;
+  },
+
+  activateLuckyEgg: () => {
+    const count = get().luckyEggCount ?? 0;
+    if (count <= 0) return false;
+    if (get().isLuckyEggActive()) return false;
+
+    set((s) => ({
+      luckyEggCount: (s.luckyEggCount ?? 0) - 1,
+      luckyEggExpiresAt: Date.now() + LUCKY_EGG_DURATION_MS,
+    }));
+    get().sync();
+    return true;
+  },
+
+  useRareCandyOnPokemon: (pokemonId, count = 1) => {
+    const available = get().rareCandyCount ?? 0;
+    const useCount = Math.min(count, available);
+    if (useCount <= 0 || !POKEMON_MAP[pokemonId]) return false;
+
+    const levelCap = get().getLevelCap();
+    const key = String(pokemonId);
+    const current = get().pokemonBattleXp[key] ?? { level: 1, xp: 0 };
+    const currentLevel = calcPokemonLevelFromTotalXp(current.xp);
+    if (currentLevel >= levelCap) return false;
+
+    let xpToGrant = 0;
+    let simXp = current.xp;
+    for (let i = 0; i < useCount; i++) {
+      const lvl = calcPokemonLevelFromTotalXp(simXp);
+      if (lvl >= levelCap) break;
+      const need = Math.max(1, totalXpForLevel(lvl + 1) - simXp);
+      xpToGrant += need;
+      simXp += need;
+    }
+    if (xpToGrant <= 0) return false;
+
+    set((s) => ({ rareCandyCount: (s.rareCandyCount ?? 0) - useCount }));
+    get().grantPokemonXp(pokemonId, xpToGrant);
+    get().sync();
+    return true;
+  },
+
+  splitRareCandyOnTeam: () => {
+    const teamIds = [...new Set(get().team)];
+    const available = get().rareCandyCount ?? 0;
+    if (teamIds.length === 0 || available <= 0) return false;
+
+    const perPokemon = Math.floor(available / teamIds.length);
+    if (perPokemon <= 0) return false;
+
+    let ok = false;
+    for (const id of teamIds) {
+      if (get().useRareCandyOnPokemon(id, perPokemon)) ok = true;
+    }
+    return ok;
+  },
 }));
 
 function getEconomySnapshot(state: EconomyStore): EconomyState {
@@ -494,6 +620,9 @@ function getEconomySnapshot(state: EconomyStore): EconomyState {
     welcomeClaimed: state.welcomeClaimed ?? false,
     unlockedAchievements: state.unlockedAchievements ?? [],
     selectedAvatarId: state.selectedAvatarId ?? "default",
+    luckyEggExpiresAt: state.luckyEggExpiresAt ?? null,
+    luckyEggCount: state.luckyEggCount ?? 0,
+    rareCandyCount: state.rareCandyCount ?? 0,
   };
 }
 
