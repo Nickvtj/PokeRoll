@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Home, Disc3, BookOpen, Swords, Gamepad2, ChevronRight } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { CoinCounter } from "@/components/ui/CoinCounter";
@@ -19,13 +20,22 @@ const navItems = [
 ] as const;
 
 function ProfileButton({ className }: { className?: string }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const username = useGameStore((s) => s.profile.username);
   const level = useEconomyStore((s) => s.level);
   const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
 
+  useEffect(() => {
+    if (pathname !== "/profile") {
+      router.prefetch("/profile");
+    }
+  }, [pathname, router]);
+
   return (
     <Link
       href="/profile"
+      prefetch
       className={cn(
         "group flex items-center gap-2 px-3 py-1.5 rounded-xl glass text-xs border border-white/10 shrink-0",
         "hover:bg-indigo-500/15 hover:border-indigo-400/40 hover:shadow-lg hover:shadow-indigo-500/20",
