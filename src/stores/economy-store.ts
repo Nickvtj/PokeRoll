@@ -67,6 +67,7 @@ interface EconomyStore extends EconomyState {
   payForSpin: (multiplier: number) => boolean;
 
   setTeam: (team: number[]) => void;
+  removeFromTeam: (pokemonId: number) => void;
   toggleFavoritePokemon: (id: number) => void;
   isFavoritePokemon: (id: number) => boolean;
   getPokemonProgress: (id: number) => { level: number; xp: number; xpInLevel: number; xpPct: number };
@@ -333,6 +334,11 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
 
   setTeam: (team) => {
     set({ team: team.slice(0, 3) });
+    get().sync();
+  },
+
+  removeFromTeam: (pokemonId) => {
+    set((s) => ({ team: s.team.filter((id) => id !== pokemonId) }));
     get().sync();
   },
 

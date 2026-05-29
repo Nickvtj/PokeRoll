@@ -33,6 +33,7 @@ function TeamPreviewSlot({
 }) {
   const collection = useGameStore((s) => s.collection);
   const pokemonBattleXp = useEconomyStore((s) => s.pokemonBattleXp);
+  const removeFromTeam = useEconomyStore((s) => s.removeFromTeam);
 
   if (pokemonId == null) {
     return (
@@ -65,11 +66,13 @@ function TeamPreviewSlot({
       type={monotypeSynergy.type}
       className={compact ? "min-h-[88px]" : "flex-1 min-h-[112px]"}
     >
-      <div
+      <button
+        onClick={() => removeFromTeam(pokemonId)}
         className={cn(
-          "relative flex flex-col items-center rounded-xl border text-center transition-all h-full",
+          "relative flex flex-col items-center rounded-xl border text-center transition-all h-full w-full overflow-hidden",
           BATTLE_CLASSIC_THEME ? "battle-prep-card battle-prep-card-selected battle-classic-card-active" : "bg-white/[0.04] border-2",
-          compact ? "p-2 min-h-[88px]" : "p-3 min-h-[112px]"
+          compact ? "p-2 min-h-[88px]" : "p-3 min-h-[112px]",
+          "hover:scale-[0.98] active:scale-95 cursor-pointer"
         )}
         style={{
           borderColor: config.color,
@@ -79,7 +82,7 @@ function TeamPreviewSlot({
       >
       <span
         className={cn(
-          "absolute top-1.5 left-1.5 text-[8px] font-black rounded-md px-1 py-0.5 leading-none",
+          "absolute top-1.5 left-1.5 text-[8px] font-black rounded-md px-1 py-0.5 leading-none z-10",
           BATTLE_CLASSIC_THEME
             ? "bg-indigo-500/35 text-indigo-100 border border-indigo-400/45"
             : "bg-indigo-500/80 text-white"
@@ -101,7 +104,7 @@ function TeamPreviewSlot({
       >
         {pokemon.name}
       </p>
-      </div>
+      </button>
     </MonotypeSynergyAura>
   );
 }
