@@ -1,6 +1,6 @@
 "use client";
 
-import { ELITE_FOUR, ELITE_REQUIRED_ACCOUNT_LEVEL, isEliteMemberUnlocked } from "@/data/gyms";
+import { ELITE_FOUR, isEliteMemberUnlocked } from "@/data/gyms";
 import { Lock } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { BattleArena } from "@/components/battle/BattleArena";
@@ -27,7 +27,6 @@ export function EliteFourScreen({
   const badgeCount = useGymStore((s) => s.badges.length);
   const recordEliteWin = useGymStore((s) => s.recordEliteWin);
   const team = useEconomyStore((s) => s.team);
-  const accountLevel = useEconomyStore((s) => s.level);
   const getPokemonLevelsMap = useEconomyStore((s) => s.getPokemonLevelsMap);
   const grantPokemonBattleXp = useEconomyStore((s) => s.grantPokemonBattleXp);
 
@@ -90,7 +89,7 @@ export function EliteFourScreen({
       setBattleState(initEliteBattle(eliteId, pokemon, getPokemonLevelsMap()));
       setFighting(true);
     },
-    [leagueUnlocked, eliteProgress, team, getPokemonLevelsMap]
+    [leagueUnlocked, eliteProgress, team, getPokemonLevelsMap, resetLoop]
   );
 
   const resetBattle = () => {
@@ -116,8 +115,9 @@ export function EliteFourScreen({
         }}
         onPlayAgain={() => {
           const elite = activeElite;
-          resetBattle();
-          if (elite) setTimeout(() => startElite(elite), 50);
+          if (!elite) return;
+          resetLoop();
+          startElite(elite);
         }}
       />
     );
@@ -128,16 +128,9 @@ export function EliteFourScreen({
       {!leagueUnlocked && (
         <div className="glass-card p-4 text-center border border-white/10 bg-white/5 space-y-1">
           <Lock className="w-8 h-8 mx-auto text-white/30 mb-2" />
-          {accountLevel < ELITE_REQUIRED_ACCOUNT_LEVEL && (
-            <p className="text-sm text-white/50">
-              Requer Nv. {ELITE_REQUIRED_ACCOUNT_LEVEL} da conta (você: Nv. {accountLevel})
-            </p>
-          )}
-          {badgeCount < 8 && (
-            <p className="text-sm text-white/50">
-              Colete as 8 insígnias ({badgeCount}/8)
-            </p>
-          )}
+          <p className="text-sm text-white/50">
+            Colete as 8 insígnias ({badgeCount}/8)
+          </p>
         </div>
       )}
 
@@ -181,9 +174,7 @@ export function EliteFourScreen({
                   <div className="flex items-center gap-2 text-white/50 text-xs font-semibold">
                     <Lock className="w-4 h-4" />
                     {!leagueUnlocked
-                      ? accountLevel < ELITE_REQUIRED_ACCOUNT_LEVEL
-                        ? `Nv. ${ELITE_REQUIRED_ACCOUNT_LEVEL}+ necessário`
-                        : "8 insígnias necessárias"
+                      ? "8 insígnias necessárias"
                       : index === 0
                         ? "Bloqueado"
                         : `Derrote ${ELITE_FOUR[index - 1]?.name} primeiro`}

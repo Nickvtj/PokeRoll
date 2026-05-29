@@ -53,9 +53,9 @@ export function TrainingPanel({
         void recordBattleToSupabase(true, coins, xp, !!state.reward.freeSpin, state.wave, team);
         finalState = { ...finalState, reward: { ...state.reward, coins, xp } };
       } else if (!won) {
-        addXp(6);
+        addXp(3);
         recordBattleLoss();
-        void recordBattleToSupabase(false, 0, 6, false, state.wave, team);
+        void recordBattleToSupabase(false, 0, 3, false, state.wave, team);
       }
 
       setBattleState(finalState);
@@ -119,8 +119,8 @@ export function TrainingPanel({
         combatHighlight={combatHighlight}
         onContinue={resetBattle}
         onPlayAgain={() => {
-          resetBattle();
-          setTimeout(() => beginBattle(), 50);
+          resetLoop();
+          beginBattle();
         }}
       />
     );

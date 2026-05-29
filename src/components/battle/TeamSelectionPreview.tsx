@@ -1,14 +1,18 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import { Users } from "lucide-react";
 import { POKEMON_MAP } from "@/data/pokemon";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
 import { RARITY_CONFIG } from "@/data/rarity";
 import { withDisplayImage } from "@/lib/pokemon-display";
+import { getTeamMonotypeSynergy } from "@/lib/team-monotype";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
 import { cn } from "@/lib/utils";
+import { MonotypeSynergyAura } from "@/components/battle/MonotypeSynergyFx";
+import type { TeamMonotypeSynergy } from "@/lib/team-monotype";
 
 interface TeamSelectionPreviewProps {
   maxTeam?: number;
@@ -20,10 +24,12 @@ function TeamPreviewSlot({
   pokemonId,
   slotIndex,
   compact,
+  monotypeSynergy,
 }: {
   pokemonId: number | null;
   slotIndex: number;
   compact?: boolean;
+  monotypeSynergy: TeamMonotypeSynergy;
 }) {
   const collection = useGameStore((s) => s.collection);
   const pokemonBattleXp = useEconomyStore((s) => s.pokemonBattleXp);
@@ -54,18 +60,23 @@ function TeamPreviewSlot({
   const level = pokemonBattleXp[String(pokemonId)]?.level ?? 1;
 
   return (
-    <div
-      className={cn(
-        "relative flex flex-col items-center rounded-xl border text-center transition-all",
-        BATTLE_CLASSIC_THEME ? "battle-prep-card battle-prep-card-selected battle-classic-card-active" : "bg-white/[0.04] border-2",
-        compact ? "p-2 min-h-[88px]" : "p-3 flex-1 min-h-[112px]"
-      )}
-      style={{
-        borderColor: config.color,
-        backgroundColor: `${config.color}${BATTLE_CLASSIC_THEME ? "22" : "18"}`,
-        boxShadow: `0 0 12px ${config.glowColor}`,
-      }}
+    <MonotypeSynergyAura
+      active={monotypeSynergy.active}
+      type={monotypeSynergy.type}
+      className={compact ? "min-h-[88px]" : "flex-1 min-h-[112px]"}
     >
+      <div
+        className={cn(
+          "relative flex flex-col items-center rounded-xl border text-center transition-all h-full",
+          BATTLE_CLASSIC_THEME ? "battle-prep-card battle-prep-card-selected battle-classic-card-active" : "bg-white/[0.04] border-2",
+          compact ? "p-2 min-h-[88px]" : "p-3 min-h-[112px]"
+        )}
+        style={{
+          borderColor: config.color,
+          backgroundColor: `${config.color}${BATTLE_CLASSIC_THEME ? "22" : "18"}`,
+          boxShadow: monotypeSynergy.active ? undefined : `0 0 12px ${config.glowColor}`,
+        }}
+      >
       <span
         className={cn(
           "absolute top-1.5 left-1.5 text-[8px] font-black rounded-md px-1 py-0.5 leading-none",
@@ -90,7 +101,8 @@ function TeamPreviewSlot({
       >
         {pokemon.name}
       </p>
-    </div>
+      </div>
+    </MonotypeSynergyAura>
   );
 }
 
@@ -101,6 +113,7 @@ export function TeamSelectionPreview({
 }: TeamSelectionPreviewProps) {
   const team = useEconomyStore((s) => s.team);
   const slots = Array.from({ length: maxTeam }, (_, i) => team[i] ?? null);
+  const monotypeSynergy = useMemo(() => getTeamMonotypeSynergy(team), [team]);
 
   if (variant === "bar") {
     return (
@@ -115,7 +128,13 @@ export function TeamSelectionPreview({
         </p>
         <div className="grid grid-cols-3 gap-2">
           {slots.map((id, i) => (
-            <TeamPreviewSlot key={i} pokemonId={id} slotIndex={i} compact />
+            <TeamPreviewSlot
+              key={i}
+              pokemonId={id}
+              slotIndex={i}
+              compact
+              monotypeSynergy={id != null ? monotypeSynergy : { active: false, type: null, label: "", bonusPercent: 0 }}
+            />
           ))}
         </div>
       </div>
@@ -150,7 +169,12 @@ export function TeamSelectionPreview({
 
       <div className="flex flex-col gap-2 flex-1 min-h-0">
         {slots.map((id, i) => (
-          <TeamPreviewSlot key={i} pokemonId={id} slotIndex={i} />
+          <TeamPreviewSlot
+            key={i}
+            pokemonId={id}
+            slotIndex={i}
+            monotypeSynergy={id != null ? monotypeSynergy : { active: false, type: null, label: "", bonusPercent: 0 }}
+          />
         ))}
       </div>
 

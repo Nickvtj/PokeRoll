@@ -1,15 +1,17 @@
 import { getPokedexInfo } from "@/data/pokedex";
 import { getEvolutionStatMult } from "@/data/pokemon-evolution";
+import { POKEMON_MAP } from "@/data/pokemon";
+import { TEAM_MONOTYPE_DAMAGE_BONUS } from "@/data/economy-balance";
 import type { Pokemon, Rarity } from "@/types";
 import type { PokemonBattleStats, PokemonAbility } from "@/types/battle";
 
 /** Multiplicadores de stats por raridade */
 const RARITY_STAT_MULT: Record<Rarity, number> = {
   common: 1.0,
-  uncommon: 1.15,
-  rare: 1.35,
-  epic: 1.6,
-  legendary: 2.0,
+  uncommon: 1.12,
+  rare: 1.28,
+  epic: 1.48,
+  legendary: 1.65,
 };
 
 /** Stats base por id — valores derivados + overrides para ícones */
@@ -154,6 +156,16 @@ export function getTeamPassiveBonuses(pokemonIds: number[]) {
       case "combo_bonus":
         comboBonus += ability.value;
         break;
+    }
+  }
+
+  if (pokemonIds.length >= 3) {
+    const types = pokemonIds
+      .map((id) => POKEMON_MAP[id])
+      .filter(Boolean)
+      .map((p) => getPokemonBattleStats(p).type);
+    if (types.length === pokemonIds.length && types.every((t) => t === types[0])) {
+      battleDamage += TEAM_MONOTYPE_DAMAGE_BONUS;
     }
   }
 

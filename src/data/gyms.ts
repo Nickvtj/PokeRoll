@@ -6,7 +6,7 @@ export const ELITE_REQUIRED_ACCOUNT_LEVEL = 40;
 function withAccountLevel(gym: Omit<GymDefinition, "requiredAccountLevel">): GymDefinition {
   return {
     ...gym,
-    requiredAccountLevel: gym.order === 1 ? 1 : (gym.order - 1) * 5,
+    requiredAccountLevel: 1,
   };
 }
 
@@ -241,30 +241,41 @@ export function getGymById(id: GymId): GymDefinition {
   return GYM_MAP[id];
 }
 
-export function isGymUnlocked(gymId: GymId, accountLevel: number): boolean {
+export function getPreviousGym(gymId: GymId): GymDefinition | null {
   const gym = GYM_MAP[gymId];
-  return accountLevel >= gym.requiredAccountLevel;
+  if (gym.order <= 1) return null;
+  return GYMS.find((g) => g.order === gym.order - 1) ?? null;
 }
 
-export function isEliteLeagueUnlocked(accountLevel: number, badges: GymId[]): boolean {
-  return accountLevel >= ELITE_REQUIRED_ACCOUNT_LEVEL && allBadgesEarned(badges);
+export function isGymUnlocked(gymId: GymId, badges: GymId[]): boolean {
+  const gym = GYM_MAP[gymId];
+  if (gym.order <= 1) return true;
+  const previous = GYMS.find((g) => g.order === gym.order - 1);
+  if (!previous) return true;
+  return badges.includes(previous.id);
+}
+
+export function isEliteLeagueUnlocked(_accountLevel: number, badges: GymId[]): boolean {
+  return allBadgesEarned(badges);
 }
 
 export function getTeamGymReadiness(
   team: number[],
   pokemonLevels: Record<number, number>,
   recommendedLevel: number
-): { ready: boolean; avgLevel: number; teamComplete: boolean } {
+): { ready: boolean; avgLevel: number; teamComplete: boolean; underleveled: boolean } {
   const teamComplete = team.length >= 3;
   if (!teamComplete) {
-    return { ready: false, avgLevel: 0, teamComplete: false };
+    return { ready: false, avgLevel: 0, teamComplete: false, underleveled: false };
   }
   const avgLevel =
     team.reduce((sum, id) => sum + (pokemonLevels[id] ?? 1), 0) / team.length;
+  const underleveled = avgLevel < recommendedLevel;
   return {
-    ready: avgLevel >= recommendedLevel,
+    ready: teamComplete,
     avgLevel: Math.round(avgLevel * 10) / 10,
     teamComplete: true,
+    underleveled,
   };
 }
 

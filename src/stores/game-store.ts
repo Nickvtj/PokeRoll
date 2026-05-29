@@ -282,16 +282,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { lastSpinResults, duplicateRewardsGranted } = get();
     if (duplicateRewardsGranted || lastSpinResults.length === 0) return;
 
-    const duplicateCount = lastSpinResults.filter((r) => r.isDuplicate).length;
+    const duplicates = lastSpinResults.filter((r) => r.isDuplicate);
     set({ duplicateRewardsGranted: true });
 
-    if (duplicateCount === 0) return;
+    if (duplicates.length === 0) return;
 
     void import("@/stores/economy-store").then(({ useEconomyStore }) => {
-      const economy = useEconomyStore.getState();
-      for (let i = 0; i < duplicateCount; i++) {
-        economy.convertDuplicate();
-      }
+      void import("@/data/duplicate-xp").then(({ getDuplicateCoins }) => {
+        const economy = useEconomyStore.getState();
+        for (const result of duplicates) {
+          economy.addCoins(getDuplicateCoins(result.rarity));
+        }
+      });
     });
   },
 

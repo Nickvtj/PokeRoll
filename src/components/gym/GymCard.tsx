@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Coins, ChevronDown } from "lucide-react";
+import { Lock, Coins, ChevronDown, Check } from "lucide-react";
 import { TOTAL_POKEMON } from "@/data/pokemon";
-import { getHallOfFameCount, getTeamGymReadiness } from "@/data/gyms";
+import { getHallOfFameCount, getPreviousGym, getTeamGymReadiness } from "@/data/gyms";
 import { GYM_LEADER_COIN_REWARD } from "@/data/gym-badges";
 import { useGymStore } from "@/stores/gym-store";
 import { useEconomyStore } from "@/stores/economy-store";
 import { PokemonHallOfFame } from "@/components/gym/PokemonHallOfFame";
-import { GymBattleScreen } from "@/components/gym/GymBattleScreen";
 import { GymBadge } from "@/components/gym/GymBadge";
 import { cn } from "@/lib/utils";
 import type { GymDefinition } from "@/types/gym";
@@ -17,18 +16,16 @@ interface GymCardProps {
   gym: GymDefinition;
   unlocked: boolean;
   hasBadge: boolean;
-  onBattleActiveChange?: (active: boolean) => void;
+  onChallenge: () => void;
 }
 
-export function GymCard({ gym, unlocked, hasBadge, onBattleActiveChange }: GymCardProps) {
+export function GymCard({ gym, unlocked, hasBadge, onChallenge }: GymCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const [battling, setBattling] = useState(false);
   const hallOfFame = useGymStore((s) => s.hallOfFame);
   const getGymProgress = useGymStore((s) => s.getGymProgress);
   const canClaimGymCoins = useGymStore((s) => s.canClaimGymCoins);
   const claimGymCoinReward = useGymStore((s) => s.claimGymCoinReward);
   const addCoins = useEconomyStore((s) => s.addCoins);
-  const accountLevel = useEconomyStore((s) => s.level);
   const team = useEconomyStore((s) => s.team);
   const getPokemonLevelsMap = useEconomyStore((s) => s.getPokemonLevelsMap);
 
@@ -36,27 +33,18 @@ export function GymCard({ gym, unlocked, hasBadge, onBattleActiveChange }: GymCa
   const hofCount = getHallOfFameCount(hallOfFame, gym.id);
   const canClaim = canClaimGymCoins(gym.id);
   const coinsClaimed = progress.coinRewardClaimed;
+  const previousGym = getPreviousGym(gym.id);
   const teamReadiness = getTeamGymReadiness(
     team,
     getPokemonLevelsMap(),
     gym.recommendedLevel
   );
-  const canChallenge = unlocked && teamReadiness.ready;
+  const canChallenge = unlocked && teamReadiness.teamComplete;
 
   const handleClaimCoins = () => {
     const amount = claimGymCoinReward(gym.id);
     if (amount > 0) addCoins(amount);
   };
-
-  if (battling) {
-    return (
-      <GymBattleScreen
-        gymId={gym.id}
-        onExit={() => setBattling(false)}
-        onBattleActiveChange={onBattleActiveChange}
-      />
-    );
-  }
 
   return (
     <div
@@ -91,19 +79,19 @@ export function GymCard({ gym, unlocked, hasBadge, onBattleActiveChange }: GymCa
               )}
             </div>
             <p className="text-[10px] text-white/50">
-              {gym.arenaName} · Pokémon Nv. {gym.recommendedLevel}+
+              {gym.arenaName} · Recomendado Nv. {gym.recommendedLevel}+
             </p>
-            {!unlocked && (
+            {!unlocked && previousGym && (
               <p className="text-[10px] text-amber-400/90 mt-1">
-                Requer Nv. {gym.requiredAccountLevel} da conta (você: Nv. {accountLevel})
+                Derrote {previousGym.leaderName} primeiro
               </p>
             )}
             {unlocked && !teamReadiness.teamComplete && (
               <p className="text-[10px] text-orange-400/90 mt-1">Monte um time de 3 Pokémon</p>
             )}
-            {unlocked && teamReadiness.teamComplete && !teamReadiness.ready && (
+            {unlocked && teamReadiness.teamComplete && teamReadiness.underleveled && (
               <p className="text-[10px] text-orange-400/90 mt-1">
-                Time médio Nv. {teamReadiness.avgLevel} · recomendado Nv. {gym.recommendedLevel}+
+                Time médio Nv. {teamReadiness.avgLevel} · recomendado Nv. {gym.recommendedLevel}+ (pode tentar mesmo assim)
               </p>
             )}
             <p className="text-[10px] text-white/40 mt-1 line-clamp-2">{gym.description}</p>
@@ -124,7 +112,7 @@ export function GymCard({ gym, unlocked, hasBadge, onBattleActiveChange }: GymCa
         <button
           type="button"
           disabled={!canChallenge}
-          onClick={() => canChallenge && setBattling(true)}
+          onClick={() => canChallenge && onChallenge()}
           className={cn(
             "flex-1 py-2 rounded-xl text-xs font-bold transition-all",
             canChallenge
@@ -146,10 +134,10 @@ export function GymCard({ gym, unlocked, hasBadge, onBattleActiveChange }: GymCa
           </button>
         ) : hasBadge && coinsClaimed ? (
           <div
-            title="Recompensa já coletada"
-            className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/25 cursor-default"
+            title="Recompensa coletada"
+            className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/30 cursor-default flex items-center justify-center gap-1 min-w-[44px]"
           >
-            <Coins className="w-4 h-4" />
+            <Check className="w-4 h-4 text-emerald-400/90" />
           </div>
         ) : (
           <button

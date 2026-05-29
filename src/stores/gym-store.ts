@@ -103,13 +103,11 @@ export const useGymStore = create<GymStore>((set, get) => ({
   hasBadge: (gymId) => get().badges.includes(gymId),
 
   isGymUnlocked: (gymId) => {
-    const accountLevel = useEconomyStore.getState().level;
-    return isGymUnlocked(gymId, accountLevel);
+    return isGymUnlocked(gymId, get().badges);
   },
 
   isEliteUnlocked: () => {
-    const accountLevel = useEconomyStore.getState().level;
-    return isEliteLeagueUnlocked(accountLevel, get().badges);
+    return isEliteLeagueUnlocked(useEconomyStore.getState().level, get().badges);
   },
 
   getGymProgress: (gymId) => get().gymProgress[gymId] ?? defaultProgress(),

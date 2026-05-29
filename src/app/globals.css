@@ -361,6 +361,156 @@ body {
     border-width: 2px;
   }
 
+  /* === Sinergia monocromática (montar time) === */
+  .monotype-synergy-aura {
+    @apply relative overflow-hidden rounded-xl;
+    box-shadow:
+      0 0 0 1px rgba(var(--mono-rgb), 0.35),
+      0 0 18px rgba(var(--mono-rgb), 0.35);
+    animation: monotype-aura-pulse 1.6s ease-in-out infinite;
+  }
+
+  .monotype-synergy-shimmer {
+    @apply absolute inset-0 z-[1] pointer-events-none opacity-70;
+    background: linear-gradient(
+      115deg,
+      transparent 35%,
+      rgba(var(--mono-rgb), 0.45) 50%,
+      transparent 65%
+    );
+    animation: monotype-shimmer-sweep 2.4s linear infinite;
+  }
+
+  .monotype-synergy-sparks {
+    @apply absolute inset-0 z-[1] pointer-events-none;
+    opacity: 0.55;
+    background-image: radial-gradient(circle, rgba(var(--mono-rgb), 0.9) 1px, transparent 1px);
+    background-size: 14px 14px;
+    animation: monotype-spark-drift 3s linear infinite;
+  }
+
+  .monotype-synergy-electric .monotype-synergy-sparks {
+    opacity: 0.85;
+    background-size: 10px 18px;
+    animation: monotype-electric-flicker 0.55s steps(2, end) infinite;
+  }
+
+  .monotype-synergy-fire .monotype-synergy-shimmer {
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(var(--mono-rgb), 0.35) 45%,
+      rgba(239, 68, 68, 0.25) 70%,
+      transparent
+    );
+    animation: monotype-fire-rise 1.8s ease-in-out infinite;
+  }
+
+  .monotype-synergy-water .monotype-synergy-shimmer {
+    background: radial-gradient(
+      ellipse 80% 50% at 50% 100%,
+      rgba(var(--mono-rgb), 0.4),
+      transparent 70%
+    );
+    animation: monotype-water-ripple 2s ease-in-out infinite;
+  }
+
+  .monotype-synergy-grass .monotype-synergy-sparks {
+    background-image: radial-gradient(circle, rgba(var(--mono-rgb), 0.75) 1.5px, transparent 1.5px);
+    background-size: 16px 22px;
+    animation: monotype-spark-drift 4s linear infinite reverse;
+  }
+
+  .monotype-synergy-banner {
+    background: linear-gradient(
+      90deg,
+      rgba(var(--mono-rgb), 0.18),
+      rgba(var(--mono-rgb), 0.08)
+    );
+    border-color: rgba(var(--mono-rgb), 0.45);
+    box-shadow: 0 0 20px rgba(var(--mono-rgb), 0.2);
+  }
+
+  .monotype-banner-electric {
+    animation: monotype-banner-flash 1.2s ease-in-out infinite;
+  }
+
+  @keyframes monotype-aura-pulse {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 1px rgba(var(--mono-rgb), 0.3),
+        0 0 14px rgba(var(--mono-rgb), 0.28);
+    }
+    50% {
+      box-shadow:
+        0 0 0 1px rgba(var(--mono-rgb), 0.55),
+        0 0 26px rgba(var(--mono-rgb), 0.48);
+    }
+  }
+
+  @keyframes monotype-shimmer-sweep {
+    0% {
+      transform: translateX(-120%) skewX(-12deg);
+    }
+    100% {
+      transform: translateX(120%) skewX(-12deg);
+    }
+  }
+
+  @keyframes monotype-spark-drift {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(-12px);
+    }
+  }
+
+  @keyframes monotype-electric-flicker {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes monotype-fire-rise {
+    0%,
+    100% {
+      transform: translateY(8%) scale(1);
+      opacity: 0.45;
+    }
+    50% {
+      transform: translateY(-4%) scale(1.05);
+      opacity: 0.85;
+    }
+  }
+
+  @keyframes monotype-water-ripple {
+    0%,
+    100% {
+      transform: scale(0.95);
+      opacity: 0.5;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  }
+
+  @keyframes monotype-banner-flash {
+    0%,
+    100% {
+      filter: brightness(1);
+    }
+    50% {
+      filter: brightness(1.15);
+    }
+  }
+
   /* === Botão caça-níquel (Roleta) === */
   .spin-lever-btn {
     @apply relative isolate py-1;

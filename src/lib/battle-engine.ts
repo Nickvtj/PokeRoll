@@ -6,6 +6,7 @@ import {
   getTypesStrongAgainst,
   normalizeType,
 } from "@/data/type-chart";
+import { TEAM_MONOTYPE_DAMAGE_BONUS } from "@/data/economy-balance";
 import {
   BATTLE_BASE_COINS_MAX,
   BATTLE_BASE_COINS_MIN,
@@ -90,7 +91,11 @@ function analyzePlayerTeam(
     playerPokemon.reduce((sum, p) => sum + (pokemonLevels[p.id] ?? 1), 0) /
     playerPokemon.length;
   const types = [...new Set(fighters.map((f) => f.stats.type))];
-  return { avgRarityTier, avgPokemonLevel, types, fighters };
+  const monotype =
+    playerPokemon.length === TEAM_SIZE &&
+    types.length === 1 &&
+    fighters.every((f) => f.stats.type === types[0]);
+  return { avgRarityTier, avgPokemonLevel, types, fighters, monotype, sharedType: monotype ? types[0] : null };
 }
 
 function pickEnemyRarity(targetTier: number): Rarity {
@@ -173,7 +178,9 @@ export function generateEnemyTeam(
 
   const levelBonus = (avgPokemonLevel - 1) * 0.018;
   const targetTier = Math.max(1, avgRarityTier + (wave - 1) * 0.25 + levelBonus * 2);
-  const difficulty = 0.94 + wave * 0.03 + levelBonus + Math.random() * 0.05;
+  const rarityPressure =
+    avgRarityTier >= 4.5 ? 1.1 : avgRarityTier >= 3.5 ? 1.05 : 1;
+  const difficulty = (0.94 + wave * 0.03 + levelBonus + Math.random() * 0.05) * rarityPressure;
 
   const usedIds = new Set<number>();
   const enemies: BattleFighter[] = [];
@@ -268,11 +275,22 @@ export function initBattle(
   );
   const enemyTeam = generateEnemyTeam(playerPokemon, wave, pokemonLevels);
 
-  const { avgRarityTier } = analyzePlayerTeam(playerPokemon, pokemonLevels);
+  const { avgRarityTier, monotype, sharedType } = analyzePlayerTeam(playerPokemon, pokemonLevels);
   const tierLabel =
     avgRarityTier >= 4 ? "Elite" : avgRarityTier >= 3 ? "Avançado" : "Padrão";
 
   const playerStarts = performCoinFlip();
+
+  const startLog: BattleLogEntry[] = [
+    log("A batalha começou!", "info"),
+    log(`${tierLabel} — 1v1 da frente; quem vence segue até cair`, "info"),
+  ];
+  if (monotype && sharedType) {
+    const typeLabel = sharedType.charAt(0).toUpperCase() + sharedType.slice(1);
+    startLog.push(
+      log(`Time monocromático (${typeLabel})! +${Math.round(TEAM_MONOTYPE_DAMAGE_BONUS * 100)}% de dano`, "info")
+    );
+  }
 
   return {
     phase: "coinFlip",
@@ -282,10 +300,7 @@ export function initBattle(
     currentTurnIndex: 0,
     wave,
     maxWaves: 1,
-    log: [
-      log("A batalha começou!", "info"),
-      log(`${tierLabel} — 1v1 da frente; quem vence segue até cair`, "info"),
-    ],
+    log: startLog,
     reward: null,
     levelUps: [],
     mode: "training",
@@ -392,12 +407,16 @@ function calcDamage(
   }
 
   let raw =
-    attacker.stats.attack * damageMult * typeMult -
-    defense * 0.4 +
-    Math.random() * 8;
-  if (isCrit) raw *= 1.8;
+    (attacker.stats.attack * damageMult) /
+      (attacker.stats.attack + defense * 0.85 + 14) *
+    50 *
+    typeMult +
+    Math.random() * 4;
+  if (isCrit) raw *= 1.45;
+  const damage = Math.max(typeMult > 1 ? 2 : 1, Math.round(raw));
+  const maxHit = Math.max(8, Math.round(defender.maxHp * 0.42));
   return {
-    damage: Math.max(typeMult > 1 ? 2 : 1, Math.round(raw)),
+    damage: Math.min(damage, maxHit),
     isCrit,
     typeLabel,
     typeMult,
@@ -585,14 +604,38 @@ export function executeBattleTurn(
       const deadOrderPos = state.turnOrder.indexOf(championFlat!);
       if (deadOrderPos >= 0) turnIndex = deadOrderPos + 1;
     } else if (championAfter && championAfter.currentHp > 0) {
-      nextEngagement = {
-        championFlatIndex: championFlat!,
-        targetFlatIndex: null,
-        counterTurn: false,
-      };
-      logEntries.push(
-        log(`${championAfter.pokemon.name} avança para o próximo oponente!`, "info")
-      );
+      if (championAfter.isPlayer) {
+        const battleAfterKo = {
+          ...state,
+          playerTeam: all.filter((f) => f.isPlayer),
+          enemyTeam: all.filter((f) => !f.isPlayer),
+        };
+        const incoming = pickFrontOpponent(championAfter, battleAfterKo);
+        if (incoming) {
+          const incomingFlat = fighterFlatIndex(incoming);
+          logEntries.push(log(`${incoming.pokemon.name} entra e ataca!`, "info"));
+          nextEngagement = {
+            championFlatIndex: incomingFlat,
+            targetFlatIndex: championFlat!,
+            counterTurn: false,
+          };
+        } else {
+          nextEngagement = {
+            championFlatIndex: championFlat!,
+            targetFlatIndex: null,
+            counterTurn: false,
+          };
+        }
+      } else {
+        nextEngagement = {
+          championFlatIndex: championFlat!,
+          targetFlatIndex: null,
+          counterTurn: false,
+        };
+        logEntries.push(
+          log(`${championAfter.pokemon.name} avança para o próximo oponente!`, "info")
+        );
+      }
     } else {
       nextEngagement = null;
     }

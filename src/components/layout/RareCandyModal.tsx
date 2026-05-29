@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { X, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { POKEMON_LIST, POKEMON_MAP } from "@/data/pokemon";
 import { RARE_CANDY_SPRITE } from "@/data/item-sprites";
@@ -19,16 +19,32 @@ interface RareCandyModalProps {
 
 export function RareCandyModal({ open, onClose }: RareCandyModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const collection = useGameStore((s) => s.collection);
   const rareCandyCount = useEconomyStore((s) => s.rareCandyCount ?? 0);
   const useRareCandyOnPokemon = useEconomyStore((s) => s.useRareCandyOnPokemon);
   const getPokemonProgress = useEconomyStore((s) => s.getPokemonProgress);
   const getLevelCap = useEconomyStore((s) => s.getLevelCap);
 
-  const collected = POKEMON_LIST.filter((p) => collection[p.id]);
+  const collected = useMemo(
+    () =>
+      POKEMON_LIST.filter((p) => {
+        if (!collection[p.id]) return false;
+        const q = searchQuery.trim().toLowerCase();
+        if (q && !p.name.toLowerCase().includes(q)) return false;
+        return true;
+      }),
+    [collection, searchQuery]
+  );
   const levelCap = getLevelCap();
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!open) {
+      setSearchQuery("");
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -80,9 +96,24 @@ export function RareCandyModal({ open, onClose }: RareCandyModalProps) {
               1 Rare Candy = +1 nível. Cap atual: Nv.{levelCap}
             </p>
 
+            {collected.length > 0 && (
+              <div className="relative mb-3 shrink-0">
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/35" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar Pokémon..."
+                  className="w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-pink-400/40"
+                />
+              </div>
+            )}
+
             {collected.length === 0 ? (
               <p className="text-center text-sm text-white/40 py-8">
-                Colete Pokémon no álbum para usar Rare Candy.
+                {searchQuery.trim()
+                  ? "Nenhum Pokémon encontrado."
+                  : "Colete Pokémon no álbum para usar Rare Candy."}
               </p>
             ) : (
               <div className="grid grid-cols-4 gap-2 overflow-y-auto overscroll-contain flex-1 min-h-0 pr-1 -mr-1">

@@ -62,7 +62,7 @@ export function TrainerItemsBar({ className }: TrainerItemsBarProps) {
             title={
               isLuckyEggActive
                 ? `Lucky Egg ativo · 2× XP · ${formatTime(secondsLeft)}`
-                : `Ativar Lucky Egg (2× XP por 2 min) · ${luckyEggCount} no inventário`
+                : `Ativar Lucky Egg (2× XP por 5 min) · ${luckyEggCount} no inventário`
             }
             className={cn(
               "inline-flex items-center gap-1.5 px-2 py-1 rounded-xl glass text-xs border transition-all",

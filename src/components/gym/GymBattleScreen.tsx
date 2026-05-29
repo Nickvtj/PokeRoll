@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
 import { BattleArena } from "@/components/battle/BattleArena";
 import { BattleTeamPrepLayout } from "@/components/battle/BattleTeamPrepLayout";
 import { TeamSelector } from "@/components/battle/TeamSelector";
@@ -96,7 +95,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
       setBattleState(initGymBattle(gymId, s, pokemon, getPokemonLevelsMap()));
       setFighting(true);
     },
-    [team, gymId, getPokemonLevelsMap]
+    [team, gymId, getPokemonLevelsMap, resetLoop]
   );
 
   const resetBattle = () => {
@@ -118,11 +117,6 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
     }
   };
 
-  const handlePlayAgain = () => {
-    resetBattle();
-    startStage(stage);
-  };
-
   const gymContinueLabel =
     battleState?.phase === "victory" && stage < 5
       ? "Próxima Batalha"
@@ -136,68 +130,84 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
     return () => onBattleActiveChange?.(false);
   }, [fighting, battleState, onBattleActiveChange]);
 
-  return (
-    <div className="space-y-3">
-      {!fighting && !battleState && (
-        <button
-          type="button"
-          onClick={onExit}
-          className="flex items-center gap-1 text-xs text-white/50 hover:text-white"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Voltar aos ginásios
-        </button>
-      )}
-
-      {!fighting && !battleState && (
-        <div
-          className="glass-card p-3 text-center border"
-          style={{ borderColor: `${gym.themeColor}40` }}
-        >
-          <p className="text-xs font-bold" style={{ color: gym.themeColor }}>
-            {gym.arenaName} · Batalha {stage}/5
-          </p>
-        </div>
-      )}
-
-      {!fighting && !battleState && (
-        <BattleTeamPrepLayout
-          previewLayout="bar-only"
-          action={
-            <AnimatedButton
-              variant="gold"
-              className="w-full"
-              onClick={() => startStage(1)}
-              disabled={team.length < 3}
-            >
-              Iniciar Ginásio (5 batalhas)
-            </AnimatedButton>
-          }
-        >
-          <SavedTeamsPanel />
-          <TeamSelector className="flex-1 min-h-0" />
-        </BattleTeamPrepLayout>
-      )}
-
-      {(fighting || battleState) && (
+  if (fighting || battleState) {
+    return (
+      <>
         <BattleArena
           state={arenaState}
           combatHighlight={combatHighlight}
           onContinue={handleContinue}
-          onPlayAgain={battleState?.phase === "defeat" ? handlePlayAgain : undefined}
+          onPlayAgain={
+            battleState?.phase === "defeat"
+              ? () => {
+                  resetLoop();
+                  startStage(stage);
+                }
+              : undefined
+          }
           continueLabel={gymContinueLabel}
         />
-      )}
+        <BadgeRewardAnimation
+          show={!!badgeReward}
+          gym={gym}
+          teamIds={badgeReward?.teamIds ?? []}
+          bonus={
+            badgeReward?.bonus ?? {
+              noDeaths: false,
+              fastClear: false,
+              underleveled: false,
+              typeChallenge: false,
+              stars: 1,
+              rank: "C",
+            }
+          }
+          onClose={() => {
+            setBadgeReward(null);
+            onExit();
+          }}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <BattleTeamPrepLayout
+        previewLayout="bar-only"
+        action={
+          <AnimatedButton
+            variant="gold"
+            className="w-full"
+            onClick={() => startStage(1)}
+            disabled={team.length < 3}
+          >
+            Iniciar Ginásio (5 batalhas)
+          </AnimatedButton>
+        }
+      >
+        <SavedTeamsPanel />
+        <TeamSelector className="flex-1 min-h-0" />
+      </BattleTeamPrepLayout>
 
       <BadgeRewardAnimation
         show={!!badgeReward}
         gym={gym}
         teamIds={badgeReward?.teamIds ?? []}
-        bonus={badgeReward?.bonus ?? { noDeaths: false, fastClear: false, underleveled: false, typeChallenge: false, stars: 1, rank: "C" }}
+        bonus={
+          badgeReward?.bonus ?? {
+            noDeaths: false,
+            fastClear: false,
+            underleveled: false,
+            typeChallenge: false,
+            stars: 1,
+            rank: "C",
+          }
+        }
         onClose={() => {
           setBadgeReward(null);
           onExit();
         }}
       />
-    </div>
+    </>
   );
 }

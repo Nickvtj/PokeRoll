@@ -5,6 +5,15 @@ export const STARTING_COINS = 0;
 export const WELCOME_PACKAGE_COINS = 15;
 export const DUPLICATE_COIN_REWARD = 2;
 
+/** Moedas por duplicata na roleta (por raridade) */
+export const DUPLICATE_COINS_BY_RARITY = {
+  common: 1,
+  uncommon: 2,
+  rare: 3,
+  epic: 4,
+  legendary: 5,
+} as const;
+
 /** Minigames — sem teto diário; recompensas menores que batalha (4–7) */
 export const CAPTURE_SHAKE_MS = 700;
 /** Moedas por acerto — perfeito vale o dobro */
@@ -41,7 +50,7 @@ export const CLICK_FATIGUE_MULTIPLIER = MINIGAME_FATIGUE_MULTIPLIER;
 export const BATTLE_BASE_COINS_MIN = 4;
 export const BATTLE_BASE_COINS_MAX = 7;
 export const BATTLE_FREE_SPIN_CHANCE = 0.04;
-export const BATTLE_XP_BASE = 22;
+export const BATTLE_XP_BASE = 14;
 export const BATTLE_DURATION_BASE_MS = 18000;
 export const BATTLE_DURATION_PER_WAVE_MS = 4000;
 /** Pausa entre golpes — tempo para animação estilo clássico */
@@ -53,12 +62,13 @@ export const BATTLE_COIN_FLIP_MS = 3200;
 export const BATTLE_COIN_REVEAL_MS = 2600;
 export const BATTLE_POST_COIN_PAUSE_MS = 1100;
 
-/** Progressão — treinador sobe mais devagar */
-export const XP_PER_LEVEL = 180;
+/** Boost de dano quando os 3 Pokémon do time compartilham o mesmo tipo */
+export const TEAM_MONOTYPE_DAMAGE_BONUS = 0.12;
+export const XP_PER_LEVEL = 260;
 export const MAX_LEVEL = 50;
 
-/** Lucky Egg: dobro de XP por 2 min (ativar manualmente no header) */
-export const LUCKY_EGG_DURATION_MS = 120_000;
+/** Lucky Egg: dobro de XP por 5 min (ativar manualmente no header) */
+export const LUCKY_EGG_DURATION_MS = 300_000;
 export const LUCKY_EGG_XP_MULTIPLIER = 2;
 export const LUCKY_EGG_PER_MILESTONE = 1;
 

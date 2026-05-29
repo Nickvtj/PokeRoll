@@ -71,10 +71,10 @@ export function getTypeEffectiveness(
     return { multiplier: 0, label: "imune" };
   }
   if (TYPE_STRONG_AGAINST[atk]?.includes(def)) {
-    return { multiplier: 1.5, label: "super efetivo" };
+    return { multiplier: 1.35, label: "super efetivo" };
   }
   if (TYPE_WEAK_AGAINST[atk]?.includes(def)) {
-    return { multiplier: 0.5, label: "pouco efetivo" };
+    return { multiplier: 0.65, label: "pouco efetivo" };
   }
   return { multiplier: 1, label: null };
 }

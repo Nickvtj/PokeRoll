@@ -16,10 +16,12 @@ import { withDisplayImage } from "@/lib/pokemon-display";
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGymStore } from "@/stores/gym-store";
 import { cn } from "@/lib/utils";
-import { RARITY_CONFIG } from "@/data/rarity";
+import { RARITY_CONFIG, RARITY_ORDER } from "@/data/rarity";
 import { PokemonGymBadges } from "@/components/gym/GymBadge";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
+import { MonotypeSynergyAura, MonotypeSynergyBanner } from "@/components/battle/MonotypeSynergyFx";
+import { getTeamMonotypeSynergy } from "@/lib/team-monotype";
 
 interface TeamSelectorProps {
   maxTeam?: number;
@@ -70,6 +72,7 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
   const getHallOfFameBorder = useGymStore((s) => s.getHallOfFameBorder);
 
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [rarityFilter, setRarityFilter] = useState<string>("all");
   const [levelFilter, setLevelFilter] = useState<LevelFilterId>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -98,6 +101,7 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
         if (q && !p.name.toLowerCase().includes(q)) return false;
         if (favoritesOnly && !favoriteSet.has(p.id)) return false;
         if (typeFilter !== "all" && type !== typeFilter) return false;
+        if (rarityFilter !== "all" && p.rarity !== rarityFilter) return false;
         if (!matchesLevelFilter(level, levelFilter)) return false;
         return true;
       })
@@ -110,12 +114,15 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
   }, [
     collected,
     typeFilter,
+    rarityFilter,
     levelFilter,
     pokemonBattleXp,
     searchQuery,
     favoritesOnly,
     favoriteSet,
   ]);
+
+  const monotypeSynergy = useMemo(() => getTeamMonotypeSynergy(team), [team]);
 
   const toggle = (id: number) => {
     const countInTeam = team.filter((t) => t === id).length;
@@ -240,6 +247,23 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
           ))}
         </select>
         <select
+          value={rarityFilter}
+          onChange={(e) => setRarityFilter(e.target.value)}
+          className={cn(
+            "px-3 py-1.5 text-xs rounded-xl bg-transparent border text-white/70",
+            BATTLE_CLASSIC_THEME ? "battle-prep-filter" : "glass-card border-white/10"
+          )}
+        >
+          <option value="all" className="bg-slate-900">
+            Todas raridades
+          </option>
+          {RARITY_ORDER.map((r) => (
+            <option key={r} value={r} className="bg-slate-900">
+              {RARITY_CONFIG[r].label}
+            </option>
+          ))}
+        </select>
+        <select
           value={levelFilter}
           onChange={(e) => setLevelFilter(e.target.value as LevelFilterId)}
           className={cn(
@@ -255,6 +279,8 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
         </select>
       </div>
 
+      <MonotypeSynergyBanner synergy={monotypeSynergy} className="shrink-0" />
+
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 flex-1 min-h-0 overflow-y-auto overscroll-contain p-1 -m-1 pr-2">
         {filtered.map((pokemon) => {
           const countInTeam = team.filter((t) => t === pokemon.id).length;
@@ -268,46 +294,51 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
           const type = getPrimaryType(pokemon.id, pokemon.name);
           const gymBadges = getHallOfFameBorder(pokemon.id);
           const displayPokemon = withDisplayImage(pokemon, collection[pokemon.id]);
+          const showMonotypeFx = selected && monotypeSynergy.active;
 
           return (
-            <motion.div
+            <MonotypeSynergyAura
               key={pokemon.id}
-              role="button"
-              tabIndex={disabled ? -1 : 0}
-              whileTap={{ scale: disabled ? 1 : 0.98 }}
-              onClick={() => !disabled && toggle(pokemon.id)}
-              onKeyDown={(e) => {
-                if (!disabled && (e.key === "Enter" || e.key === " ")) {
-                  e.preventDefault();
-                  toggle(pokemon.id);
-                }
-              }}
-              className={cn(
-                BATTLE_CLASSIC_THEME
-                  ? cn(
-                      "battle-prep-card",
-                      selected && "battle-prep-card-selected battle-classic-card-active",
-                      isFavorite && !selected && "border-pink-400/30"
-                    )
-                  : cn(
-                      "relative text-center transition-all cursor-pointer rounded-xl border p-2 bg-white/[0.04]",
-                      selected ? "border-2" : "border-white/10 hover:border-white/20",
-                      isFavorite && !selected && "border-pink-400/30"
-                    ),
-                disabled && "opacity-30 cursor-not-allowed"
-              )}
-              style={
-                selected
-                  ? {
-                      borderColor: config.color,
-                      backgroundColor: BATTLE_CLASSIC_THEME
-                        ? `${config.color}22`
-                        : `${config.color}18`,
-                      boxShadow: `0 0 14px ${config.glowColor}`,
-                    }
-                  : undefined
-              }
+              active={showMonotypeFx}
+              type={monotypeSynergy.type}
             >
+              <motion.div
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                whileTap={{ scale: disabled ? 1 : 0.98 }}
+                onClick={() => !disabled && toggle(pokemon.id)}
+                onKeyDown={(e) => {
+                  if (!disabled && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    toggle(pokemon.id);
+                  }
+                }}
+                className={cn(
+                  BATTLE_CLASSIC_THEME
+                    ? cn(
+                        "battle-prep-card",
+                        selected && "battle-prep-card-selected battle-classic-card-active",
+                        isFavorite && !selected && "border-pink-400/30"
+                      )
+                    : cn(
+                        "relative text-center transition-all cursor-pointer rounded-xl border p-2 bg-white/[0.04]",
+                        selected ? "border-2" : "border-white/10 hover:border-white/20",
+                        isFavorite && !selected && "border-pink-400/30"
+                      ),
+                  disabled && "opacity-30 cursor-not-allowed"
+                )}
+                style={
+                  selected
+                    ? {
+                        borderColor: config.color,
+                        backgroundColor: BATTLE_CLASSIC_THEME
+                          ? `${config.color}22`
+                          : `${config.color}18`,
+                        boxShadow: showMonotypeFx ? undefined : `0 0 14px ${config.glowColor}`,
+                      }
+                    : undefined
+                }
+              >
               <button
                 type="button"
                 aria-label={isFavorite ? "Remover dos favoritos" : "Favoritar"}
@@ -369,7 +400,8 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
                   <PokemonGymBadges gymIds={gymBadges} size="xs" max={3} />
                 </div>
               )}
-            </motion.div>
+              </motion.div>
+            </MonotypeSynergyAura>
           );
         })}
       </div>
