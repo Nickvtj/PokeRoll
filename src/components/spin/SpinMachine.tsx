@@ -13,9 +13,39 @@ interface SpinMachineProps {
   result?: SpinResult | null;
   onSpinComplete: () => void;
   onReelTick?: () => void;
-  compact?: boolean;
+  reelLayout?: 1 | 2 | 3;
   reelIndex?: number;
 }
+
+const REEL_LAYOUT = {
+  1: {
+    shell: "w-full max-w-md",
+    padding: "p-6",
+    frameMax: "max-w-[280px]",
+    imgSize: 180,
+    nameText: "text-lg",
+    dots: "w-3 h-3",
+    dotsMt: "mt-4",
+  },
+  2: {
+    shell: "w-full",
+    padding: "p-4",
+    frameMax: "max-w-[240px]",
+    imgSize: 145,
+    nameText: "text-sm",
+    dots: "w-2.5 h-2.5",
+    dotsMt: "mt-3",
+  },
+  3: {
+    shell: "w-full",
+    padding: "p-3.5",
+    frameMax: "max-w-[195px]",
+    imgSize: 118,
+    nameText: "text-xs",
+    dots: "w-2.5 h-2.5",
+    dotsMt: "mt-3",
+  },
+} as const;
 
 export function SpinMachine({
   sequence,
@@ -23,9 +53,10 @@ export function SpinMachine({
   result,
   onSpinComplete,
   onReelTick,
-  compact = false,
+  reelLayout = 1,
   reelIndex = 0,
 }: SpinMachineProps) {
+  const layout = REEL_LAYOUT[reelLayout];
   const [displayPokemon, setDisplayPokemon] = useState<Pokemon | null>(null);
   const [localSpinning, setLocalSpinning] = useState(false);
   const rafRef = useRef<number | null>(null);
@@ -139,19 +170,19 @@ export function SpinMachine({
 
   if (!pokemon) {
     return (
-      <div className={cn("relative mx-auto", compact ? "w-full" : "w-full max-w-md")}>
+      <div className={cn("relative mx-auto", layout.shell)}>
         <div className="glass-card p-1 rounded-3xl">
-          <div className={cn("slot-machine-bg rounded-[22px] relative overflow-hidden", compact ? "p-3" : "p-6")}>
+          <div className={cn("slot-machine-bg rounded-[22px] relative overflow-hidden", layout.padding)}>
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-60" />
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-60" />
-            <div className={cn("relative mx-auto", compact ? "max-w-[140px]" : "max-w-[280px]")}>
-              <SpinMachineIdle compact={compact} />
+            <div className={cn("relative mx-auto w-full", layout.frameMax)}>
+              <SpinMachineIdle reelLayout={reelLayout} />
             </div>
-            <div className={cn("flex justify-center gap-1.5", compact ? "mt-2" : "mt-4")}>
+            <div className={cn("flex justify-center gap-1.5", layout.dotsMt)}>
               {(["common", "uncommon", "rare", "epic", "legendary"] as const).map((r) => (
                 <div
                   key={r}
-                  className={cn("rounded-full opacity-20", compact ? "w-2 h-2" : "w-3 h-3")}
+                  className={cn("rounded-full opacity-20", layout.dots)}
                   style={{ backgroundColor: RARITY_CONFIG[r].color }}
                 />
               ))}
@@ -163,16 +194,16 @@ export function SpinMachine({
   }
 
   const config = RARITY_CONFIG[pokemon.rarity];
-  const imgSize = compact ? 90 : 180;
+  const imgSize = layout.imgSize;
 
   return (
-    <div className={cn("relative mx-auto", compact ? "w-full" : "w-full max-w-md")}>
+    <div className={cn("relative mx-auto", layout.shell)}>
       <div className="glass-card p-1 rounded-3xl">
-        <div className={cn("slot-machine-bg rounded-[22px] relative overflow-hidden", compact ? "p-3" : "p-6")}>
+        <div className={cn("slot-machine-bg rounded-[22px] relative overflow-hidden", layout.padding)}>
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-60" />
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-60" />
 
-          <div className={cn("relative mx-auto", compact ? "max-w-[140px]" : "max-w-[280px]")}>
+          <div className={cn("relative mx-auto w-full", layout.frameMax)}>
             {showResult && (
               <div className="absolute -top-2 -right-2 z-30 flex flex-col items-end gap-1">
                 {result.isNewShinyUnlock && (
@@ -224,7 +255,7 @@ export function SpinMachine({
                   <p
                     className={cn(
                       "mt-1 font-bold truncate max-w-full px-1",
-                      compact ? "text-xs" : "text-lg"
+                      layout.nameText
                     )}
                     style={{ color: config.color }}
                   >
@@ -246,14 +277,14 @@ export function SpinMachine({
             </div>
           </div>
 
-          <div className={cn("flex justify-center gap-1.5", compact ? "mt-2" : "mt-4")}>
+          <div className={cn("flex justify-center gap-1.5", layout.dotsMt)}>
             {(["common", "uncommon", "rare", "epic", "legendary"] as const).map((r, i) => (
               <div
                 key={r}
                 ref={(el) => {
                   dotsRef.current[i] = el;
                 }}
-                className={cn("rounded-full transition-all duration-300", compact ? "w-2 h-2" : "w-3 h-3")}
+                className={cn("rounded-full transition-all duration-300", layout.dots)}
                 style={{
                   backgroundColor: RARITY_CONFIG[r].color,
                   opacity: pokemon.rarity === r ? 1 : 0.3,

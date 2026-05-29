@@ -19,9 +19,11 @@ import { cn } from "@/lib/utils";
 import { RARITY_CONFIG } from "@/data/rarity";
 import { PokemonGymBadges } from "@/components/gym/GymBadge";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
 
 interface TeamSelectorProps {
   maxTeam?: number;
+  className?: string;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -56,7 +58,7 @@ function getOwnedCount(collection: Record<number, { count?: number }>, id: numbe
   return Math.max(1, entry.count ?? 1);
 }
 
-export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
+export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
   const collection = useGameStore((s) => s.collection);
   const team = useEconomyStore((s) => s.team);
   const setTeam = useEconomyStore((s) => s.setTeam);
@@ -146,7 +148,13 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
 
   if (collected.length === 0) {
     return (
-      <div className="glass-card p-6 text-center text-white/50 text-sm">
+      <div
+        className={cn(
+          "p-6 text-center text-white/50 text-sm",
+          BATTLE_CLASSIC_THEME ? "battle-classic-dialog" : "glass-card",
+          className
+        )}
+      >
         <Users className="w-8 h-8 mx-auto mb-2 opacity-40" />
         Colete Pokémon no álbum para montar seu time!
       </div>
@@ -154,12 +162,19 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h3 className="font-bold text-sm flex items-center gap-2">
-          <Users className="w-4 h-4 text-indigo-400" />
-          Montar Time ({team.length}/{maxTeam})
-        </h3>
+    <div className={cn("flex flex-col min-h-0 gap-3", className)}>
+      <div className="flex items-center justify-between flex-wrap gap-2 shrink-0">
+        {BATTLE_CLASSIC_THEME ? (
+          <span className="battle-classic-section-label battle-classic-player-label flex items-center gap-1.5 mb-0">
+            <Users className="w-3.5 h-3.5" />
+            Montar Time ({team.length}/{maxTeam})
+          </span>
+        ) : (
+          <h3 className="font-bold text-sm flex items-center gap-2">
+            <Users className="w-4 h-4 text-indigo-400" />
+            Montar Time ({team.length}/{maxTeam})
+          </h3>
+        )}
         <span className="text-[10px] text-amber-400/80">
           Cap Nv.{getLevelCap()} · {badgeCount}🏅
         </span>
@@ -180,7 +195,7 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 shrink-0">
         <div className="relative flex-1 min-w-[160px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 w-4 h-4 text-white/40" />
           <input
@@ -188,14 +203,20 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar Pokémon..."
-            className="w-full rounded-xl bg-white/5 border border-white/10 pl-10 pr-3 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30"
+            className={cn(
+              "w-full pl-10 pr-3 py-2 text-xs text-white placeholder:text-white/30",
+              BATTLE_CLASSIC_THEME
+                ? "battle-prep-filter"
+                : "rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30"
+            )}
           />
         </div>
         <button
           type="button"
           onClick={() => setFavoritesOnly((v) => !v)}
           className={cn(
-            "glass-card px-3 py-1.5 text-xs rounded-xl border transition-all flex items-center gap-1.5",
+            "px-3 py-1.5 text-xs rounded-xl border transition-all flex items-center gap-1.5",
+            BATTLE_CLASSIC_THEME ? "battle-prep-filter" : "glass-card",
             favoritesOnly
               ? "border-pink-400/50 text-pink-300 bg-pink-500/10"
               : "border-white/10 text-white/70 hover:text-white"
@@ -207,7 +228,10 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="glass-card px-3 py-1.5 text-xs rounded-xl bg-transparent border border-white/10 text-white/70"
+          className={cn(
+            "px-3 py-1.5 text-xs rounded-xl bg-transparent border text-white/70",
+            BATTLE_CLASSIC_THEME ? "battle-prep-filter" : "glass-card border-white/10"
+          )}
         >
           {availableTypes.map((t) => (
             <option key={t} value={t} className="bg-slate-900">
@@ -218,7 +242,10 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
         <select
           value={levelFilter}
           onChange={(e) => setLevelFilter(e.target.value as LevelFilterId)}
-          className="glass-card px-3 py-1.5 text-xs rounded-xl bg-transparent border border-white/10 text-white/70"
+          className={cn(
+            "px-3 py-1.5 text-xs rounded-xl bg-transparent border text-white/70",
+            BATTLE_CLASSIC_THEME ? "battle-prep-filter" : "glass-card border-white/10"
+          )}
         >
           {LEVEL_FILTER_OPTIONS.map((o) => (
             <option key={o.id} value={o.id} className="bg-slate-900">
@@ -228,7 +255,7 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
         </select>
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-72 overflow-y-auto p-1 -m-1 pr-2">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 flex-1 min-h-0 overflow-y-auto overscroll-contain p-1 -m-1 pr-2">
         {filtered.map((pokemon) => {
           const countInTeam = team.filter((t) => t === pokemon.id).length;
           const selected = countInTeam > 0;
@@ -256,16 +283,26 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
                 }
               }}
               className={cn(
-                "relative text-center transition-all cursor-pointer rounded-xl border p-2 bg-white/[0.04]",
-                selected ? "border-2" : "border-white/10 hover:border-white/20",
-                isFavorite && !selected && "border-pink-400/30",
+                BATTLE_CLASSIC_THEME
+                  ? cn(
+                      "battle-prep-card",
+                      selected && "battle-prep-card-selected battle-classic-card-active",
+                      isFavorite && !selected && "border-pink-400/30"
+                    )
+                  : cn(
+                      "relative text-center transition-all cursor-pointer rounded-xl border p-2 bg-white/[0.04]",
+                      selected ? "border-2" : "border-white/10 hover:border-white/20",
+                      isFavorite && !selected && "border-pink-400/30"
+                    ),
                 disabled && "opacity-30 cursor-not-allowed"
               )}
               style={
                 selected
                   ? {
                       borderColor: config.color,
-                      backgroundColor: `${config.color}18`,
+                      backgroundColor: BATTLE_CLASSIC_THEME
+                        ? `${config.color}22`
+                        : `${config.color}18`,
                       boxShadow: `0 0 14px ${config.glowColor}`,
                     }
                   : undefined
@@ -288,7 +325,14 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
                 />
               </button>
 
-              <div className="absolute top-1 left-1 px-1 py-0.5 rounded-md bg-indigo-500/80 text-[9px] font-bold">
+              <div
+                className={cn(
+                  "absolute top-1 left-1 z-10 px-1 py-0.5 text-[8px] font-black rounded-md leading-none",
+                  BATTLE_CLASSIC_THEME
+                    ? "bg-indigo-500/35 text-indigo-100 border border-indigo-400/45"
+                    : "bg-indigo-500/80 text-white"
+                )}
+              >
                 Nv.{level}
               </div>
               {selected && (
@@ -313,7 +357,12 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
                 className="object-contain mx-auto mt-2"
                 unoptimized
               />
-              <p className="text-[10px] font-semibold truncate mt-1">{pokemon.name}</p>
+              <p
+                className="text-[10px] font-semibold truncate mt-1"
+                style={BATTLE_CLASSIC_THEME ? { color: config.color } : undefined}
+              >
+                {pokemon.name}
+              </p>
               <p className="text-[9px] text-white/40 capitalize">{type}</p>
               {gymBadges.length > 0 && (
                 <div className="mt-1">

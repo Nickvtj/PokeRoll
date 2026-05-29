@@ -9,6 +9,7 @@ interface RarityBadgeProps {
   rarity: Rarity;
   size?: "sm" | "md" | "lg";
   showChance?: boolean;
+  subtle?: boolean;
   className?: string;
 }
 
@@ -22,6 +23,7 @@ export function RarityBadge({
   rarity,
   size = "md",
   showChance = false,
+  subtle = false,
   className,
 }: RarityBadgeProps) {
   const config = RARITY_CONFIG[rarity];
@@ -38,8 +40,8 @@ export function RarityBadge({
       style={{
         color: config.color,
         backgroundColor: `${config.color}20`,
-        border: `1px solid ${config.color}40`,
-        boxShadow: `0 0 12px ${config.glowColor}`,
+        border: `1px solid ${config.color}${subtle ? "30" : "40"}`,
+        boxShadow: subtle ? `0 0 6px ${config.glowColor}` : `0 0 12px ${config.glowColor}`,
       }}
     >
       <span

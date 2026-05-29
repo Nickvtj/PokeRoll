@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Shield } from "lucide-react";
 import { BattleArena } from "@/components/battle/BattleArena";
+import { BattleTeamPrepLayout } from "@/components/battle/BattleTeamPrepLayout";
 import { TeamSelector } from "@/components/battle/TeamSelector";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
@@ -126,18 +127,21 @@ export function TrainingPanel({
   }
 
   return (
-    <div className="space-y-4">
-      <TeamSelector />
-      <AnimatedButton
-        variant="gold"
-        size="lg"
-        onClick={startBattle}
-        disabled={team.length < 3}
-        icon={<Shield className="w-5 h-5" />}
-        className="w-full"
-      >
-        {team.length < 3 ? "Selecione 3 Pokémon" : "INICIAR TREINO"}
-      </AnimatedButton>
-    </div>
+    <BattleTeamPrepLayout
+      action={
+        <AnimatedButton
+          variant="gold"
+          size="lg"
+          onClick={startBattle}
+          disabled={team.length < 3}
+          icon={<Shield className="w-5 h-5" />}
+          className="w-full"
+        >
+          {team.length < 3 ? "Selecione 3 Pokémon" : "INICIAR TREINO"}
+        </AnimatedButton>
+      }
+    >
+      <TeamSelector className="flex-1 min-h-0" />
+    </BattleTeamPrepLayout>
   );
 }

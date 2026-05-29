@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { BattleArena } from "@/components/battle/BattleArena";
+import { BattleTeamPrepLayout } from "@/components/battle/BattleTeamPrepLayout";
 import { TeamSelector } from "@/components/battle/TeamSelector";
 import { SavedTeamsPanel } from "@/components/gym/SavedTeamsPanel";
 import { BadgeRewardAnimation } from "@/components/gym/BadgeRewardAnimation";
@@ -159,13 +160,22 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
       )}
 
       {!fighting && !battleState && (
-        <>
+        <BattleTeamPrepLayout
+          previewLayout="bar-only"
+          action={
+            <AnimatedButton
+              variant="gold"
+              className="w-full"
+              onClick={() => startStage(1)}
+              disabled={team.length < 3}
+            >
+              Iniciar Ginásio (5 batalhas)
+            </AnimatedButton>
+          }
+        >
           <SavedTeamsPanel />
-          <TeamSelector />
-          <AnimatedButton variant="gold" className="w-full" onClick={() => startStage(1)} disabled={team.length < 3}>
-            Iniciar Ginásio (5 batalhas)
-          </AnimatedButton>
-        </>
+          <TeamSelector className="flex-1 min-h-0" />
+        </BattleTeamPrepLayout>
       )}
 
       {(fighting || battleState) && (

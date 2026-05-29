@@ -27,7 +27,8 @@ export default function BattlePage() {
   return (
     <div
       className={cn(
-        "max-w-2xl mx-auto px-4",
+        "mx-auto px-4",
+        battleActive ? "max-w-2xl" : "max-w-2xl lg:max-w-5xl",
         battleActive ? "" : "py-6 space-y-5"
       )}
     >
