@@ -27,6 +27,29 @@ export interface PokemonBattleStats {
   ability?: PokemonAbility;
 }
 
+export type MoveCategory = "damage" | "status";
+
+export type StatusEffect = "burn" | "paralyze" | "poison" | "sleep";
+
+export interface BattleMove {
+  id: string;
+  name: string;
+  type: string;
+  category: MoveCategory;
+  /** 0 para golpes puramente de status */
+  power: number;
+  accuracy: number;
+  statusEffect?: StatusEffect;
+  /** 0–1 chance de aplicar status */
+  statusChance?: number;
+  description: string;
+}
+
+export interface FighterStatus {
+  effect: StatusEffect;
+  turnsLeft: number;
+}
+
 export interface BattleFighter {
   pokemon: Pokemon;
   stats: PokemonBattleStats;
@@ -35,6 +58,9 @@ export interface BattleFighter {
   isPlayer: boolean;
   battleLevel?: number;
   slotIndex?: number;
+  /** 1–2 golpes equipados para batalha */
+  equippedMoves?: BattleMove[];
+  status?: FighterStatus | null;
 }
 
 export type BattlePhase = "idle" | "coinFlip" | "fighting" | "victory" | "defeat";
@@ -88,6 +114,29 @@ export interface BattleEngagement {
   counterTurn: boolean;
 }
 
+export type TacticalPhase =
+  | "player-pick-actor"
+  | "player-pick-target"
+  | "player-pick-move"
+  | "executing"
+  | "animating"
+  | "enemy-turn";
+
+export interface BattlePendingSelection {
+  actorSlot?: number;
+  targetSlot?: number;
+  moveIndex?: number;
+}
+
+export interface MovePreview {
+  move: BattleMove;
+  effectiveness: BattleHitEffectiveness;
+  typeLabel: string | null;
+  typeMult: number;
+  estimatedDamage: [number, number];
+  statusChance: number;
+}
+
 export interface BattleState {
   phase: BattlePhase;
   playerTeam: BattleFighter[];
@@ -107,4 +156,13 @@ export interface BattleState {
   playerStarts?: boolean;
   /** Combate 1v1 — campeão luta até cair */
   battleEngagement?: BattleEngagement | null;
+  /** Combate tático por turnos */
+  tacticalMode?: boolean;
+  tacticalPhase?: TacticalPhase;
+  pendingSelection?: BattlePendingSelection;
+  roundNumber?: number;
+  /** Próximo slot inimigo na rotação de turnos (0–2) */
+  enemyTurnCursor?: number;
+  /** Ação inimiga pendente neste turno (sempre 0 ou 1 item) */
+  enemyActionQueue?: Array<{ actorSlot: number; targetSlot: number; moveIndex: number }>;
 }

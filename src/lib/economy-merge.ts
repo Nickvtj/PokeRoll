@@ -85,6 +85,10 @@ export function mergeEconomyState(
       local.pokemonBattleXp ?? {},
       remote.pokemonBattleXp ?? {}
     ),
+    pokemonMoveLoadouts: {
+      ...(remote.pokemonMoveLoadouts ?? {}),
+      ...(local.pokemonMoveLoadouts ?? {}),
+    },
     welcomeClaimed: local.welcomeClaimed || remote.welcomeClaimed,
     unlockedAchievements: mergeAchievementIds(
       local.unlockedAchievements ?? [],

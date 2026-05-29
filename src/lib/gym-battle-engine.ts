@@ -1,6 +1,7 @@
 import { ELITE_FOUR, GYM_MAP, GYM_TRAINER_STAGES } from "@/data/gyms";
 import { POKEMON_MAP } from "@/data/pokemon";
 import { buildTurnOrder, createFighter, performCoinFlip } from "@/lib/battle-engine";
+import { attachMovesToTeam } from "@/lib/tactical-battle-engine";
 import type { BattleFighter, BattleLogEntry, BattleState } from "@/types/battle";
 import type { Pokemon } from "@/types";
 import type { EliteId, GymBattleMeta, GymId } from "@/types/gym";
@@ -80,14 +81,17 @@ export function initGymBattle(
   gymId: GymId,
   stage: number,
   playerPokemon: Pokemon[],
-  pokemonLevels: Record<number, number>
+  pokemonLevels: Record<number, number>,
+  moveLoadouts: Record<string, string[]> = {}
 ): BattleState {
   const gym = GYM_MAP[gymId];
   const stageData = GYM_TRAINER_STAGES[gymId].find((s) => s.stage === stage);
   if (!stageData) throw new Error(`Stage ${stage} not found for ${gymId}`);
 
-  const playerTeam = playerPokemon.map((p, i) =>
-    createFighter(p, true, pokemonLevels[p.id] ?? 1, i)
+  const attachConfig = { moveLoadouts };
+  const playerTeam = attachMovesToTeam(
+    playerPokemon.map((p, i) => createFighter(p, true, pokemonLevels[p.id] ?? 1, i)),
+    attachConfig
   );
 
   const avgLevel =
@@ -98,11 +102,13 @@ export function initGymBattle(
   const baseDifficulty = stageData.difficultyScale * levelGapMod;
   const enemyLevelBoost = Math.max(0, Math.floor(gym.recommendedLevel - avgLevel));
 
-  const enemyTeam = buildEnemyTeamFromIds(
-    stageData.pokemonIds.slice(0, TEAM_SIZE),
-    playerTeam,
-    baseDifficulty,
-    enemyLevelBoost
+  const enemyTeam = attachMovesToTeam(
+    buildEnemyTeamFromIds(
+      stageData.pokemonIds.slice(0, TEAM_SIZE),
+      playerTeam,
+      baseDifficulty,
+      enemyLevelBoost
+    )
   );
 
   const gymMeta: GymBattleMeta = {
@@ -144,19 +150,23 @@ export function initGymBattle(
     turnCount: 0,
     playerStarts,
     battleEngagement: null,
+    tacticalMode: true,
   };
 }
 
 export function initEliteBattle(
   eliteId: EliteId,
   playerPokemon: Pokemon[],
-  pokemonLevels: Record<number, number>
+  pokemonLevels: Record<number, number>,
+  moveLoadouts: Record<string, string[]> = {}
 ): BattleState {
   const elite = ELITE_FOUR.find((e) => e.id === eliteId);
   if (!elite) throw new Error(`Elite ${eliteId} not found`);
 
-  const playerTeam = playerPokemon.map((p, i) =>
-    createFighter(p, true, pokemonLevels[p.id] ?? 1, i)
+  const attachConfig = { moveLoadouts };
+  const playerTeam = attachMovesToTeam(
+    playerPokemon.map((p, i) => createFighter(p, true, pokemonLevels[p.id] ?? 1, i)),
+    attachConfig
   );
 
   const avgLevel =
@@ -168,11 +178,13 @@ export function initEliteBattle(
     ? elite.pokemonIds.slice(-TEAM_SIZE)
     : elite.pokemonIds.slice(0, TEAM_SIZE);
 
-  const enemyTeam = buildEnemyTeamFromIds(
-    ids,
-    playerTeam,
-    elite.difficultyScale * levelGapMod,
-    Math.max(0, Math.floor(elite.recommendedLevel - avgLevel))
+  const enemyTeam = attachMovesToTeam(
+    buildEnemyTeamFromIds(
+      ids,
+      playerTeam,
+      elite.difficultyScale * levelGapMod,
+      Math.max(0, Math.floor(elite.recommendedLevel - avgLevel))
+    )
   );
 
   const gymMeta: GymBattleMeta = {
@@ -208,5 +220,6 @@ export function initEliteBattle(
     turnCount: 0,
     playerStarts,
     battleEngagement: null,
+    tacticalMode: true,
   };
 }

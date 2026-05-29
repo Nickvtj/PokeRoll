@@ -7,6 +7,7 @@ import {
   normalizeType,
 } from "@/data/type-chart";
 import { TEAM_MONOTYPE_DAMAGE_BONUS } from "@/data/economy-balance";
+import { attachMovesToTeam } from "@/lib/tactical-battle-engine";
 import {
   BATTLE_BASE_COINS_MAX,
   BATTLE_BASE_COINS_MIN,
@@ -268,22 +269,23 @@ export function resolveCoinFlip(state: BattleState): BattleState {
 export function initBattle(
   playerPokemon: Pokemon[],
   wave = 1,
-  pokemonLevels: Record<number, number> = {}
+  pokemonLevels: Record<number, number> = {},
+  moveLoadouts: Record<string, string[]> = {}
 ): BattleState {
-  const playerTeam = playerPokemon.map((p, i) =>
-    createFighter(p, true, pokemonLevels[p.id] ?? 1, i)
+  const attachConfig = { moveLoadouts };
+  const playerTeam = attachMovesToTeam(
+    playerPokemon.map((p, i) => createFighter(p, true, pokemonLevels[p.id] ?? 1, i)),
+    attachConfig
   );
-  const enemyTeam = generateEnemyTeam(playerPokemon, wave, pokemonLevels);
+  const enemyTeam = attachMovesToTeam(generateEnemyTeam(playerPokemon, wave, pokemonLevels));
 
-  const { avgRarityTier, monotype, sharedType } = analyzePlayerTeam(playerPokemon, pokemonLevels);
-  const tierLabel =
-    avgRarityTier >= 4 ? "Elite" : avgRarityTier >= 3 ? "Avançado" : "Padrão";
+  const { monotype, sharedType } = analyzePlayerTeam(playerPokemon, pokemonLevels);
 
   const playerStarts = performCoinFlip();
 
   const startLog: BattleLogEntry[] = [
-    log("A batalha começou!", "info"),
-    log(`${tierLabel} — 1v1 da frente; quem vence segue até cair`, "info"),
+    log("A batalha tática começou!", "info"),
+    log("Escolha Pokémon, alvo e golpe a cada turno.", "info"),
   ];
   if (monotype && sharedType) {
     const typeLabel = sharedType.charAt(0).toUpperCase() + sharedType.slice(1);
@@ -308,6 +310,7 @@ export function initBattle(
     turnCount: 0,
     playerStarts,
     battleEngagement: null,
+    tacticalMode: true,
   };
 }
 

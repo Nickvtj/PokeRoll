@@ -10,8 +10,7 @@ import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
 import { initBattle } from "@/lib/battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordBattleToSupabase } from "@/lib/economy-supabase";
-import { useBattleCoinFlip } from "@/hooks/use-battle-coin-flip";
-import { useBattleTurnLoop } from "@/hooks/use-battle-turn-loop";
+import { useTacticalBattle } from "@/hooks/use-tactical-battle";
 import type { BattleState } from "@/types/battle";
 
 export function TrainingPanel({
@@ -27,11 +26,10 @@ export function TrainingPanel({
   const recordBattleLoss = useEconomyStore((s) => s.recordBattleLoss);
   const grantPokemonBattleXp = useEconomyStore((s) => s.grantPokemonBattleXp);
   const getPokemonLevelsMap = useEconomyStore((s) => s.getPokemonLevelsMap);
+  const pokemonMoveLoadouts = useEconomyStore((s) => s.pokemonMoveLoadouts);
 
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
-
-  useBattleCoinFlip(battleState, setBattleState);
 
   const handleTurnComplete = useCallback(
     (state: BattleState, done: boolean) => {
@@ -71,17 +69,24 @@ export function TrainingPanel({
     ]
   );
 
-  const { arenaState, combatHighlight, resetLoop } = useBattleTurnLoop({
+  const economyBonuses = getEconomyBonuses(team);
+
+  const {
+    arenaState,
+    combatHighlight,
+    pickActor,
+    pickTarget,
+    pickMove,
+    cancelSelection,
+    resetLoop,
+  } = useTacticalBattle({
     fighting,
     battleState,
     setBattleState,
-    getBonuses: () => {
-      const bonuses = getEconomyBonuses(team);
-      return {
-        battleDamage: bonuses.battleDamage,
-        critChance: bonuses.critChance,
-      };
-    },
+    getBonuses: () => ({
+      battleDamage: economyBonuses.battleDamage,
+      critChance: economyBonuses.critChance,
+    }),
     onTurnComplete: handleTurnComplete,
   });
 
@@ -90,11 +95,11 @@ export function TrainingPanel({
     const pokemon = getTeamPokemonForBattle(team);
     if (pokemon.length < 3) return null;
     resetLoop();
-    const state = initBattle(pokemon, 1, getPokemonLevelsMap());
+    const state = initBattle(pokemon, 1, getPokemonLevelsMap(), pokemonMoveLoadouts);
     setBattleState(state);
     setFighting(true);
     return state;
-  }, [team, getPokemonLevelsMap, resetLoop]);
+  }, [team, getPokemonLevelsMap, pokemonMoveLoadouts, resetLoop]);
 
   const startBattle = () => {
     beginBattle();
@@ -117,6 +122,14 @@ export function TrainingPanel({
       <BattleArena
         state={arenaState}
         combatHighlight={combatHighlight}
+        bonuses={{
+          battleDamage: economyBonuses.battleDamage,
+          critChance: economyBonuses.critChance,
+        }}
+        onPickActor={pickActor}
+        onPickTarget={pickTarget}
+        onPickMove={pickMove}
+        onCancelSelection={cancelSelection}
         onContinue={resetBattle}
         onPlayAgain={() => {
           resetLoop();

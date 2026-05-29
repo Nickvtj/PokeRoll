@@ -511,6 +511,312 @@ body {
     }
   }
 
+  /* === Combate tático — seleção e FX de golpes === */
+  .battle-card-selectable {
+    box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.45), 0 0 18px rgba(34, 211, 238, 0.2);
+  }
+
+  .battle-card-selected-actor {
+    box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.7), 0 0 22px rgba(129, 140, 248, 0.35);
+  }
+
+  .battle-card-selected-target {
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.75), 0 0 22px rgba(248, 113, 113, 0.35);
+  }
+
+  .battle-turn-banner {
+    @apply flex items-center gap-2 rounded-xl px-4 py-2.5 border font-black text-sm uppercase tracking-wide;
+  }
+
+  .battle-turn-banner-player {
+    @apply border-cyan-400/50 text-cyan-100;
+    background: linear-gradient(90deg, rgba(34, 211, 238, 0.2), rgba(34, 211, 238, 0.06));
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.15);
+  }
+
+  .battle-turn-banner-enemy {
+    @apply border-red-400/50 text-red-100;
+    background: linear-gradient(90deg, rgba(248, 113, 113, 0.2), rgba(248, 113, 113, 0.06));
+    box-shadow: 0 0 24px rgba(248, 113, 113, 0.15);
+  }
+
+  .battle-turn-banner-action {
+    @apply border-indigo-400/50 text-indigo-100;
+    background: linear-gradient(90deg, rgba(129, 140, 248, 0.2), rgba(129, 140, 248, 0.06));
+  }
+
+  .battle-turn-banner-sub {
+    @apply text-[10px] font-semibold normal-case tracking-normal text-white/45 ml-auto;
+  }
+
+  .battle-turn-step {
+    @apply text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/10 text-white/35;
+  }
+
+  .battle-turn-step-active {
+    @apply border-cyan-400/50 text-cyan-200 bg-cyan-500/15;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
+  }
+
+  .battle-turn-step-done {
+    @apply border-emerald-400/30 text-emerald-300/60 bg-emerald-500/10;
+  }
+
+  .battle-section-highlight-player {
+    background: rgba(34, 211, 238, 0.06);
+    box-shadow: inset 0 0 0 2px rgba(34, 211, 238, 0.35), 0 0 20px rgba(34, 211, 238, 0.08);
+  }
+
+  .battle-section-selected-player {
+    background: rgba(129, 140, 248, 0.05);
+    box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.25);
+  }
+
+  .battle-section-highlight-enemy {
+    background: rgba(248, 113, 113, 0.08);
+    box-shadow: inset 0 0 0 2px rgba(248, 113, 113, 0.4), 0 0 20px rgba(248, 113, 113, 0.1);
+  }
+
+  .battle-section-highlight-enemy-pulse {
+    background: rgba(248, 113, 113, 0.06);
+    box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.3);
+    animation: battle-enemy-turn-pulse 1.2s ease-in-out infinite;
+  }
+
+  .battle-section-dim {
+    opacity: 0.55;
+    filter: saturate(0.85);
+  }
+
+  @keyframes battle-enemy-turn-pulse {
+    0%,
+    100% {
+      box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.25);
+    }
+    50% {
+      box-shadow: inset 0 0 0 2px rgba(248, 113, 113, 0.45);
+    }
+  }
+
+  .battle-card-asleep {
+    filter: saturate(0.55) brightness(0.75);
+  }
+
+  .battle-status-badge {
+    @apply inline-flex items-center gap-0.5 text-[8px] font-bold uppercase tracking-wide rounded-md px-1 py-0.5 border;
+  }
+
+  .battle-status-burn {
+    @apply bg-orange-500/20 border-orange-400/40 text-orange-200;
+  }
+
+  .battle-status-paralyze {
+    @apply bg-yellow-500/20 border-yellow-400/40 text-yellow-200;
+    animation: battle-paralyze-pulse 0.8s ease-in-out infinite;
+  }
+
+  .battle-status-poison {
+    @apply bg-purple-500/20 border-purple-400/40 text-purple-200;
+  }
+
+  .battle-status-sleep {
+    @apply bg-indigo-500/20 border-indigo-400/40 text-indigo-200;
+  }
+
+  .battle-sleep-overlay {
+    @apply absolute inset-0 z-[15] flex items-start justify-center pt-2;
+    background: linear-gradient(180deg, rgba(30, 27, 75, 0.55), transparent 60%);
+  }
+
+  .battle-sleep-zzz {
+    @apply text-indigo-200/80 font-black text-sm;
+    animation: battle-zzz-float 2s ease-in-out infinite;
+  }
+
+  .battle-sleep-zzz-2 {
+    animation-delay: 0.35s;
+    font-size: 0.65rem;
+    margin-left: 2px;
+  }
+
+  .battle-sleep-zzz-3 {
+    animation-delay: 0.7s;
+    font-size: 0.55rem;
+  }
+
+  .battle-attack-fx {
+    @apply absolute inset-0 z-[12] overflow-hidden rounded-[inherit];
+  }
+
+  .battle-attack-fx-burst {
+    @apply absolute inset-0 opacity-0;
+    animation: battle-fx-burst 0.65s ease-out forwards;
+  }
+
+  .battle-attack-fx-wave {
+    @apply absolute inset-0 opacity-0;
+    animation: battle-fx-wave 0.65s ease-out forwards;
+  }
+
+  .battle-atk-fire .battle-attack-fx-burst {
+    background: radial-gradient(circle at 50% 80%, rgba(251, 146, 60, 0.75), transparent 65%);
+  }
+
+  .battle-atk-fire .battle-attack-fx-ember {
+    @apply absolute inset-0;
+    background-image: radial-gradient(circle, rgba(254, 240, 138, 0.9) 1px, transparent 1px);
+    background-size: 12px 18px;
+    animation: battle-ember-rise 0.7s linear forwards;
+  }
+
+  .battle-atk-water .battle-attack-fx-burst {
+    background: radial-gradient(ellipse 90% 60% at 50% 100%, rgba(56, 189, 248, 0.65), transparent 70%);
+  }
+
+  .battle-atk-water .battle-attack-fx-splash {
+    @apply absolute inset-x-0 bottom-0 h-1/2;
+    background: linear-gradient(0deg, rgba(125, 211, 252, 0.5), transparent);
+    animation: battle-splash-up 0.55s ease-out forwards;
+  }
+
+  .battle-atk-electric .battle-attack-fx-burst {
+    background: radial-gradient(circle, rgba(250, 204, 21, 0.55), transparent 70%);
+  }
+
+  .battle-atk-electric .battle-attack-fx-bolt {
+    @apply absolute inset-0;
+    background: linear-gradient(
+      105deg,
+      transparent 45%,
+      rgba(254, 240, 138, 0.85) 49%,
+      transparent 53%
+    );
+    animation: battle-bolt-flash 0.45s steps(3, end) 2;
+  }
+
+  .battle-atk-grass .battle-attack-fx-burst {
+    background: radial-gradient(circle at 50% 100%, rgba(74, 222, 128, 0.55), transparent 68%);
+  }
+
+  .battle-atk-ice .battle-attack-fx-burst {
+    background: radial-gradient(circle, rgba(103, 232, 249, 0.6), transparent 70%);
+  }
+
+  .battle-atk-poison .battle-attack-fx-burst {
+    background: radial-gradient(circle, rgba(192, 132, 252, 0.55), transparent 70%);
+  }
+
+  .battle-atk-psychic .battle-attack-fx-burst {
+    background: radial-gradient(circle, rgba(244, 114, 182, 0.5), transparent 72%);
+  }
+
+  .battle-atk-ghost .battle-attack-fx-burst {
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.55), transparent 70%);
+  }
+
+  .battle-atk-fighting .battle-attack-fx-burst {
+    background: radial-gradient(circle, rgba(248, 113, 113, 0.5), transparent 68%);
+  }
+
+  .battle-atk-default .battle-attack-fx-burst {
+    background: radial-gradient(circle, rgba(148, 163, 184, 0.45), transparent 70%);
+  }
+
+  .battle-card-hit-fire {
+    box-shadow: inset 0 -20px 30px rgba(251, 146, 60, 0.35);
+  }
+
+  .battle-card-hit-water {
+    box-shadow: inset 0 20px 30px rgba(56, 189, 248, 0.3);
+  }
+
+  .battle-card-hit-electric {
+    box-shadow: 0 0 24px rgba(250, 204, 21, 0.55);
+  }
+
+  .battle-card-hit-poison {
+    box-shadow: inset 0 0 24px rgba(192, 132, 252, 0.35);
+  }
+
+  @keyframes battle-paralyze-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+
+  @keyframes battle-zzz-float {
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.5;
+    }
+    50% {
+      transform: translateY(-6px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes battle-fx-burst {
+    0% {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+    30% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.15);
+    }
+  }
+
+  @keyframes battle-fx-wave {
+    0% {
+      opacity: 0.6;
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.25);
+    }
+  }
+
+  @keyframes battle-ember-rise {
+    0% {
+      transform: translateY(20%);
+      opacity: 0.8;
+    }
+    100% {
+      transform: translateY(-30%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes battle-splash-up {
+    0% {
+      transform: translateY(100%);
+      opacity: 0.8;
+    }
+    100% {
+      transform: translateY(-20%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes battle-bolt-flash {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
   /* === Botão caça-níquel (Roleta) === */
   .spin-lever-btn {
     @apply relative isolate py-1;

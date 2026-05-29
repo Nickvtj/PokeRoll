@@ -1,7 +1,8 @@
-import { playBattleDamage, playBattleStrike } from "@/lib/battle-hit-sounds";
+import { playBattleDamage, playBattleHit, playBattleStrike } from "@/lib/battle-hit-sounds";
 import { playBattleFaint } from "@/lib/sound-engine";
 import type { BattleHitSound } from "@/types/battle";
 import type { BattleLogEntry } from "@/types/battle";
+import type { BattleMove } from "@/types/battle";
 
 export function findNewHitSound(
   log: BattleLogEntry[],
@@ -20,6 +21,35 @@ export function hasNewKoLog(log: BattleLogEntry[], fromIndex: number): boolean {
   return false;
 }
 
+export function hitSoundFromMove(move: BattleMove): BattleHitSound {
+  return {
+    attackType: move.type,
+    isCrit: false,
+    effectiveness: "normal",
+  };
+}
+
+/** Golpe + som por tipo + dano ao piscar */
+export function playTacticalCombatSounds(
+  log: BattleLogEntry[],
+  fromIndex: number,
+  move: BattleMove,
+  strikeMs: number
+): void {
+  const hitSound = findNewHitSound(log, fromIndex) ?? hitSoundFromMove(move);
+  const koAfter = hasNewKoLog(log, fromIndex);
+
+  void playBattleStrike();
+  void playBattleHit(hitSound);
+
+  window.setTimeout(() => {
+    void playBattleDamage(hitSound);
+    if (koAfter) {
+      window.setTimeout(() => void playBattleFaint(), 220);
+    }
+  }, strikeMs);
+}
+
 /** Golpe primeiro, dano ao piscar — estilo Pokémon clássico */
 export function playBattleCombatSounds(
   log: BattleLogEntry[],
@@ -32,6 +62,7 @@ export function playBattleCombatSounds(
   const koAfter = hasNewKoLog(log, fromIndex);
 
   void playBattleStrike();
+  void playBattleHit(hitSound);
   window.setTimeout(() => {
     void playBattleDamage(hitSound);
     if (koAfter) {

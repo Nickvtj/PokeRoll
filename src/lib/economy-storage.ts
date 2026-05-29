@@ -27,6 +27,7 @@ export function getDefaultEconomy(): EconomyState {
     team: [],
     favoritePokemon: [],
     pokemonBattleXp: {},
+    pokemonMoveLoadouts: {},
     welcomeClaimed: false,
     unlockedAchievements: [],
     selectedAvatarId: "default",

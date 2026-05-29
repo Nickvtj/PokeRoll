@@ -5,15 +5,33 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
 import { RARITY_CONFIG } from "@/data/rarity";
+import {
+  BattleAttackFx,
+  BattleSleepOverlay,
+  BattleStatusBadge,
+} from "@/components/battle/BattleAttackFx";
 import type { BattleFighter } from "@/types/battle";
 
 export type BattleTurnHighlight = "attack" | "defend" | "idle-dim" | "none";
 
+export type BattleSelectionMode =
+  | "pick-actor"
+  | "pick-target"
+  | "selected-actor"
+  | "selected-target"
+  | "none";
+
 interface PokemonBattleCardProps {
   fighter: BattleFighter;
   turnHighlight?: BattleTurnHighlight;
+  selectionMode?: BattleSelectionMode;
   compact?: boolean;
   side?: "enemy" | "player";
+  onSelect?: () => void;
+  selectable?: boolean;
+  moveType?: string;
+  attackPhase?: "strike" | "flash" | "impact";
+  statusApplied?: string;
 }
 
 function classicHpFillClass(hpPercent: number): string {
@@ -25,8 +43,14 @@ function classicHpFillClass(hpPercent: number): string {
 export function PokemonBattleCard({
   fighter,
   turnHighlight = "none",
+  selectionMode = "none",
   compact = false,
   side = "player",
+  onSelect,
+  selectable = false,
+  moveType,
+  attackPhase,
+  statusApplied,
 }: PokemonBattleCardProps) {
   const config = RARITY_CONFIG[fighter.pokemon.rarity];
   const hpPercent = (fighter.currentHp / fighter.maxHp) * 100;
@@ -35,48 +59,81 @@ export function PokemonBattleCard({
   const isFlashing = turnHighlight === "defend" && !isKo;
   const isDimmed = turnHighlight === "idle-dim" && !isKo;
   const isActive = isStriking || isFlashing;
+  const isSleeping = fighter.status?.effect === "sleep" && !isKo;
+  const isSelectable = selectable && !isKo && onSelect;
+
+  const selectionRing =
+    selectionMode === "pick-actor" || selectionMode === "pick-target"
+      ? "battle-card-selectable"
+      : selectionMode === "selected-actor"
+        ? "battle-card-selected-actor"
+        : selectionMode === "selected-target"
+          ? "battle-card-selected-target"
+          : "";
+
+  const typeFxClass =
+    isFlashing && moveType ? `battle-card-hit-${moveType in HIT_TYPES ? moveType : "default"}` : "";
 
   return (
     <motion.div
-      key={isFlashing ? "flash" : isStriking ? "strike" : "idle"}
+      role={isSelectable ? "button" : undefined}
+      tabIndex={isSelectable ? 0 : undefined}
+      onClick={isSelectable ? onSelect : undefined}
+      onKeyDown={
+        isSelectable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect?.();
+              }
+            }
+          : undefined
+      }
+      key={isFlashing ? `flash-${moveType}` : isStriking ? "strike" : "idle"}
       animate={
         isKo
           ? { opacity: 0.4, scale: 1, x: 0, y: 0, filter: "brightness(1)" }
           : isStriking
             ? {
-                y: [0, fighter.isPlayer ? -16 : 16, 0],
-                scale: [1, 1.05, 1],
-                filter: ["brightness(1)", "brightness(1.2)", "brightness(1)"],
+                y: [0, fighter.isPlayer ? -20 : 20, 0],
+                scale: [1, 1.08, 1],
+                filter: ["brightness(1)", "brightness(1.35)", "brightness(1)"],
               }
             : isFlashing
               ? {
-                  opacity: [1, 0.15, 1, 0.15, 1, 0.15, 1],
+                  x: moveType === "electric" ? [0, -4, 4, -3, 3, 0] : 0,
+                  opacity:
+                    moveType === "electric"
+                      ? [1, 0.4, 1, 0.5, 1]
+                      : [1, 0.2, 1, 0.2, 1, 0.2, 1],
                   filter: [
                     "brightness(1)",
-                    "brightness(2.4)",
+                    "brightness(2.8)",
                     "brightness(1)",
                     "brightness(2.4)",
                     "brightness(1)",
-                    "brightness(2.4)",
+                    "brightness(2.2)",
                     "brightness(1)",
                   ],
-                  x: 0,
-                  y: 0,
-                  scale: 1,
+                  scale: moveType === "fighting" ? [1, 0.94, 1.02, 1] : 1,
                 }
               : isDimmed
-                ? { opacity: 0.5, scale: 0.97, x: 0, y: 0, filter: "brightness(0.85)" }
-                : { opacity: 1, scale: 1, x: 0, y: 0, filter: "brightness(1)" }
+                ? { opacity: 0.45, scale: 0.96, x: 0, y: 0, filter: "brightness(0.8)" }
+                : isSelectable
+                  ? { opacity: 1, scale: [1, 1.02, 1], y: 0 }
+                  : { opacity: 1, scale: 1, x: 0, y: 0, filter: "brightness(1)" }
       }
       transition={
         isFlashing
-          ? { duration: 0.62, ease: "linear" }
+          ? { duration: moveType === "electric" ? 0.55 : 0.65, ease: "linear" }
           : isStriking
-            ? { duration: 0.22, ease: "easeOut" }
-            : { duration: 0.2 }
+            ? { duration: 0.28, ease: "easeOut" }
+            : isSelectable
+              ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
+              : { duration: 0.2 }
       }
       className={cn(
-        "relative overflow-hidden",
+        "relative overflow-hidden w-full text-left",
         BATTLE_CLASSIC_THEME
           ? cn(
               "battle-classic-card z-[1]",
@@ -84,14 +141,16 @@ export function PokemonBattleCard({
               isActive && "battle-classic-card-active",
               compact ? "p-2" : "p-3"
             )
-          : cn(
-              "glass-card",
-              compact ? "p-2" : "p-3"
-            ),
-        isKo && "grayscale",
+          : cn("glass-card", compact ? "p-2" : "p-3"),
+        isKo && "grayscale cursor-default",
         isStriking && "z-10",
         isFlashing && "z-10",
-        isDimmed && !BATTLE_CLASSIC_THEME && "z-0"
+        isDimmed && !BATTLE_CLASSIC_THEME && "z-0",
+        selectionRing,
+        typeFxClass,
+        isSleeping && "battle-card-asleep",
+        isSelectable && "cursor-pointer battle-card-tap-hint",
+        !isSelectable && "cursor-default"
       )}
       style={
         BATTLE_CLASSIC_THEME
@@ -101,6 +160,23 @@ export function PokemonBattleCard({
             }
       }
     >
+      {isFlashing && moveType && attackPhase && (
+        <BattleAttackFx
+          moveType={moveType}
+          statusApplied={statusApplied}
+          phase={attackPhase}
+          side={side}
+        />
+      )}
+
+      {isSleeping && <BattleSleepOverlay />}
+
+      {fighter.status && !isKo && fighter.status.effect !== "sleep" && (
+        <div className="absolute top-1 right-1 z-20">
+          <BattleStatusBadge effect={fighter.status.effect} />
+        </div>
+      )}
+
       {BATTLE_CLASSIC_THEME && fighter.battleLevel != null && fighter.battleLevel > 0 && (
         <span className="battle-classic-level">Lv.{fighter.battleLevel}</span>
       )}
@@ -111,14 +187,17 @@ export function PokemonBattleCard({
           alt={fighter.pokemon.name}
           width={compact ? 64 : 80}
           height={compact ? 64 : 80}
-          className="object-contain drop-shadow-lg"
+          className={cn(
+            "object-contain drop-shadow-lg relative z-[2]",
+            isSleeping && "opacity-60 saturate-50"
+          )}
           unoptimized
         />
       </div>
 
       <p
         className={cn(
-          "font-bold text-center truncate mt-1",
+          "font-bold text-center truncate mt-1 relative z-[2]",
           compact ? "text-xs" : "text-sm"
         )}
         style={{ color: config.color }}
@@ -127,12 +206,12 @@ export function PokemonBattleCard({
       </p>
 
       {!BATTLE_CLASSIC_THEME && fighter.battleLevel != null && fighter.battleLevel > 0 && (
-        <p className="text-[9px] text-center text-indigo-400 font-semibold">
+        <p className="text-[9px] text-center text-indigo-400 font-semibold relative z-[2]">
           Nv. {fighter.battleLevel}
         </p>
       )}
 
-      <div className="mt-2">
+      <div className="mt-2 relative z-[2]">
         <div
           className={cn(
             "flex justify-between mb-0.5",
@@ -152,9 +231,7 @@ export function PokemonBattleCard({
           <motion.div
             className={cn(
               "h-full",
-              BATTLE_CLASSIC_THEME
-                ? classicHpFillClass(hpPercent)
-                : "rounded-full"
+              BATTLE_CLASSIC_THEME ? classicHpFillClass(hpPercent) : "rounded-full"
             )}
             initial={false}
             animate={{ width: `${hpPercent}%` }}
@@ -181,3 +258,17 @@ export function PokemonBattleCard({
     </motion.div>
   );
 }
+
+const HIT_TYPES: Record<string, boolean> = {
+  fire: true,
+  water: true,
+  electric: true,
+  grass: true,
+  ice: true,
+  poison: true,
+  psychic: true,
+  ghost: true,
+  fighting: true,
+  normal: true,
+  default: true,
+};

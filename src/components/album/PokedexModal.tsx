@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { BookOpen, Calendar, Copy, Sparkles, X } from "lucide-react";
+import { BookOpen, Calendar, Copy, Sparkles, Swords, X } from "lucide-react";
 import { getPokedexInfo, getTypeColor } from "@/data/pokedex";
 import { getEvolutionLabel } from "@/data/pokemon-evolution";
 import { RarityBadge } from "@/components/ui/RarityBadge";
@@ -16,6 +16,7 @@ import { useEconomyStore } from "@/stores/economy-store";
 import { useGameStore } from "@/stores/game-store";
 import { useGymStore } from "@/stores/gym-store";
 import { PokemonGymBadges } from "@/components/gym/GymBadge";
+import { PokemonMovesTab } from "@/components/album/PokemonMovesTab";
 import { cn } from "@/lib/utils";
 import type { CollectedPokemon, Pokemon } from "@/types";
 
@@ -33,6 +34,7 @@ export function PokedexModal({
   onClose,
 }: PokedexModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<"profile" | "moves">("profile");
   const pokemonBattleXp = useEconomyStore((s) => s.pokemonBattleXp);
   const toggleUseShiny = useGameStore((s) => s.toggleUseShiny);
   const getHallOfFameBorder = useGymStore((s) => s.getHallOfFameBorder);
@@ -41,6 +43,7 @@ export function PokedexModal({
 
   useEffect(() => {
     if (!show) return;
+    setActiveTab("profile");
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -110,6 +113,38 @@ export function PokedexModal({
                 </button>
               </div>
 
+              {/* Abas */}
+              <div className="flex border-b border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("profile")}
+                  className={cn(
+                    "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5",
+                    activeTab === "profile"
+                      ? "text-indigo-300 border-b-2 border-indigo-400 bg-indigo-500/5"
+                      : "text-white/40 hover:text-white/60"
+                  )}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Perfil
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("moves")}
+                  className={cn(
+                    "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5",
+                    activeTab === "moves"
+                      ? "text-amber-300 border-b-2 border-amber-400 bg-amber-500/5"
+                      : "text-white/40 hover:text-white/60"
+                  )}
+                >
+                  <Swords className="w-3.5 h-3.5" />
+                  Ataques
+                </button>
+              </div>
+
+              {activeTab === "profile" ? (
+                <>
               {/* Nome + tipos */}
               <div className="px-5 pt-4 pb-3 border-b border-white/10">
                 <div className="flex items-start justify-between gap-2">
@@ -262,6 +297,10 @@ export function PokedexModal({
                   {info.description}
                 </p>
               </div>
+                </>
+              ) : (
+                <PokemonMovesTab pokemonId={pokemon.id} level={xpProgress.level} />
+              )}
 
               {/* Footer + botão */}
               <div className="px-5 pb-5 space-y-3">

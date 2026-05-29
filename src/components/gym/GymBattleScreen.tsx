@@ -12,8 +12,7 @@ import { initGymBattle } from "@/lib/gym-battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
 import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
-import { useBattleCoinFlip } from "@/hooks/use-battle-coin-flip";
-import { useBattleTurnLoop } from "@/hooks/use-battle-turn-loop";
+import { useTacticalBattle } from "@/hooks/use-tactical-battle";
 import type { BattleState } from "@/types/battle";
 import type { GymId } from "@/types/gym";
 import type { PerfectRunBonus } from "@/types/gym";
@@ -28,6 +27,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
   const gym = GYM_MAP[gymId];
   const team = useEconomyStore((s) => s.team);
   const getPokemonLevelsMap = useEconomyStore((s) => s.getPokemonLevelsMap);
+  const pokemonMoveLoadouts = useEconomyStore((s) => s.pokemonMoveLoadouts);
   const grantPokemonBattleXp = useEconomyStore((s) => s.grantPokemonBattleXp);
   const recordGymStageWin = useGymStore((s) => s.recordGymStageWin);
 
@@ -39,7 +39,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
     teamIds: number[];
   } | null>(null);
 
-  useBattleCoinFlip(battleState, setBattleState);
+  const economyBonuses = getEconomyBonuses(team);
 
   const handleTurnComplete = useCallback(
     (state: BattleState, done: boolean) => {
@@ -71,17 +71,22 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
     [team, stage, gymId, grantPokemonBattleXp, getPokemonLevelsMap, recordGymStageWin]
   );
 
-  const { arenaState, combatHighlight, resetLoop } = useBattleTurnLoop({
+  const {
+    arenaState,
+    combatHighlight,
+    pickActor,
+    pickTarget,
+    pickMove,
+    cancelSelection,
+    resetLoop,
+  } = useTacticalBattle({
     fighting,
     battleState,
     setBattleState,
-    getBonuses: () => {
-      const bonuses = getEconomyBonuses(team);
-      return {
-        battleDamage: bonuses.battleDamage,
-        critChance: bonuses.critChance,
-      };
-    },
+    getBonuses: () => ({
+      battleDamage: economyBonuses.battleDamage,
+      critChance: economyBonuses.critChance,
+    }),
     onTurnComplete: handleTurnComplete,
   });
 
@@ -92,10 +97,10 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
       if (pokemon.length < 3) return;
       resetLoop();
       setStage(s);
-      setBattleState(initGymBattle(gymId, s, pokemon, getPokemonLevelsMap()));
+      setBattleState(initGymBattle(gymId, s, pokemon, getPokemonLevelsMap(), pokemonMoveLoadouts));
       setFighting(true);
     },
-    [team, gymId, getPokemonLevelsMap, resetLoop]
+    [team, gymId, getPokemonLevelsMap, pokemonMoveLoadouts, resetLoop]
   );
 
   const resetBattle = () => {
@@ -136,6 +141,14 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
         <BattleArena
           state={arenaState}
           combatHighlight={combatHighlight}
+          bonuses={{
+            battleDamage: economyBonuses.battleDamage,
+            critChance: economyBonuses.critChance,
+          }}
+          onPickActor={pickActor}
+          onPickTarget={pickTarget}
+          onPickMove={pickMove}
+          onCancelSelection={cancelSelection}
           onContinue={handleContinue}
           onPlayAgain={
             battleState?.phase === "defeat"

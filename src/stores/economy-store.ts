@@ -44,6 +44,10 @@ import { mergeEconomyState } from "@/lib/economy-merge";
 import { useGymStore } from "@/stores/gym-store";
 import type { EconomyState, RewardPayload, RewardPlayAgainFn } from "@/types/economy";
 import type { PokemonLevelUpResult } from "@/types/battle";
+import {
+  getPokemonMoveEntries,
+  isMoveSlotUnlocked,
+} from "@/data/pokemon-moves";
 
 interface EconomyStore extends EconomyState {
   lastReward: RewardPayload | null;
@@ -91,6 +95,8 @@ interface EconomyStore extends EconomyState {
   activateLuckyEgg: () => boolean;
   useRareCandyOnPokemon: (pokemonId: number, count?: number) => boolean;
   splitRareCandyOnTeam: () => boolean;
+  toggleMoveEquip: (pokemonId: number, moveId: string) => boolean;
+  getPokemonMoveLoadout: (pokemonId: number) => string[];
 }
 
 function todayStr() {
@@ -595,6 +601,47 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     }
     return ok;
   },
+
+  getPokemonMoveLoadout: (pokemonId) => {
+    const key = String(pokemonId);
+    const saved = get().pokemonMoveLoadouts[key] ?? [];
+    const level = get().getPokemonProgress(pokemonId).level;
+    const unlocked = new Set(
+      getPokemonMoveEntries(pokemonId)
+        .filter((e) => isMoveSlotUnlocked(e.slotIndex, level))
+        .map((e) => e.moveId)
+    );
+    return saved.filter((id) => unlocked.has(id)).slice(0, 2);
+  },
+
+  toggleMoveEquip: (pokemonId, moveId) => {
+    const key = String(pokemonId);
+    const level = get().getPokemonProgress(pokemonId).level;
+    const entry = getPokemonMoveEntries(pokemonId).find((e) => e.moveId === moveId);
+    if (!entry || !isMoveSlotUnlocked(entry.slotIndex, level)) return false;
+
+    const current = [...(get().pokemonMoveLoadouts[key] ?? [])].filter((id) => {
+      const e = getPokemonMoveEntries(pokemonId).find((x) => x.moveId === id);
+      return e && isMoveSlotUnlocked(e.slotIndex, level);
+    });
+
+    const idx = current.indexOf(moveId);
+    let next: string[];
+
+    if (idx >= 0) {
+      next = current.filter((id) => id !== moveId);
+    } else if (current.length >= 2) {
+      next = [current[1], moveId];
+    } else {
+      next = [...current, moveId];
+    }
+
+    set((s) => ({
+      pokemonMoveLoadouts: { ...s.pokemonMoveLoadouts, [key]: next },
+    }));
+    get().sync();
+    return true;
+  },
 }));
 
 function getEconomySnapshot(state: EconomyStore): EconomyState {
@@ -624,6 +671,7 @@ function getEconomySnapshot(state: EconomyStore): EconomyState {
     luckyEggExpiresAt: state.luckyEggExpiresAt ?? null,
     luckyEggCount: state.luckyEggCount ?? 0,
     rareCandyCount: state.rareCandyCount ?? 0,
+    pokemonMoveLoadouts: state.pokemonMoveLoadouts ?? {},
   };
 }
 

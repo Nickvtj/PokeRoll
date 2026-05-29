@@ -18,6 +18,8 @@ export interface EconomyState {
   team: number[]; // 3 pokemon ids
   favoritePokemon: number[];
   pokemonBattleXp: Record<string, { level: number; xp: number }>;
+  /** IDs dos golpes equipados por Pokémon (máx. 2) */
+  pokemonMoveLoadouts: Record<string, string[]>;
   welcomeClaimed?: boolean;
   unlockedAchievements: string[];
   selectedAvatarId: string;

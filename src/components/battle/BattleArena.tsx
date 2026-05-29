@@ -2,12 +2,14 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Swords } from "lucide-react";
-import { PokemonBattleCard } from "@/components/battle/PokemonBattleCard";
+import { PokemonBattleCard, type BattleSelectionMode } from "@/components/battle/PokemonBattleCard";
+import { BattleActionPanel } from "@/components/battle/BattleActionPanel";
+import { BattleTurnBanner, battleSectionClass } from "@/components/battle/BattleTurnBanner";
 import { BattleResultModal } from "@/components/battle/BattleResultModal";
 import { BattleCoinFlipOverlay } from "@/components/battle/BattleCoinFlipOverlay";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
-import type { BattleCombatHighlight } from "@/hooks/use-battle-turn-loop";
+import type { BattleCombatHighlight } from "@/hooks/use-tactical-battle";
 import type { BattleTurnHighlight } from "@/components/battle/PokemonBattleCard";
 import type { BattleState } from "@/types/battle";
 import { cn } from "@/lib/utils";
@@ -18,6 +20,11 @@ interface BattleArenaProps {
   onContinue?: () => void;
   onPlayAgain?: () => void;
   continueLabel?: string;
+  bonuses?: { battleDamage: number; critChance: number };
+  onPickActor?: (slot: number) => void;
+  onPickTarget?: (slot: number) => void;
+  onPickMove?: (index: number) => void;
+  onCancelSelection?: () => void;
 }
 
 export function BattleArena({
@@ -26,6 +33,11 @@ export function BattleArena({
   onContinue,
   onPlayAgain,
   continueLabel,
+  bonuses = { battleDamage: 0, critChance: 0 },
+  onPickActor,
+  onPickTarget,
+  onPickMove,
+  onCancelSelection,
 }: BattleArenaProps) {
   if (!state) {
     return (
@@ -35,6 +47,10 @@ export function BattleArena({
       </div>
     );
   }
+
+  const tactical = state.tacticalMode && state.phase === "fighting";
+  const phase = state.tacticalPhase;
+  const pending = state.pendingSelection ?? {};
 
   const turnHighlight = (
     f: (typeof state.playerTeam)[0],
@@ -48,7 +64,10 @@ export function BattleArena({
       if (combatHighlight.phase === "strike" && flatIdx === combatHighlight.strikerFlat) {
         return "attack";
       }
-      if (combatHighlight.phase === "flash" && flatIdx === combatHighlight.victimFlat) {
+      if (
+        (combatHighlight.phase === "flash" || combatHighlight.phase === "impact") &&
+        flatIdx === combatHighlight.victimFlat
+      ) {
         return "defend";
       }
       if (
@@ -61,6 +80,27 @@ export function BattleArena({
     }
 
     return "none";
+  };
+
+  const playerSelectionMode = (slot: number): BattleSelectionMode => {
+    if (
+      !tactical ||
+      phase === "executing" ||
+      phase === "animating" ||
+      phase === "enemy-turn"
+    ) {
+      return "none";
+    }
+    if (phase === "player-pick-actor") return "pick-actor";
+    if (phase === "player-pick-target" || phase === "player-pick-move") {
+      if (pending.actorSlot === slot) return "selected-actor";
+    }
+    return "none";
+  };
+
+  const enemySelectionMode = (slot: number): BattleSelectionMode => {
+    if (!tactical || phase !== "player-pick-target") return "none";
+    return "pick-target";
   };
 
   const showModal =
@@ -99,26 +139,48 @@ export function BattleArena({
       )}
 
       <div className={state.phase === "coinFlip" ? "opacity-40 pointer-events-none" : ""}>
-        <div>
+        {tactical && <BattleTurnBanner phase={phase} />}
+
+        <div
+          className={cn(
+            "rounded-xl transition-all duration-300 p-1 -m-1",
+            tactical && battleSectionClass("enemy", phase)
+          )}
+        >
           <p
             className={cn(
               BATTLE_CLASSIC_THEME
                 ? "battle-classic-section-label battle-classic-enemy-label"
-                : "text-xs text-red-400 font-bold uppercase tracking-wider mb-2"
+                : "text-xs text-red-400 font-bold uppercase tracking-wider mb-2",
+              phase === "player-pick-target" && "animate-pulse"
             )}
           >
-            Inimigos
+            {phase === "player-pick-target" ? "🎯 Escolha o alvo" : "Inimigos"}
           </p>
           <div className="grid grid-cols-3 gap-2 relative z-10">
-            {state.enemyTeam.map((f, i) => (
-              <PokemonBattleCard
-                key={`enemy-${f.pokemon.id}-${i}`}
-                fighter={f}
-                turnHighlight={turnHighlight(f, 3, i)}
-                compact
-                side="enemy"
-              />
-            ))}
+            {state.enemyTeam.map((f, i) => {
+              const slot = f.slotIndex ?? i;
+              const flatIdx = 3 + slot;
+              const isVictim = combatHighlight?.victimFlat === flatIdx;
+
+              return (
+                <PokemonBattleCard
+                  key={`enemy-${f.pokemon.id}-${i}`}
+                  fighter={f}
+                  turnHighlight={turnHighlight(f, 3, slot)}
+                  selectionMode={
+                    pending.targetSlot === slot ? "selected-target" : enemySelectionMode(slot)
+                  }
+                  compact
+                  side="enemy"
+                  selectable={tactical && phase === "player-pick-target" && f.currentHp > 0}
+                  onSelect={() => onPickTarget?.(slot)}
+                  moveType={isVictim ? combatHighlight?.moveType : undefined}
+                  attackPhase={isVictim ? combatHighlight?.phase : undefined}
+                  statusApplied={isVictim ? combatHighlight?.statusApplied : undefined}
+                />
+              );
+            })}
           </div>
         </div>
 
@@ -145,37 +207,75 @@ export function BattleArena({
           )}
         </div>
 
-        <div>
+        <div
+          className={cn(
+            "rounded-xl transition-all duration-300 p-1 -m-1",
+            tactical && battleSectionClass("player", phase)
+          )}
+        >
           <p
             className={cn(
               BATTLE_CLASSIC_THEME
                 ? "battle-classic-section-label battle-classic-player-label"
-                : "text-xs text-cyan-400 font-bold uppercase tracking-wider mb-2"
+                : "text-xs text-cyan-400 font-bold uppercase tracking-wider mb-2",
+              phase === "player-pick-actor" && "animate-pulse"
             )}
           >
-            Seu Time
+            {phase === "player-pick-actor" ? "👆 Escolha quem ataca" : "Seu Time"}
           </p>
           <div className="grid grid-cols-3 gap-2 relative z-10">
-            {state.playerTeam.map((f, i) => (
-              <PokemonBattleCard
-                key={`player-${f.pokemon.id}-${i}`}
-                fighter={f}
-                turnHighlight={turnHighlight(f, 0, i)}
-                compact
-                side="player"
-              />
-            ))}
+            {state.playerTeam.map((f, i) => {
+              const slot = f.slotIndex ?? i;
+              const flatIdx = slot;
+              const isStriker = combatHighlight?.strikerFlat === flatIdx;
+              const isVictim = combatHighlight?.victimFlat === flatIdx;
+
+              return (
+                <PokemonBattleCard
+                  key={`player-${f.pokemon.id}-${i}`}
+                  fighter={f}
+                  turnHighlight={turnHighlight(f, 0, slot)}
+                  selectionMode={playerSelectionMode(slot)}
+                  compact
+                  side="player"
+                  selectable={
+                    tactical &&
+                    f.currentHp > 0 &&
+                    ((phase === "player-pick-actor" && f.status?.effect !== "sleep") ||
+                      ((phase === "player-pick-target" || phase === "player-pick-move") &&
+                        pending.actorSlot === slot))
+                  }
+                  onSelect={() => onPickActor?.(slot)}
+                  moveType={
+                    isVictim || isStriker ? combatHighlight?.moveType : undefined
+                  }
+                  attackPhase={
+                    isVictim || isStriker ? combatHighlight?.phase : undefined
+                  }
+                  statusApplied={isVictim ? combatHighlight?.statusApplied : undefined}
+                />
+              );
+            })}
           </div>
         </div>
 
+        {tactical && onPickMove && onCancelSelection && (
+          <BattleActionPanel
+            state={state}
+            bonuses={bonuses}
+            onPickMove={onPickMove}
+            onCancel={onCancelSelection}
+          />
+        )}
+
         <div
           className={cn(
-            "mt-4 relative z-10",
-            BATTLE_CLASSIC_THEME ? "battle-classic-dialog h-28" : "glass-card p-3 h-28 overflow-y-auto space-y-1"
+            "mt-3 relative z-10",
+            BATTLE_CLASSIC_THEME ? "battle-classic-dialog h-24" : "glass-card p-3 h-24 overflow-y-auto space-y-1"
           )}
         >
           <AnimatePresence initial={false}>
-            {state.log.slice(-6).map((entry) => (
+            {state.log.slice(-5).map((entry) => (
               <motion.p
                 key={entry.id}
                 initial={{ opacity: 0, x: -10 }}
