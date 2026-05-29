@@ -207,6 +207,43 @@ function getTypePreset(type: string): ToneSpec[] {
   }
 }
 
+export async function playBattleStrike(): Promise<void> {
+  const ctx = await getAudioContext();
+  if (!ctx) return;
+
+  const baseTime = ctx.currentTime + 0.01;
+  const tones: ToneSpec[] = [
+    { freq: 240, dur: 0.035, vol: 0.1, type: "square", at: 0, freqEnd: 140 },
+    { freq: 160, dur: 0.05, vol: 0.085, type: "triangle", at: 0.028 },
+  ];
+
+  for (const tone of tones) {
+    scheduleTone(ctx, baseTime, tone, 1, 1);
+  }
+}
+
+/** Som curto ao piscar (dano recebido) — estilo Game Boy */
+export async function playBattleDamage(sound: BattleHitSound): Promise<void> {
+  const ctx = await getAudioContext();
+  if (!ctx) return;
+
+  const { pitchMult, volMult } = getModifiers(sound);
+  const baseTime = ctx.currentTime + 0.01;
+  const blips: ToneSpec[] = [
+    { freq: 620, dur: 0.028, vol: 0.09, type: "square", at: 0 },
+    { freq: 480, dur: 0.028, vol: 0.085, type: "square", at: 0.065 },
+    { freq: 360, dur: 0.035, vol: 0.075, type: "square", at: 0.13 },
+  ];
+
+  if (sound.isCrit) {
+    blips.push({ freq: 820, dur: 0.025, vol: 0.08, type: "square", at: 0.19 });
+  }
+
+  for (const tone of blips) {
+    scheduleTone(ctx, baseTime, tone, pitchMult, volMult);
+  }
+}
+
 export async function playBattleHit(sound: BattleHitSound): Promise<void> {
   const ctx = await getAudioContext();
   if (!ctx) return;

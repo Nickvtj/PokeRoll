@@ -75,6 +75,8 @@ export interface PokemonLevelUpResult {
   xpPct: number;
   xpNeeded?: number;
   leveledUp: boolean;
+  /** XP foi dobrado por Lucky Egg nesta batalha */
+  luckyEggBoosted?: boolean;
 }
 
 export interface BattleEngagement {

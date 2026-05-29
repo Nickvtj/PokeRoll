@@ -1,12 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { Target } from "lucide-react";
-import { CapturaPerfeitaGame, type CaptureGameResult } from "@/components/minigame/CapturaPerfeitaGame";
+import type { CaptureGameResult } from "@/components/minigame/CapturaPerfeitaGame";
 import { GamePageShell } from "@/components/minigame/GamePageShell";
+import { PanelSkeleton } from "@/components/ui/RouteLoading";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordMinigameToSupabase } from "@/lib/economy-supabase";
 import { POKEMON_MAP } from "@/data/pokemon";
+
+const CapturaPerfeitaGame = dynamic(
+  () =>
+    import("@/components/minigame/CapturaPerfeitaGame").then((m) => m.CapturaPerfeitaGame),
+  { loading: () => <PanelSkeleton label="Carregando Captura Perfeita..." /> }
+);
 
 export default function CapturaGamePage() {
   const addCoins = useEconomyStore((s) => s.addCoins);
@@ -64,11 +72,11 @@ export default function CapturaGamePage() {
   return (
     <GamePageShell
       title="Captura Perfeita"
-      subtitle="Capture em sequência · 1 moeda por captura"
+      subtitle="Capture em sequência · perfeito = 2 moedas, bom = 1 moeda"
       icon={<Target className="w-7 h-7 text-emerald-400 shrink-0" />}
       tips={
         <>
-          <p>Centro dourado = timing perfeito. Cada acerto traz um novo Pokémon na sequência.</p>
+          <p>Centro dourado = perfeito (2 moedas). Zona verde = capturado (1 moeda).</p>
           {bonuses.coinBonus > 0 && (
             <p className="text-amber-400">
               Meowth no time: +{Math.round(bonuses.coinBonus * 100)}% moedas

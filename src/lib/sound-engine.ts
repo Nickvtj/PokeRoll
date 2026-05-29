@@ -60,6 +60,19 @@ export async function playSpinTick(pitch = 300): Promise<void> {
 
 export { playBattleHit } from "@/lib/battle-hit-sounds";
 
+let lastBattleResultSoundKey = "";
+
+/** Toca vitória/derrota no máximo uma vez por chave de resultado */
+export async function playBattleResultSound(
+  won: boolean,
+  soundKey: string
+): Promise<void> {
+  if (lastBattleResultSoundKey === soundKey) return;
+  lastBattleResultSoundKey = soundKey;
+  if (won) await playBattleWin();
+  else await playBattleLoss();
+}
+
 export async function playBattleWin(): Promise<void> {
   await playNoteSequence(
     [
@@ -81,6 +94,134 @@ export async function playBattleLoss(): Promise<void> {
     ],
     0.06
   );
+}
+
+/** Pokémon desmaiou — tom descendente estilo clássico */
+export async function playBattleFaint(): Promise<void> {
+  await playNoteSequence(
+    [
+      { freq: 420, dur: 0.08, vol: 0.09, type: "square" },
+      { freq: 310, dur: 0.1, vol: 0.085, type: "square" },
+      { freq: 220, dur: 0.14, vol: 0.075, type: "triangle" },
+      { freq: 165, dur: 0.2, vol: 0.06, type: "sine" },
+    ],
+    0.04
+  );
+}
+
+/** Lançamento da moeda — whoosh curto para cima */
+export async function playBattleCoinToss(): Promise<void> {
+  const ctx = await getAudioContext();
+  if (!ctx) return;
+
+  const start = ctx.currentTime + 0.01;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(180, start);
+  osc.frequency.exponentialRampToValueAtTime(920, start + 0.14);
+
+  gain.gain.setValueAtTime(0.001, start);
+  gain.gain.linearRampToValueAtTime(0.032, start + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + 0.16);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(start);
+  osc.stop(start + 0.18);
+}
+
+/**
+ * Giro da moeda no ar — “tins” metálicos que vão desacelerando até parar.
+ * Duração alinhada à animação (~2s).
+ */
+export async function playBattleCoinSpinSequence(durationSec = 2.05): Promise<void> {
+  const ctx = await getAudioContext();
+  if (!ctx) return;
+
+  const baseTime = ctx.currentTime + 0.08;
+  let elapsed = 0;
+  let flipIndex = 0;
+
+  while (elapsed < durationSec * 0.93) {
+    const progress = elapsed / durationSec;
+    const interval = 0.055 + progress * progress * 0.22;
+    const start = baseTime + elapsed;
+    const vol = 0.022 + (1 - progress) * 0.018;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const freq = 1180 - progress * 520 + (flipIndex % 2) * 90;
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, start);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(120, freq * 0.55), start + 0.032);
+
+    gain.gain.setValueAtTime(0.001, start);
+    gain.gain.linearRampToValueAtTime(vol, start + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.038);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.045);
+
+    elapsed += interval;
+    flipIndex++;
+  }
+}
+
+/** Moeda parou + revelação de quem ataca primeiro */
+export async function playBattleCoinResultReveal(playerStarts: boolean): Promise<void> {
+  const ctx = await getAudioContext();
+  if (!ctx) return;
+
+  const land = ctx.currentTime + 0.02;
+
+  const thud = ctx.createOscillator();
+  const thudGain = ctx.createGain();
+  thud.type = "sine";
+  thud.frequency.setValueAtTime(320, land);
+  thud.frequency.exponentialRampToValueAtTime(140, land + 0.1);
+  thudGain.gain.setValueAtTime(0.001, land);
+  thudGain.gain.linearRampToValueAtTime(0.05, land + 0.012);
+  thudGain.gain.exponentialRampToValueAtTime(0.001, land + 0.12);
+  thud.connect(thudGain);
+  thudGain.connect(ctx.destination);
+  thud.start(land);
+  thud.stop(land + 0.14);
+
+  const ringStart = land + 0.09;
+  const ring = ctx.createOscillator();
+  const ringGain = ctx.createGain();
+  ring.type = "triangle";
+  ring.frequency.value = playerStarts ? 784 : 440;
+  ringGain.gain.setValueAtTime(0.001, ringStart);
+  ringGain.gain.linearRampToValueAtTime(0.048, ringStart + 0.015);
+  ringGain.gain.exponentialRampToValueAtTime(0.001, ringStart + (playerStarts ? 0.35 : 0.28));
+  ring.connect(ringGain);
+  ringGain.connect(ctx.destination);
+  ring.start(ringStart);
+  ring.stop(ringStart + 0.4);
+
+  if (playerStarts) {
+    const chimeStart = ringStart + 0.12;
+    for (const [i, freq] of [988, 1175].entries()) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const t = chimeStart + i * 0.09;
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(0.035, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.2);
+    }
+  }
 }
 
 export async function playXpGain(): Promise<void> {

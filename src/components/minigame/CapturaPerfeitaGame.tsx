@@ -10,8 +10,6 @@ import {
   calcStreakReward,
   evaluateCaptureHit,
   getCaptureConfig,
-  getCaptureCoinsForRarity,
-  getRarityColor,
   pickWildPokemon,
   rollZoneCenter,
   type CaptureHitQuality,
@@ -208,10 +206,10 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
         </div>
         <h3 className="text-xl font-bold">Captura Perfeita</h3>
         <p className="text-white/50 text-sm leading-relaxed">
-          Acerte o timing e capture Pokémon em sequência. Cada captura vale 1 moeda.
-          Errou? A sequência termina.
+          Acerte o timing e capture Pokémon em sequência. Centro dourado = perfeito
+          (2 moedas). Zona verde = capturado (1 moeda). Errou? A sequência termina.
         </p>
-        <p className="text-xs text-amber-400/90">1 moeda por captura 🪙</p>
+        <p className="text-xs text-amber-400/90">Perfeito = 2 moedas · Bom = 1 moeda</p>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -242,11 +240,10 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
           <RarityBadge rarity={wild.rarity} size="sm" />
         </div>
         <div className="text-right text-xs text-white/50">
-          <p className={getRarityColor(wild.rarity)}>
-            +{getCaptureCoinsForRarity()} 🪙
-          </p>
+          <p className="text-emerald-400">+1 🪙 na zona verde</p>
+          <p className="text-amber-400">+2 🪙 no perfeito</p>
           {perfectHits > 0 && (
-            <p className="text-amber-400">{perfectHits} perfeito{perfectHits > 1 ? "s" : ""}</p>
+            <p className="text-amber-300">{perfectHits} perfeito{perfectHits > 1 ? "s" : ""}</p>
           )}
         </div>
       </div>
@@ -321,7 +318,7 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
               lastQuality === "miss" && "text-red-400"
             )}
           >
-            {lastQuality === "perfect" && "Perfeito! ✨"}
+            {lastQuality === "perfect" && "Perfeito! +2 moedas ✨"}
             {lastQuality === "good" && "Capturado!"}
             {lastQuality === "miss" && "Escapou..."}
           </motion.p>
@@ -339,7 +336,7 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
           )}
         >
           <p className="text-[10px] text-white/40 mb-2 text-center uppercase tracking-wider">
-            Timing de captura
+            Centro dourado = perfeito (+2 🪙)
           </p>
           <div className="relative h-10 rounded-full bg-white/10 border border-white/10 overflow-hidden">
             <div

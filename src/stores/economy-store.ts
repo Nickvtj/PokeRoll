@@ -225,6 +225,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
           xpPct: newProgress.pct,
           xpNeeded: newProgress.xpNeeded,
           leveledUp,
+          luckyEggBoosted: luckyActive,
         });
       }
 

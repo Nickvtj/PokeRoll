@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { BattleArena } from "@/components/battle/BattleArena";
 import { TeamSelector } from "@/components/battle/TeamSelector";
@@ -8,13 +8,12 @@ import { SavedTeamsPanel } from "@/components/gym/SavedTeamsPanel";
 import { BadgeRewardAnimation } from "@/components/gym/BadgeRewardAnimation";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { GYM_MAP } from "@/data/gyms";
-import { executeBattleTurn } from "@/lib/battle-engine";
 import { initGymBattle } from "@/lib/gym-battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
 import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
-import { playNewBattleHitSounds } from "@/lib/battle-sound-utils";
 import { useBattleCoinFlip } from "@/hooks/use-battle-coin-flip";
+import { useBattleTurnLoop } from "@/hooks/use-battle-turn-loop";
 import type { BattleState } from "@/types/battle";
 import type { GymId } from "@/types/gym";
 import type { PerfectRunBonus } from "@/types/gym";
@@ -22,9 +21,10 @@ import type { PerfectRunBonus } from "@/types/gym";
 interface GymBattleScreenProps {
   gymId: GymId;
   onExit: () => void;
+  onBattleActiveChange?: (active: boolean) => void;
 }
 
-export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
+export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBattleScreenProps) {
   const gym = GYM_MAP[gymId];
   const team = useEconomyStore((s) => s.team);
   const getPokemonLevelsMap = useEconomyStore((s) => s.getPokemonLevelsMap);
@@ -38,19 +38,59 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
     bonus: PerfectRunBonus;
     teamIds: number[];
   } | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const battleStateRef = useRef<BattleState | null>(null);
-  const lastLogLenRef = useRef(0);
-  battleStateRef.current = battleState;
 
   useBattleCoinFlip(battleState, setBattleState);
+
+  const handleTurnComplete = useCallback(
+    (state: BattleState, done: boolean) => {
+      if (!done) return;
+
+      setFighting(false);
+      const won = state.phase === "victory";
+      const levelUps = grantPokemonBattleXp(team, won, "gym");
+      const finalState: BattleState = { ...state, levelUps };
+
+      if (won && state.gymMeta) {
+        const avgLevel =
+          team.reduce((sum, id) => sum + (getPokemonLevelsMap()[id] ?? 1), 0) / team.length;
+        const bonus = calcPerfectRun(
+          true,
+          state.playerDeaths ?? 0,
+          state.turnCount ?? 0,
+          avgLevel,
+          state.gymMeta.recommendedLevel
+        );
+        const { badgeEarned } = recordGymStageWin(gymId, stage, team, bonus);
+
+        if (badgeEarned) {
+          setBadgeReward({ bonus, teamIds: [...team] });
+        }
+      }
+      setBattleState(finalState);
+    },
+    [team, stage, gymId, grantPokemonBattleXp, getPokemonLevelsMap, recordGymStageWin]
+  );
+
+  const { arenaState, combatHighlight, resetLoop } = useBattleTurnLoop({
+    fighting,
+    battleState,
+    setBattleState,
+    getBonuses: () => {
+      const bonuses = getEconomyBonuses(team);
+      return {
+        battleDamage: bonuses.battleDamage,
+        critChance: bonuses.critChance,
+      };
+    },
+    onTurnComplete: handleTurnComplete,
+  });
 
   const startStage = useCallback(
     (s: number) => {
       if (team.length < 3) return;
       const pokemon = getTeamPokemonForBattle(team);
       if (pokemon.length < 3) return;
-      lastLogLenRef.current = 0;
+      resetLoop();
       setStage(s);
       setBattleState(initGymBattle(gymId, s, pokemon, getPokemonLevelsMap()));
       setFighting(true);
@@ -58,62 +98,8 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
     [team, gymId, getPokemonLevelsMap]
   );
 
-  const processTurns = useCallback(() => {
-    const prev = battleStateRef.current;
-    if (!prev || prev.phase !== "fighting") return;
-
-    const bonuses = getEconomyBonuses(team);
-    const { state, done } = executeBattleTurn(prev, {
-      battleDamage: bonuses.battleDamage,
-      critChance: bonuses.critChance,
-    });
-
-    if (state.log.length > lastLogLenRef.current) {
-      playNewBattleHitSounds(state.log, lastLogLenRef.current);
-      lastLogLenRef.current = state.log.length;
-    }
-
-    if (!done) {
-      setBattleState(state);
-      return;
-    }
-
-    setFighting(false);
-    const won = state.phase === "victory";
-    const levelUps = grantPokemonBattleXp(team, won, "gym");
-    const finalState: BattleState = { ...state, levelUps };
-
-    if (won && state.gymMeta) {
-      const avgLevel =
-        team.reduce((sum, id) => sum + (getPokemonLevelsMap()[id] ?? 1), 0) / team.length;
-      const bonus = calcPerfectRun(
-        true,
-        state.playerDeaths ?? 0,
-        state.turnCount ?? 0,
-        avgLevel,
-        state.gymMeta.recommendedLevel
-      );
-      const { badgeEarned } = recordGymStageWin(gymId, stage, team, bonus);
-
-      if (badgeEarned) {
-        setBadgeReward({ bonus, teamIds: [...team] });
-      }
-    }
-    setBattleState(finalState);
-  }, [team, stage, gymId, grantPokemonBattleXp, getPokemonLevelsMap, recordGymStageWin]);
-
-  useEffect(() => {
-    if (!fighting) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
-    }
-    intervalRef.current = setInterval(processTurns, 900);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [fighting, processTurns]);
-
   const resetBattle = () => {
+    resetLoop();
     setBattleState(null);
     setFighting(false);
   };
@@ -143,24 +129,34 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
         ? "Terminar"
         : "Continuar";
 
+  useEffect(() => {
+    const active = fighting || battleState != null;
+    onBattleActiveChange?.(active);
+    return () => onBattleActiveChange?.(false);
+  }, [fighting, battleState, onBattleActiveChange]);
+
   return (
     <div className="space-y-3">
-      <button
-        type="button"
-        onClick={onExit}
-        className="flex items-center gap-1 text-xs text-white/50 hover:text-white"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" /> Voltar aos ginásios
-      </button>
+      {!fighting && !battleState && (
+        <button
+          type="button"
+          onClick={onExit}
+          className="flex items-center gap-1 text-xs text-white/50 hover:text-white"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Voltar aos ginásios
+        </button>
+      )}
 
-      <div
-        className="glass-card p-3 text-center border"
-        style={{ borderColor: `${gym.themeColor}40` }}
-      >
-        <p className="text-xs font-bold" style={{ color: gym.themeColor }}>
-          {gym.arenaName} · Batalha {stage}/5
-        </p>
-      </div>
+      {!fighting && !battleState && (
+        <div
+          className="glass-card p-3 text-center border"
+          style={{ borderColor: `${gym.themeColor}40` }}
+        >
+          <p className="text-xs font-bold" style={{ color: gym.themeColor }}>
+            {gym.arenaName} · Batalha {stage}/5
+          </p>
+        </div>
+      )}
 
       {!fighting && !battleState && (
         <>
@@ -174,7 +170,8 @@ export function GymBattleScreen({ gymId, onExit }: GymBattleScreenProps) {
 
       {(fighting || battleState) && (
         <BattleArena
-          state={battleState}
+          state={arenaState}
+          combatHighlight={combatHighlight}
           onContinue={handleContinue}
           onPlayAgain={battleState?.phase === "defeat" ? handlePlayAgain : undefined}
           continueLabel={gymContinueLabel}

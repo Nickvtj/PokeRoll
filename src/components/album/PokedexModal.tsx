@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { BookOpen, Calendar, Copy, Sparkles, X } from "lucide-react";
 import { getPokedexInfo, getTypeColor } from "@/data/pokedex";
+import { getEvolutionLabel } from "@/data/pokemon-evolution";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { RARITY_CONFIG } from "@/data/rarity";
@@ -56,6 +57,7 @@ export function PokedexModal({
   const gymBadges = getHallOfFameBorder(pokemon.id);
   const displayImage = getPokemonDisplayImage(pokemon.id, collection);
   const usingShiny = Boolean(collection.hasShiny && collection.useShiny);
+  const evolutionLabel = getEvolutionLabel(pokemon.id);
 
   const modal = (
     <AnimatePresence>
@@ -169,6 +171,9 @@ export function PokedexModal({
                   <StatRow label="Altura" value={`${info.height.toFixed(1)} m`} />
                   <StatRow label="Peso" value={`${info.weight.toFixed(1)} kg`} />
                   <StatRow label="Geração" value={`${pokemon.generation}ª`} />
+                  {evolutionLabel && (
+                    <StatRow label="Evolução" value={evolutionLabel} />
+                  )}
                   <StatRow
                     label="Cópias"
                     value={`${collection.count}x`}

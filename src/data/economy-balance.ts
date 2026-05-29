@@ -7,17 +7,25 @@ export const DUPLICATE_COIN_REWARD = 2;
 
 /** Minigames — sem teto diário; recompensas menores que batalha (4–7) */
 export const CAPTURE_SHAKE_MS = 700;
-/** Moedas por Pokémon capturado na sequência (Captura Perfeita) */
+/** Moedas por acerto — perfeito vale o dobro */
 export const CAPTURE_COINS_PER_CATCH = 1;
+export const CAPTURE_PERFECT_COIN_BONUS = 1;
 export const CAPTURE_COINS_MIN = CAPTURE_COINS_PER_CATCH;
 export const CAPTURE_COINS_MAX = CAPTURE_COINS_PER_CATCH;
 
 export const CLICK_GAME_DURATION_SEC = 30;
+/** Click Rush — moedas por desempenho (pontos + combo) */
 export const CLICK_BASE_COINS_MIN = 1;
-export const CLICK_BASE_COINS_MAX = 2;
+export const CLICK_BASE_COINS_MAX = 8;
+/** Limites de pontos para cada faixa de moeda base (1→7 moedas) */
+export const CLICK_SCORE_TIER_THRESHOLDS = [150, 300, 500, 700, 900, 1100] as const;
+export const CLICK_COMBO_BONUS_TIER_1 = 20;
+export const CLICK_COMBO_BONUS_TIER_2 = 40;
+export const CLICK_COMBO_BONUS_COINS_1 = 1;
+export const CLICK_COMBO_BONUS_COINS_2 = 2;
 
 export const MEMORY_PAIR_COUNT = 12;
-export const MEMORY_GAME_DURATION_SEC = 45;
+export const MEMORY_GAME_DURATION_SEC = 60;
 export const MEMORY_COINS_MIN = 1;
 export const MEMORY_COINS_MAX = 3;
 
@@ -36,6 +44,14 @@ export const BATTLE_FREE_SPIN_CHANCE = 0.04;
 export const BATTLE_XP_BASE = 22;
 export const BATTLE_DURATION_BASE_MS = 18000;
 export const BATTLE_DURATION_PER_WAVE_MS = 4000;
+/** Pausa entre golpes — tempo para animação estilo clássico */
+export const BATTLE_STRIKE_MS = 280;
+export const BATTLE_FLASH_MS = 620;
+export const BATTLE_TURN_INTERVAL_MS = 2200;
+/** Moeda — giro, revelação e pausa antes do 1º ataque */
+export const BATTLE_COIN_FLIP_MS = 3200;
+export const BATTLE_COIN_REVEAL_MS = 2600;
+export const BATTLE_POST_COIN_PAUSE_MS = 1100;
 
 /** Progressão — treinador sobe mais devagar */
 export const XP_PER_LEVEL = 180;
@@ -46,8 +62,8 @@ export const LUCKY_EGG_DURATION_MS = 120_000;
 export const LUCKY_EGG_XP_MULTIPLIER = 2;
 export const LUCKY_EGG_PER_MILESTONE = 1;
 
-/** Poké-Memory: moedas só ao completar — 1 por par */
-export const MEMORY_COINS_PER_PAIR = 1;
+/** Poké-Memory: moedas só ao completar — 2 por par */
+export const MEMORY_COINS_PER_PAIR = 2;
 
 /** Rare Candy: a cada 5 níveis de treinador */
 export const RARE_CANDY_PER_MILESTONE = 3;
@@ -67,6 +83,11 @@ export const DAILY_MISSIONS = [
 ];
 
 /** Pokébolas do Click Rush */
+export const CLICK_TIME_BONUS_SEC = 10;
+export const CLICK_TIME_BALL_CHANCE = 0.035;
+export const CLICK_MAX_TIME_SEC = 55;
+export const CLICK_BALL_MIN_DISTANCE_PCT = 14;
+
 export const BALL_TYPES = {
   poke: { label: "Poké", points: 1, color: "#ef4444", chance: 0.55 },
   great: { label: "Great", points: 3, color: "#3b82f6", chance: 0.28 },

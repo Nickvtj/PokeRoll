@@ -1,19 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Shield } from "lucide-react";
 import { BattleArena } from "@/components/battle/BattleArena";
 import { TeamSelector } from "@/components/battle/TeamSelector";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
-import { executeBattleTurn, initBattle } from "@/lib/battle-engine";
+import { initBattle } from "@/lib/battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordBattleToSupabase } from "@/lib/economy-supabase";
-import { playNewBattleHitSounds } from "@/lib/battle-sound-utils";
 import { useBattleCoinFlip } from "@/hooks/use-battle-coin-flip";
+import { useBattleTurnLoop } from "@/hooks/use-battle-turn-loop";
 import type { BattleState } from "@/types/battle";
 
-export function TrainingPanel() {
+export function TrainingPanel({
+  onBattleActiveChange,
+}: {
+  onBattleActiveChange?: (active: boolean) => void;
+}) {
   const team = useEconomyStore((s) => s.team);
   const addCoins = useEconomyStore((s) => s.addCoins);
   const addXp = useEconomyStore((s) => s.addXp);
@@ -25,91 +29,93 @@ export function TrainingPanel() {
 
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const battleStateRef = useRef<BattleState | null>(null);
-  const lastLogLenRef = useRef(0);
-  battleStateRef.current = battleState;
 
   useBattleCoinFlip(battleState, setBattleState);
+
+  const handleTurnComplete = useCallback(
+    (state: BattleState, done: boolean) => {
+      if (!done) return;
+
+      setFighting(false);
+      const won = state.phase === "victory";
+      const levelUps = grantPokemonBattleXp(team, won, "training");
+      let finalState: BattleState = { ...state, levelUps };
+      const bonuses = getEconomyBonuses(team);
+
+      if (won && state.reward) {
+        const coins = Math.round(state.reward.coins * (1 + bonuses.coinBonus));
+        const xp = Math.round(state.reward.xp * (1 + bonuses.xpBonus));
+        addCoins(coins);
+        addXp(xp);
+        recordBattleWin();
+        if (state.reward.freeSpin) grantFreeSpin();
+        void recordBattleToSupabase(true, coins, xp, !!state.reward.freeSpin, state.wave, team);
+        finalState = { ...finalState, reward: { ...state.reward, coins, xp } };
+      } else if (!won) {
+        addXp(6);
+        recordBattleLoss();
+        void recordBattleToSupabase(false, 0, 6, false, state.wave, team);
+      }
+
+      setBattleState(finalState);
+    },
+    [
+      team,
+      addCoins,
+      addXp,
+      recordBattleWin,
+      recordBattleLoss,
+      grantFreeSpin,
+      grantPokemonBattleXp,
+    ]
+  );
+
+  const { arenaState, combatHighlight, resetLoop } = useBattleTurnLoop({
+    fighting,
+    battleState,
+    setBattleState,
+    getBonuses: () => {
+      const bonuses = getEconomyBonuses(team);
+      return {
+        battleDamage: bonuses.battleDamage,
+        critChance: bonuses.critChance,
+      };
+    },
+    onTurnComplete: handleTurnComplete,
+  });
 
   const beginBattle = useCallback(() => {
     if (team.length < 3) return null;
     const pokemon = getTeamPokemonForBattle(team);
     if (pokemon.length < 3) return null;
-    lastLogLenRef.current = 0;
+    resetLoop();
     const state = initBattle(pokemon, 1, getPokemonLevelsMap());
     setBattleState(state);
     setFighting(true);
     return state;
-  }, [team, getPokemonLevelsMap]);
+  }, [team, getPokemonLevelsMap, resetLoop]);
 
   const startBattle = () => {
     beginBattle();
   };
 
-  const processTurns = useCallback(() => {
-    const prev = battleStateRef.current;
-    if (!prev || prev.phase !== "fighting") return;
-
-    const bonuses = getEconomyBonuses(team);
-    const { state, done } = executeBattleTurn(prev, {
-      battleDamage: bonuses.battleDamage,
-      critChance: bonuses.critChance,
-    });
-
-    if (state.log.length > lastLogLenRef.current) {
-      playNewBattleHitSounds(state.log, lastLogLenRef.current);
-      lastLogLenRef.current = state.log.length;
-    }
-
-    if (!done) {
-      setBattleState(state);
-      return;
-    }
-
-    setFighting(false);
-    const won = state.phase === "victory";
-    const levelUps = grantPokemonBattleXp(team, won, "training");
-    let finalState: BattleState = { ...state, levelUps };
-
-    if (won && state.reward) {
-      const coins = Math.round(state.reward.coins * (1 + bonuses.coinBonus));
-      const xp = Math.round(state.reward.xp * (1 + bonuses.xpBonus));
-      addCoins(coins);
-      addXp(xp);
-      recordBattleWin();
-      if (state.reward.freeSpin) grantFreeSpin();
-      void recordBattleToSupabase(true, coins, xp, !!state.reward.freeSpin, state.wave, team);
-      finalState = { ...finalState, reward: { ...state.reward, coins, xp } };
-    } else if (!won) {
-      addXp(6);
-      recordBattleLoss();
-      void recordBattleToSupabase(false, 0, 6, false, state.wave, team);
-    }
-
-    setBattleState(finalState);
-  }, [team, addCoins, addXp, recordBattleWin, recordBattleLoss, grantFreeSpin, grantPokemonBattleXp]);
-
-  useEffect(() => {
-    if (!fighting) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
-    }
-    intervalRef.current = setInterval(processTurns, 900);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [fighting, processTurns]);
-
   const resetBattle = () => {
+    resetLoop();
     setBattleState(null);
     setFighting(false);
   };
 
+  useEffect(() => {
+    const active = fighting || battleState != null;
+    onBattleActiveChange?.(active);
+    return () => onBattleActiveChange?.(false);
+  }, [fighting, battleState, onBattleActiveChange]);
+
   if (fighting || battleState) {
     return (
       <BattleArena
-        state={battleState}
+        state={arenaState}
+        combatHighlight={combatHighlight}
         onContinue={resetBattle}
         onPlayAgain={() => {
           resetBattle();

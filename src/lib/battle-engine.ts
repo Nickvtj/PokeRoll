@@ -407,6 +407,8 @@ function calcDamage(
 export interface BattleStepResult {
   state: BattleState;
   done: boolean;
+  /** Par atacante/alvo quando houve golpe neste turno */
+  combatBeat?: { strikerFlat: number; victimFlat: number } | null;
 }
 
 export function executeBattleTurn(
@@ -546,7 +548,11 @@ export function executeBattleTurn(
       targetFlatIndex: null,
       counterTurn: false,
     };
-    return applyFighterUpdates(state, all, logEntries, turnIndex, nextEngagement);
+    const aoeVictimFlat = fighterFlatIndex(livingOpp[0]);
+    return {
+      ...applyFighterUpdates(state, all, logEntries, turnIndex, nextEngagement),
+      combatBeat: { strikerFlat, victimFlat: aoeVictimFlat },
+    };
   }
 
   const { damage, isCrit, typeLabel, typeMult } = calcDamage(
@@ -600,7 +606,10 @@ export function executeBattleTurn(
     nextEngagement = null;
   }
 
-  return applyFighterUpdates(state, all, logEntries, turnIndex, nextEngagement);
+  return {
+    ...applyFighterUpdates(state, all, logEntries, turnIndex, nextEngagement),
+    combatBeat: { strikerFlat, victimFlat },
+  };
 }
 
 function countNewPlayerDeaths(prev: BattleFighter[], next: BattleFighter[]): number {
@@ -687,6 +696,49 @@ function applyFighterUpdates(
   return { state: newState, done: false };
 }
 
+/** Fallback quando combatBeat não veio no resultado — detecta pelo log/HP */
+export function inferCombatBeatFromTurn(
+  prev: BattleState,
+  next: BattleState,
+  logFrom: number
+): { strikerFlat: number; victimFlat: number } | null {
+  const prevAll = getAllFighters(prev);
+  const nextAll = getAllFighters(next);
+
+  let victimFlat = -1;
+  for (let i = 0; i < nextAll.length; i++) {
+    if (nextAll[i].currentHp < prevAll[i].currentHp) {
+      victimFlat = i;
+      break;
+    }
+  }
+  if (victimFlat < 0) return null;
+
+  for (let i = logFrom; i < next.log.length; i++) {
+    const entry = next.log[i];
+    if (!entry.hitSound) continue;
+    const match = entry.message.match(/^(.+?) (?:→|atingiu) (.+?) \(-/);
+    if (!match) continue;
+    const strikerFlat = nextAll.findIndex((f) => f.pokemon.name === match[1]);
+    const parsedVictim = nextAll.findIndex((f) => f.pokemon.name === match[2]);
+    if (strikerFlat >= 0 && parsedVictim >= 0) {
+      return { strikerFlat, victimFlat: parsedVictim };
+    }
+  }
+
+  for (let i = 0; i < nextAll.length; i++) {
+    if (
+      i !== victimFlat &&
+      nextAll[i].currentHp > 0 &&
+      nextAll[i].currentHp === prevAll[i].currentHp
+    ) {
+      return { strikerFlat: i, victimFlat };
+    }
+  }
+
+  return null;
+}
+
 export function calcBattleReward(wave: number, coinBonus = 0): BattleReward {
   const base =
     BATTLE_BASE_COINS_MIN +
@@ -699,17 +751,48 @@ export function calcBattleReward(wave: number, coinBonus = 0): BattleReward {
 }
 
 export function getActiveFighterIndex(state: BattleState): number | null {
+  const roles = getBattleCombatRoles(state);
+  return roles.attackerFlat;
+}
+
+export interface BattleCombatRoles {
+  attackerFlat: number | null;
+  defenderFlat: number | null;
+}
+
+/** Quem ataca e quem recebe o golpe neste momento do duelo 1v1 */
+export function getBattleCombatRoles(state: BattleState): BattleCombatRoles {
   const eng = state.battleEngagement;
-  if (!eng) return null;
+  if (!eng || state.phase !== "fighting") {
+    return { attackerFlat: null, defenderFlat: null };
+  }
 
   const all = getAllFighters(state);
-  if (eng.counterTurn && eng.targetFlatIndex != null) {
-    const target = all[eng.targetFlatIndex];
-    if (target?.currentHp > 0) return eng.targetFlatIndex;
-  }
   const champion = all[eng.championFlatIndex];
-  if (champion?.currentHp > 0) return eng.championFlatIndex;
-  return null;
+  const target =
+    eng.targetFlatIndex != null ? all[eng.targetFlatIndex] : undefined;
+
+  if (eng.counterTurn && target?.currentHp > 0 && champion?.currentHp > 0) {
+    return {
+      attackerFlat: eng.targetFlatIndex!,
+      defenderFlat: eng.championFlatIndex,
+    };
+  }
+
+  if (champion?.currentHp > 0) {
+    const defenderFlat =
+      target?.currentHp > 0 ? eng.targetFlatIndex : null;
+    return {
+      attackerFlat: eng.championFlatIndex,
+      defenderFlat: defenderFlat ?? null,
+    };
+  }
+
+  if (target?.currentHp > 0) {
+    return { attackerFlat: eng.targetFlatIndex!, defenderFlat: null };
+  }
+
+  return { attackerFlat: null, defenderFlat: null };
 }
 
 export function getDuelHighlightIndices(state: BattleState): number[] {

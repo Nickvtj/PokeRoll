@@ -260,9 +260,6 @@ export default function SpinPage() {
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-amber-400/80 text-center mt-2">
-            ✨ Shiny: 0,1% por giro (skin alternativa)
-          </p>
         </div>
       </div>
 

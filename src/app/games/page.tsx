@@ -1,12 +1,14 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Gamepad2, Target, MousePointerClick, Brain, Coins, Sparkles } from "lucide-react";
 import {
   CLICK_BASE_COINS_MAX,
   CLICK_BASE_COINS_MIN,
-  MEMORY_COINS_MAX,
-  MEMORY_COINS_MIN,
+  MEMORY_COINS_PER_PAIR,
+  MEMORY_PAIR_COUNT,
 } from "@/data/economy-balance";
 import { useEconomyStore } from "@/stores/economy-store";
 import { cn } from "@/lib/utils";
@@ -26,7 +28,7 @@ const GAMES = [
     href: "/games/click-rush",
     title: "Click Rush",
     desc: "Clique nas Pokébolas o máximo que puder em 30 segundos.",
-    reward: `${CLICK_BASE_COINS_MIN}~${CLICK_BASE_COINS_MAX} moedas`,
+    reward: `${CLICK_BASE_COINS_MIN}~${CLICK_BASE_COINS_MAX} moedas · por desempenho`,
     icon: MousePointerClick,
     color: "from-cyan-500/20 to-blue-500/10 border-cyan-500/25",
     iconColor: "text-cyan-400",
@@ -36,7 +38,7 @@ const GAMES = [
     href: "/games/memory",
     title: "Poké-Memory",
     desc: "Vire as cartas e encontre todos os pares antes do tempo acabar.",
-    reward: `${MEMORY_COINS_MIN}~${MEMORY_COINS_MAX} moedas`,
+    reward: `${MEMORY_PAIR_COUNT * MEMORY_COINS_PER_PAIR} moedas ao completar`,
     icon: Brain,
     color: "from-violet-500/20 to-purple-500/10 border-violet-500/25",
     iconColor: "text-violet-400",
@@ -45,8 +47,15 @@ const GAMES = [
 ] as const;
 
 export default function GamesHubPage() {
+  const router = useRouter();
   const gamesPlayed = useEconomyStore((s) => s.clickGamesPlayed);
   const gamesToday = useEconomyStore((s) => s.clickGamesToday);
+
+  useEffect(() => {
+    for (const game of GAMES) {
+      router.prefetch(game.href);
+    }
+  }, [router]);
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
@@ -71,7 +80,7 @@ export default function GamesHubPage() {
 
       <div className="flex flex-col gap-3">
         {GAMES.map((game) => (
-          <Link key={game.href} href={game.href} className="block group">
+          <Link key={game.href} href={game.href} prefetch className="block group">
             <div
               className={cn(
                 "glass-card p-4 border bg-gradient-to-br transition-all",

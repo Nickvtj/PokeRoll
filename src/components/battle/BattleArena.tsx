@@ -5,17 +5,26 @@ import { Swords } from "lucide-react";
 import { PokemonBattleCard } from "@/components/battle/PokemonBattleCard";
 import { BattleResultModal } from "@/components/battle/BattleResultModal";
 import { BattleCoinFlipOverlay } from "@/components/battle/BattleCoinFlipOverlay";
-import { getActiveFighterIndex } from "@/lib/battle-engine";
+import type { BattleCombatHighlight } from "@/hooks/use-battle-turn-loop";
+import type { BattleTurnHighlight } from "@/components/battle/PokemonBattleCard";
 import type { BattleState } from "@/types/battle";
+import { cn } from "@/lib/utils";
 
 interface BattleArenaProps {
   state: BattleState | null;
+  combatHighlight?: BattleCombatHighlight | null;
   onContinue?: () => void;
   onPlayAgain?: () => void;
   continueLabel?: string;
 }
 
-export function BattleArena({ state, onContinue, onPlayAgain, continueLabel }: BattleArenaProps) {
+export function BattleArena({
+  state,
+  combatHighlight = null,
+  onContinue,
+  onPlayAgain,
+  continueLabel,
+}: BattleArenaProps) {
   if (!state) {
     return (
       <div className="glass-card p-12 text-center text-white/40">
@@ -25,16 +34,30 @@ export function BattleArena({ state, onContinue, onPlayAgain, continueLabel }: B
     );
   }
 
-  const strikerIdx =
-    state.phase === "fighting" ? getActiveFighterIndex(state) : null;
-
   const turnHighlight = (
     f: (typeof state.playerTeam)[0],
     teamOffset: number,
     slot: number
-  ): "attack" | "none" => {
-    const flatIdx = teamOffset + slot;
-    if (strikerIdx === flatIdx && f.currentHp > 0) return "attack";
+  ): BattleTurnHighlight => {
+    if (f.currentHp <= 0) return "none";
+
+    if (combatHighlight) {
+      const flatIdx = teamOffset + slot;
+      if (combatHighlight.phase === "strike" && flatIdx === combatHighlight.strikerFlat) {
+        return "attack";
+      }
+      if (combatHighlight.phase === "flash" && flatIdx === combatHighlight.victimFlat) {
+        return "defend";
+      }
+      if (
+        flatIdx === combatHighlight.strikerFlat ||
+        flatIdx === combatHighlight.victimFlat
+      ) {
+        return "idle-dim";
+      }
+      return "idle-dim";
+    }
+
     return "none";
   };
 
@@ -43,7 +66,13 @@ export function BattleArena({ state, onContinue, onPlayAgain, continueLabel }: B
 
   return (
     <>
-      <div className="relative space-y-4 min-h-[420px]">
+      <div
+        className={cn(
+          "relative w-full flex flex-col justify-center py-2",
+          "min-h-[calc(100dvh-7.5rem)] md:min-h-[calc(100dvh-5.5rem)] lg:min-h-[calc(100dvh-6rem)]"
+        )}
+      >
+        <div className="relative space-y-4 w-full">
         {state.phase === "coinFlip" && (
           <BattleCoinFlipOverlay playerStarts={state.playerStarts ?? true} />
         )}
@@ -125,12 +154,7 @@ export function BattleArena({ state, onContinue, onPlayAgain, continueLabel }: B
               ))}
             </AnimatePresence>
           </div>
-
-          {state.phase === "fighting" && (
-            <p className="text-[10px] text-center text-white/30 mt-2">
-              Quem brilha é quem vai atacar agora
-            </p>
-          )}
+        </div>
         </div>
       </div>
 

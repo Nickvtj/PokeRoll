@@ -1,4 +1,5 @@
 import { getPokedexInfo } from "@/data/pokedex";
+import { getEvolutionStatMult } from "@/data/pokemon-evolution";
 import type { Pokemon, Rarity } from "@/types";
 import type { PokemonBattleStats, PokemonAbility } from "@/types/battle";
 
@@ -107,6 +108,7 @@ export const POKEMON_ABILITIES: Record<number, PokemonAbility> = {
 
 export function getPokemonBattleStats(pokemon: Pokemon): PokemonBattleStats {
   const mult = RARITY_STAT_MULT[pokemon.rarity];
+  const evo = getEvolutionStatMult(pokemon.id);
   const override = STAT_OVERRIDES[pokemon.id];
   const info = getPokedexInfo(pokemon.id, pokemon.name);
   const type = info.types[0].toLowerCase();
@@ -117,9 +119,9 @@ export function getPokemonBattleStats(pokemon: Pokemon): PokemonBattleStats {
   const baseSpd = 25 + (pokemon.id % 50) * 0.8;
 
   return {
-    hp: Math.round((override?.hp ?? baseHp) * mult),
-    attack: Math.round((override?.attack ?? baseAtk) * mult),
-    defense: Math.round((override?.defense ?? baseDef) * mult),
+    hp: Math.round((override?.hp ?? baseHp) * mult * evo.hp),
+    attack: Math.round((override?.attack ?? baseAtk) * mult * evo.attack),
+    defense: Math.round((override?.defense ?? baseDef) * mult * evo.defense),
     speed: Math.round((override?.speed ?? baseSpd) * mult),
     type,
     ability: POKEMON_ABILITIES[pokemon.id],

@@ -2,22 +2,25 @@
 
 import { ELITE_FOUR, ELITE_REQUIRED_ACCOUNT_LEVEL, isEliteMemberUnlocked } from "@/data/gyms";
 import { Lock } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BattleArena } from "@/components/battle/BattleArena";
 import { TeamSelector } from "@/components/battle/TeamSelector";
 import { SavedTeamsPanel } from "@/components/gym/SavedTeamsPanel";
-import { executeBattleTurn } from "@/lib/battle-engine";
 import { initEliteBattle } from "@/lib/gym-battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
 import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
-import { playNewBattleHitSounds } from "@/lib/battle-sound-utils";
 import { useBattleCoinFlip } from "@/hooks/use-battle-coin-flip";
+import { useBattleTurnLoop } from "@/hooks/use-battle-turn-loop";
 import type { BattleState } from "@/types/battle";
 import type { EliteId } from "@/types/gym";
 import { cn } from "@/lib/utils";
 
-export function EliteFourScreen() {
+export function EliteFourScreen({
+  onBattleActiveChange,
+}: {
+  onBattleActiveChange?: (active: boolean) => void;
+}) {
   const isEliteUnlocked = useGymStore((s) => s.isEliteUnlocked);
   const eliteProgress = useGymStore((s) => s.eliteProgress);
   const championDefeated = useGymStore((s) => s.championDefeated);
@@ -31,14 +34,50 @@ export function EliteFourScreen() {
   const [activeElite, setActiveElite] = useState<EliteId | null>(null);
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const battleStateRef = useRef<BattleState | null>(null);
-  const lastLogLenRef = useRef(0);
-  battleStateRef.current = battleState;
 
   useBattleCoinFlip(battleState, setBattleState);
 
   const leagueUnlocked = isEliteUnlocked();
+
+  const handleTurnComplete = useCallback(
+    (state: BattleState, done: boolean) => {
+      if (!done) return;
+
+      setFighting(false);
+      const won = state.phase === "victory";
+      const levelUps = grantPokemonBattleXp(team, won, "elite");
+
+      if (won && activeElite) {
+        const avgLevel =
+          team.reduce((sum, id) => sum + (getPokemonLevelsMap()[id] ?? 1), 0) / team.length;
+        const rec = ELITE_FOUR.find((e) => e.id === activeElite);
+        const bonus = calcPerfectRun(
+          true,
+          state.playerDeaths ?? 0,
+          state.turnCount ?? 0,
+          avgLevel,
+          rec?.recommendedLevel ?? 40
+        );
+        recordEliteWin(activeElite, team, bonus);
+      }
+      setBattleState({ ...state, levelUps });
+    },
+    [team, activeElite, grantPokemonBattleXp, getPokemonLevelsMap, recordEliteWin]
+  );
+
+  const { arenaState, combatHighlight, resetLoop } = useBattleTurnLoop({
+    fighting,
+    battleState,
+    setBattleState,
+    getBonuses: () => {
+      const bonuses = getEconomyBonuses(team);
+      return {
+        battleDamage: bonuses.battleDamage,
+        critChance: bonuses.critChance,
+      };
+    },
+    onTurnComplete: handleTurnComplete,
+  });
 
   const startElite = useCallback(
     (eliteId: EliteId) => {
@@ -46,7 +85,7 @@ export function EliteFourScreen() {
       if (team.length < 3) return;
       const pokemon = getTeamPokemonForBattle(team);
       if (pokemon.length < 3) return;
-      lastLogLenRef.current = 0;
+      resetLoop();
       setActiveElite(eliteId);
       setBattleState(initEliteBattle(eliteId, pokemon, getPokemonLevelsMap()));
       setFighting(true);
@@ -54,66 +93,23 @@ export function EliteFourScreen() {
     [leagueUnlocked, eliteProgress, team, getPokemonLevelsMap]
   );
 
-  const processTurns = useCallback(() => {
-    const prev = battleStateRef.current;
-    if (!prev || prev.phase !== "fighting") return;
-
-    const bonuses = getEconomyBonuses(team);
-    const { state, done } = executeBattleTurn(prev, {
-      battleDamage: bonuses.battleDamage,
-      critChance: bonuses.critChance,
-    });
-
-    if (state.log.length > lastLogLenRef.current) {
-      playNewBattleHitSounds(state.log, lastLogLenRef.current);
-      lastLogLenRef.current = state.log.length;
-    }
-
-    if (!done) {
-      setBattleState(state);
-      return;
-    }
-
-    setFighting(false);
-    const won = state.phase === "victory";
-    const levelUps = grantPokemonBattleXp(team, won, "elite");
-
-    if (won && activeElite) {
-      const avgLevel =
-        team.reduce((sum, id) => sum + (getPokemonLevelsMap()[id] ?? 1), 0) / team.length;
-      const rec = ELITE_FOUR.find((e) => e.id === activeElite);
-      const bonus = calcPerfectRun(
-        true,
-        state.playerDeaths ?? 0,
-        state.turnCount ?? 0,
-        avgLevel,
-        rec?.recommendedLevel ?? 40
-      );
-      recordEliteWin(activeElite, team, bonus);
-    }
-    setBattleState({ ...state, levelUps });
-  }, [team, activeElite, grantPokemonBattleXp, getPokemonLevelsMap, recordEliteWin]);
-
-  useEffect(() => {
-    if (!fighting) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
-    }
-    intervalRef.current = setInterval(processTurns, 900);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [fighting, processTurns]);
-
   const resetBattle = () => {
+    resetLoop();
     setBattleState(null);
     setFighting(false);
   };
 
+  useEffect(() => {
+    const active = fighting || battleState != null;
+    onBattleActiveChange?.(active);
+    return () => onBattleActiveChange?.(false);
+  }, [fighting, battleState, onBattleActiveChange]);
+
   if (fighting || battleState) {
     return (
       <BattleArena
-        state={battleState}
+        state={arenaState}
+        combatHighlight={combatHighlight}
         onContinue={() => {
           resetBattle();
           setActiveElite(null);

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { playLevelUp, playXpBarFill } from "@/lib/sound-engine";
 import type { PokemonLevelUpResult } from "@/types/battle";
+import { cn } from "@/lib/utils";
 
 export const BAR_DURATION = 1;
 export const STAGGER = 0.15;
@@ -19,9 +20,17 @@ interface XpFillBarProps {
   barDelay: number;
   pokemonId: number;
   leveledUp: boolean;
+  luckyEggBoosted?: boolean;
 }
 
-function XpFillBar({ prevPct, targetPct, barDelay, pokemonId, leveledUp }: XpFillBarProps) {
+function XpFillBar({
+  prevPct,
+  targetPct,
+  barDelay,
+  pokemonId,
+  leveledUp,
+  luckyEggBoosted,
+}: XpFillBarProps) {
   const levelUpPlayedRef = useRef(false);
 
   useEffect(() => {
@@ -38,7 +47,12 @@ function XpFillBar({ prevPct, targetPct, barDelay, pokemonId, leveledUp }: XpFil
 
   return (
     <motion.div
-      className="progress-fill bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full"
+      className={cn(
+        "progress-fill h-full rounded-full",
+        luckyEggBoosted
+          ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 shadow-[0_0_10px_rgba(251,191,36,0.45)]"
+          : "bg-gradient-to-r from-indigo-500 to-purple-500"
+      )}
       initial={{ width: `${prevPct}%` }}
       animate={{ width: `${targetPct}%` }}
       transition={{ duration: BAR_DURATION, delay: barDelay, ease: [0, 0, 0.58, 1] }}
@@ -69,6 +83,7 @@ export function BattleLevelUpPanel({ levelUps }: BattleLevelUpPanelProps) {
         const needed = entry.xpNeeded ?? 100;
         const prevPct = needed > 0 ? (entry.previousXpInLevel / needed) * 100 : 0;
         const barDelay = i * (BAR_DURATION + STAGGER);
+        const luckyEggBoosted = entry.luckyEggBoosted ?? false;
 
         return (
           <motion.div
@@ -97,18 +112,26 @@ export function BattleLevelUpPanel({ levelUps }: BattleLevelUpPanelProps) {
                 </span>
               </div>
               <div className="flex justify-between text-[10px] text-white/40 mt-1">
-                <span>+{entry.xpGained} XP</span>
+                <span className={cn(luckyEggBoosted && "text-amber-300 font-semibold")}>
+                  +{entry.xpGained} XP{luckyEggBoosted ? " · 2× Lucky Egg" : ""}
+                </span>
                 <span>
                   {entry.newXpInLevel}/{needed}
                 </span>
               </div>
-              <div className="progress-bar h-1.5 mt-1 overflow-hidden rounded-full">
+              <div
+                className={cn(
+                  "progress-bar h-1.5 mt-1 overflow-hidden rounded-full",
+                  luckyEggBoosted && "ring-1 ring-amber-400/30"
+                )}
+              >
                 <XpFillBar
                   prevPct={prevPct}
                   targetPct={entry.xpPct}
                   barDelay={barDelay}
                   pokemonId={entry.pokemonId}
                   leveledUp={entry.leveledUp}
+                  luckyEggBoosted={luckyEggBoosted}
                 />
               </div>
               {entry.leveledUp && (

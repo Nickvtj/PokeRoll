@@ -2,13 +2,23 @@ import {
   BALL_TYPES,
   CLICK_BASE_COINS_MAX,
   CLICK_BASE_COINS_MIN,
+  CLICK_BALL_MIN_DISTANCE_PCT,
+  CLICK_COMBO_BONUS_COINS_1,
+  CLICK_COMBO_BONUS_COINS_2,
+  CLICK_COMBO_BONUS_TIER_1,
+  CLICK_COMBO_BONUS_TIER_2,
+  CLICK_SCORE_TIER_THRESHOLDS,
+  CLICK_TIME_BALL_CHANCE,
   type BallType,
 } from "@/data/economy-balance";
 import { applyMinigameCoinBonus } from "@/lib/minigame-rewards";
 
+export type SpawnedBallKind = "normal" | "time";
+
 export interface SpawnedBall {
   id: string;
   type: BallType;
+  kind: SpawnedBallKind;
   x: number;
   y: number;
   createdAt: number;
@@ -26,6 +36,19 @@ export interface RareEvent {
 
 let spawnId = 0;
 
+function pickSpawnPosition(existing: SpawnedBall[]): { x: number; y: number } {
+  const minDist = CLICK_BALL_MIN_DISTANCE_PCT;
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const x = 8 + Math.random() * 82;
+    const y = 12 + Math.random() * 68;
+    const overlaps = existing.some(
+      (b) => Math.hypot(b.x - x, b.y - y) < minDist
+    );
+    if (!overlaps) return { x, y };
+  }
+  return { x: 8 + Math.random() * 82, y: 12 + Math.random() * 68 };
+}
+
 export function rollBallType(): BallType {
   const roll = Math.random();
   let cumulative = 0;
@@ -36,25 +59,32 @@ export function rollBallType(): BallType {
   return "poke";
 }
 
-export function spawnBall(): SpawnedBall {
+export function spawnBall(existing: SpawnedBall[] = []): SpawnedBall {
+  const hasTimeBall = existing.some((b) => b.kind === "time");
+  const kind: SpawnedBallKind =
+    !hasTimeBall && Math.random() < CLICK_TIME_BALL_CHANCE ? "time" : "normal";
+  const { x, y } = pickSpawnPosition(existing);
+
   return {
     id: `ball-${++spawnId}`,
-    type: rollBallType(),
-    x: 10 + Math.random() * 80,
-    y: 15 + Math.random() * 65,
+    type: kind === "time" ? "poke" : rollBallType(),
+    kind,
+    x,
+    y,
     createdAt: Date.now(),
-    lifetime: 1400 + Math.random() * 900,
+    lifetime: kind === "time" ? 2600 : 1400 + Math.random() * 900,
   };
 }
 
 export function maybeSpawnRareEvent(): RareEvent | null {
   if (Math.random() > 0.012) return null;
   const rareIds = [144, 145, 150, 6, 25, 131];
+  const { x, y } = pickSpawnPosition([]);
   return {
     id: `rare-${++spawnId}`,
     pokemonId: rareIds[Math.floor(Math.random() * rareIds.length)],
-    x: 5 + Math.random() * 70,
-    y: 20 + Math.random() * 50,
+    x,
+    y,
     createdAt: Date.now(),
     lifetime: 3200,
   };
@@ -70,10 +100,47 @@ export function calcClickScore(
   return Math.round(base * mult);
 }
 
-export function calcClickGameReward(score: number, coinBonus = 0): number {
-  let coins =
-    CLICK_BASE_COINS_MIN +
-    Math.floor((score / 120) * (CLICK_BASE_COINS_MAX - CLICK_BASE_COINS_MIN));
-  coins = Math.min(CLICK_BASE_COINS_MAX, Math.max(CLICK_BASE_COINS_MIN, coins));
-  return applyMinigameCoinBonus(coins, coinBonus);
+export interface ClickGameRewardBreakdown {
+  baseCoins: number;
+  comboBonus: number;
+  totalBeforeTeamBonus: number;
+  coins: number;
+}
+
+function calcClickScoreTierCoins(score: number): number {
+  let tier = CLICK_BASE_COINS_MIN;
+  for (const threshold of CLICK_SCORE_TIER_THRESHOLDS) {
+    if (score < threshold) break;
+    tier += 1;
+  }
+  return tier;
+}
+
+function calcClickComboBonusCoins(maxCombo: number): number {
+  if (maxCombo >= CLICK_COMBO_BONUS_TIER_2) return CLICK_COMBO_BONUS_COINS_2;
+  if (maxCombo >= CLICK_COMBO_BONUS_TIER_1) return CLICK_COMBO_BONUS_COINS_1;
+  return 0;
+}
+
+export function calcClickGameRewardBreakdown(
+  score: number,
+  maxCombo: number,
+  coinBonus = 0
+): ClickGameRewardBreakdown {
+  const baseCoins = calcClickScoreTierCoins(score);
+  const comboBonus = calcClickComboBonusCoins(maxCombo);
+  const totalBeforeTeamBonus = Math.min(
+    CLICK_BASE_COINS_MAX,
+    baseCoins + comboBonus
+  );
+  const coins = applyMinigameCoinBonus(totalBeforeTeamBonus, coinBonus);
+  return { baseCoins, comboBonus, totalBeforeTeamBonus, coins };
+}
+
+export function calcClickGameReward(
+  score: number,
+  coinBonus = 0,
+  maxCombo = 0
+): number {
+  return calcClickGameRewardBreakdown(score, maxCombo, coinBonus).coins;
 }

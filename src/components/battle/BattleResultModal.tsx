@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Skull, Coins, Star, Gift, RotateCcw } from "lucide-react";
 import { BattleLevelUpPanel } from "@/components/battle/BattleLevelUpPanel";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
-import { playBattleLoss, playBattleWin } from "@/lib/sound-engine";
+import { playBattleResultSound } from "@/lib/sound-engine";
 import type { BattleState } from "@/types/battle";
 
 interface BattleResultModalProps {
@@ -27,28 +27,23 @@ export function BattleResultModal({ state, onContinue, onPlayAgain, continueLabe
   const hasLevelUps = levelUps.length > 0;
 
   const [phase, setPhase] = useState<ModalPhase>("intro");
-  const lastSoundKeyRef = useRef("");
 
   const phaseKey = `${state.phase}-${levelUps.map((l) => l.pokemonId).join(",")}`;
+  const resultSoundKey = `${state.phase}-${state.wave}-${state.turnCount ?? 0}`;
+
+  useEffect(() => {
+    void playBattleResultSound(won, resultSoundKey);
+  }, [won, resultSoundKey]);
 
   useEffect(() => {
     setPhase("intro");
-
-    if (lastSoundKeyRef.current !== phaseKey) {
-      lastSoundKeyRef.current = phaseKey;
-      if (won) {
-        void playBattleWin();
-      } else {
-        void playBattleLoss();
-      }
-    }
 
     const introTimer = setTimeout(() => {
       setPhase("results");
     }, INTRO_HOLD_MS);
 
     return () => clearTimeout(introTimer);
-  }, [phaseKey, won]);
+  }, [phaseKey]);
 
   if (typeof window === "undefined") return null;
   if (state.phase !== "victory" && state.phase !== "defeat") return null;

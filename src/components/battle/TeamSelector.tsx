@@ -160,9 +160,6 @@ export function TeamSelector({ maxTeam = 3 }: TeamSelectorProps) {
           <Users className="w-4 h-4 text-indigo-400" />
           Montar Time ({team.length}/{maxTeam})
         </h3>
-        <span className="text-[10px] text-white/40">
-          Duplicatas: clique de novo para adicionar outra cópia
-        </span>
         <span className="text-[10px] text-amber-400/80">
           Cap Nv.{getLevelCap()} · {badgeCount}🏅
         </span>

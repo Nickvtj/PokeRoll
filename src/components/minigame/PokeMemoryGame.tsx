@@ -89,25 +89,24 @@ export function PokeMemoryGame({ onComplete, onReady }: PokeMemoryGameProps) {
     if (!started || done) return;
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          const pairsFound = matchedRef.current.length / 2;
-          endGame({
-            moves: movesRef.current,
-            pairsFound,
-            totalPairs: MEMORY_PAIR_COUNT,
-            completed: pairsFound === MEMORY_PAIR_COUNT,
-            timedOut: true,
-          });
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [started, done, endGame]);
+  }, [started, done]);
+
+  useEffect(() => {
+    if (!started || done || timeLeft > 0) return;
+
+    const pairsFound = matchedRef.current.length / 2;
+    endGame({
+      moves: movesRef.current,
+      pairsFound,
+      totalPairs: MEMORY_PAIR_COUNT,
+      completed: pairsFound === MEMORY_PAIR_COUNT,
+      timedOut: true,
+    });
+  }, [started, done, timeLeft, endGame]);
 
   const handleFlip = (uid: string) => {
     if (done || resolvingRef.current) return;
@@ -171,7 +170,8 @@ export function PokeMemoryGame({ onComplete, onReady }: PokeMemoryGameProps) {
           As cartas viram de novo. Continue até acabar o tempo.
         </p>
         <p className="text-xs text-violet-400/90">
-          Recompensa: {MEMORY_COINS_MIN}~{MEMORY_COINS_MAX} moedas ao completar
+          Recompensa: {MEMORY_COINS_PER_PAIR} moeda/par · até{" "}
+          {MEMORY_PAIR_COUNT * MEMORY_COINS_PER_PAIR} moedas ao completar
         </p>
         <motion.button
           whileHover={{ scale: 1.03 }}

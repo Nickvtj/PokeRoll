@@ -5,7 +5,11 @@ import { useGymStore } from "@/stores/gym-store";
 import { GymCard } from "@/components/gym/GymCard";
 import { LeagueProgression } from "@/components/gym/LeagueProgression";
 
-export function GymMap() {
+export function GymMap({
+  onBattleActiveChange,
+}: {
+  onBattleActiveChange?: (active: boolean) => void;
+}) {
   const badges = useGymStore((s) => s.badges);
   const isGymUnlocked = useGymStore((s) => s.isGymUnlocked);
 
@@ -19,6 +23,7 @@ export function GymMap() {
             gym={gym}
             unlocked={isGymUnlocked(gym.id)}
             hasBadge={badges.includes(gym.id)}
+            onBattleActiveChange={onBattleActiveChange}
           />
         ))}
       </div>

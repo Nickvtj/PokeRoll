@@ -6,10 +6,11 @@ import { cn } from "@/lib/utils";
 import { RARITY_CONFIG } from "@/data/rarity";
 import type { BattleFighter } from "@/types/battle";
 
+export type BattleTurnHighlight = "attack" | "defend" | "idle-dim" | "none";
+
 interface PokemonBattleCardProps {
   fighter: BattleFighter;
-  /** Destaque de turno — só quem vai atacar "sobe" */
-  turnHighlight?: "attack" | "none";
+  turnHighlight?: BattleTurnHighlight;
   compact?: boolean;
 }
 
@@ -21,25 +22,56 @@ export function PokemonBattleCard({
   const config = RARITY_CONFIG[fighter.pokemon.rarity];
   const hpPercent = (fighter.currentHp / fighter.maxHp) * 100;
   const isKo = fighter.currentHp <= 0;
-  const isAttacking = turnHighlight === "attack" && !isKo;
-  const attackGlow = fighter.isPlayer
-    ? "0 0 28px rgba(34,211,238,0.75)"
-    : "0 0 28px rgba(248,113,113,0.75)";
+  const isStriking = turnHighlight === "attack" && !isKo;
+  const isFlashing = turnHighlight === "defend" && !isKo;
+  const isDimmed = turnHighlight === "idle-dim" && !isKo;
 
   return (
     <motion.div
+      key={isFlashing ? "flash" : isStriking ? "strike" : "idle"}
       animate={
-        isAttacking
-          ? { scale: 1.08, y: -4, boxShadow: attackGlow }
-          : { scale: 1, y: 0 }
+        isKo
+          ? { opacity: 0.4, scale: 1, x: 0, y: 0, filter: "brightness(1)" }
+          : isStriking
+            ? {
+                y: [0, fighter.isPlayer ? -16 : 16, 0],
+                scale: [1, 1.05, 1],
+                filter: ["brightness(1)", "brightness(1.2)", "brightness(1)"],
+              }
+            : isFlashing
+              ? {
+                  opacity: [1, 0.15, 1, 0.15, 1, 0.15, 1],
+                  filter: [
+                    "brightness(1)",
+                    "brightness(2.4)",
+                    "brightness(1)",
+                    "brightness(2.4)",
+                    "brightness(1)",
+                    "brightness(2.4)",
+                    "brightness(1)",
+                  ],
+                  x: 0,
+                  y: 0,
+                  scale: 1,
+                }
+              : isDimmed
+                ? { opacity: 0.5, scale: 0.97, x: 0, y: 0, filter: "brightness(0.85)" }
+                : { opacity: 1, scale: 1, x: 0, y: 0, filter: "brightness(1)" }
       }
-      transition={{ type: "spring", stiffness: 420, damping: 24 }}
+      transition={
+        isFlashing
+          ? { duration: 0.62, ease: "linear" }
+          : isStriking
+            ? { duration: 0.22, ease: "easeOut" }
+            : { duration: 0.2 }
+      }
       className={cn(
-        "glass-card relative overflow-hidden transition-all",
+        "glass-card relative overflow-hidden",
         compact ? "p-2" : "p-3",
-        isKo && "opacity-40 grayscale",
-        isAttacking && "ring-2 ring-offset-1 ring-offset-slate-950",
-        isAttacking && (fighter.isPlayer ? "ring-cyan-400" : "ring-red-400")
+        isKo && "grayscale",
+        isStriking && "z-10",
+        isFlashing && "z-10",
+        isDimmed && "z-0"
       )}
       style={{
         borderColor: `${config.color}40`,
@@ -68,7 +100,6 @@ export function PokemonBattleCard({
         </p>
       )}
 
-      {/* HP Bar */}
       <div className="mt-2">
         <div className="flex justify-between text-[10px] text-white/50 mb-0.5">
           <span>HP</span>
@@ -81,7 +112,11 @@ export function PokemonBattleCard({
             className="h-full rounded-full"
             initial={false}
             animate={{ width: `${hpPercent}%` }}
-            transition={{ duration: 0.4 }}
+            transition={{
+              duration: isFlashing ? 0.35 : 0.25,
+              delay: isFlashing ? 0.08 : 0,
+              ease: "easeOut",
+            }}
             style={{
               background:
                 hpPercent > 50

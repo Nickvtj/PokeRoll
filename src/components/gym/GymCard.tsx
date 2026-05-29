@@ -17,9 +17,10 @@ interface GymCardProps {
   gym: GymDefinition;
   unlocked: boolean;
   hasBadge: boolean;
+  onBattleActiveChange?: (active: boolean) => void;
 }
 
-export function GymCard({ gym, unlocked, hasBadge }: GymCardProps) {
+export function GymCard({ gym, unlocked, hasBadge, onBattleActiveChange }: GymCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [battling, setBattling] = useState(false);
   const hallOfFame = useGymStore((s) => s.hallOfFame);
@@ -48,7 +49,13 @@ export function GymCard({ gym, unlocked, hasBadge }: GymCardProps) {
   };
 
   if (battling) {
-    return <GymBattleScreen gymId={gym.id} onExit={() => setBattling(false)} />;
+    return (
+      <GymBattleScreen
+        gymId={gym.id}
+        onExit={() => setBattling(false)}
+        onBattleActiveChange={onBattleActiveChange}
+      />
+    );
   }
 
   return (

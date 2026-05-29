@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { MousePointerClick } from "lucide-react";
+import { MousePointerClick, Timer } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import {
   GreatBallIcon,
@@ -15,14 +15,17 @@ import {
   CLICK_BASE_COINS_MAX,
   CLICK_BASE_COINS_MIN,
   CLICK_GAME_DURATION_SEC,
+  CLICK_MAX_TIME_SEC,
+  CLICK_TIME_BONUS_SEC,
   type BallType,
 } from "@/data/economy-balance";
 import { POKEMON_MAP } from "@/data/pokemon";
 import {
-  calcClickGameReward,
+  calcClickGameRewardBreakdown,
   calcClickScore,
   maybeSpawnRareEvent,
   spawnBall,
+  type ClickGameRewardBreakdown,
   type RareEvent,
   type SpawnedBall,
 } from "@/lib/minigame-engine";
@@ -31,7 +34,7 @@ import { playClickCombo, playClickPop, playClickRare } from "@/lib/sound-engine"
 import { cn } from "@/lib/utils";
 
 interface ClickMinigameProps {
-  onComplete: (score: number, coins: number, maxCombo: number) => void;
+  onComplete: (score: number, reward: ClickGameRewardBreakdown, maxCombo: number) => void;
   onReady?: (restart: () => void) => void;
 }
 
@@ -64,8 +67,12 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
     endedRef.current = true;
     setPlaying(false);
 
-    const coins = calcClickGameReward(scoreRef.current, bonuses.coinBonus);
-    onCompleteRef.current(scoreRef.current, coins, maxComboRef.current);
+    const reward = calcClickGameRewardBreakdown(
+      scoreRef.current,
+      maxComboRef.current,
+      bonuses.coinBonus
+    );
+    onCompleteRef.current(scoreRef.current, reward, maxComboRef.current);
   }, [bonuses.coinBonus]);
 
   const start = useCallback(() => {
@@ -107,14 +114,16 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
     if (!playing) return;
 
     const interval = setInterval(() => {
-      const now = Date.now();
       setBalls((prev) => {
+        const now = Date.now();
         let alive = prev.filter((b) => now - b.createdAt < b.lifetime);
         while (alive.length < 3) {
-          alive = [...alive, spawnBall()];
+          const next = spawnBall(alive);
+          alive = [...alive, next];
         }
         if (Math.random() < 0.38) {
-          alive = [...alive.slice(-10), spawnBall()];
+          const next = spawnBall(alive);
+          alive = [...alive.slice(-10), next];
         }
         return alive;
       });
@@ -157,6 +166,23 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
   };
 
   const handleBallClick = (ball: SpawnedBall) => {
+    if (ball.kind === "time") {
+      void playClickRare();
+      setTimeLeft((t) => Math.min(CLICK_MAX_TIME_SEC, t + CLICK_TIME_BONUS_SEC));
+      setBalls((prev) => prev.filter((b) => b.id !== ball.id));
+      setPopups((prev) => [
+        ...prev.slice(-8),
+        {
+          id: `pop-${Date.now()}`,
+          x: ball.x,
+          y: ball.y,
+          text: `+${CLICK_TIME_BONUS_SEC}s!`,
+        },
+      ]);
+      resetComboTimer();
+      return;
+    }
+
     const newCombo = combo + 1;
     void playClickPop();
     if (newCombo >= 3 && newCombo % 3 === 0) void playClickCombo(newCombo);
@@ -206,8 +232,12 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
           Pokébolas aparecem na tela. Clique o máximo que conseguir em{" "}
           {CLICK_GAME_DURATION_SEC} segundos. Combos aumentam sua pontuação!
         </p>
+        <p className="text-xs text-cyan-400/80">
+          Raro: Pokébola dourada com relógio — +{CLICK_TIME_BONUS_SEC}s extras
+        </p>
         <p className="text-xs text-amber-400/90">
-          Recompensa: {CLICK_BASE_COINS_MIN}~{CLICK_BASE_COINS_MAX} moedas
+          Recompensa: {CLICK_BASE_COINS_MIN}~{CLICK_BASE_COINS_MAX} moedas · quanto melhor, mais
+          você ganha
         </p>
         <motion.button
           whileHover={{ scale: 1.03 }}
@@ -246,10 +276,23 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0, opacity: 0 }}
               onClick={() => handleBallClick(ball)}
-              className="absolute w-12 h-12 flex items-center justify-center"
+              className={cn(
+                "absolute flex items-center justify-center",
+                ball.kind === "time" ? "w-14 h-14" : "w-12 h-12"
+              )}
               style={{ left: `${ball.x}%`, top: `${ball.y}%` }}
             >
-              <BallVisual type={ball.type} />
+              {ball.kind === "time" ? (
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-amber-400/30 blur-md animate-pulse" />
+                  <div className="relative flex flex-col items-center">
+                    <PokeballIcon size={48} />
+                    <Timer className="absolute -bottom-1 -right-1 w-4 h-4 text-amber-300 drop-shadow" />
+                  </div>
+                </div>
+              ) : (
+                <BallVisual type={ball.type} />
+              )}
             </motion.button>
           ))}
           {rareEvents.map((event) => {
