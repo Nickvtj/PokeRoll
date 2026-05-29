@@ -8,8 +8,10 @@ import {
   rollShiny,
 } from "@/lib/spin-algorithm";
 import {
-  loadCollection,
-  loadProfile,
+  loadLocalCollection,
+  loadLocalProfile,
+  fetchRemoteCollection,
+  fetchRemoteProfile,
   persistLocalCollection,
   persistLocalProfile,
   syncProfileToSupabase,
@@ -89,6 +91,50 @@ function applyCollectionEntry(
   return { ...collection, [pokemonId]: newEntry };
 }
 
+function mergeCollections(
+  local: Record<number, CollectedPokemon>,
+  remote: Record<number, CollectedPokemon>
+): Record<number, CollectedPokemon> {
+  const merged = { ...local };
+
+  for (const remoteEntry of Object.values(remote)) {
+    const localEntry = merged[remoteEntry.pokemonId];
+    if (!localEntry) {
+      merged[remoteEntry.pokemonId] = remoteEntry;
+      continue;
+    }
+
+    const count = Math.max(localEntry.count, remoteEntry.count);
+    merged[remoteEntry.pokemonId] = {
+      ...localEntry,
+      count,
+      isDuplicate: count > 1,
+      hasShiny: localEntry.hasShiny || remoteEntry.hasShiny,
+      useShiny: localEntry.useShiny || remoteEntry.useShiny,
+      collectedAt:
+        localEntry.collectedAt <= remoteEntry.collectedAt
+          ? localEntry.collectedAt
+          : remoteEntry.collectedAt,
+    };
+  }
+
+  return merged;
+}
+
+function mergeProfiles(local: PlayerProfile, remote: PlayerProfile): PlayerProfile {
+  return {
+    ...local,
+    id: remote.id || local.id,
+    username:
+      remote.username && remote.username !== "Treinador"
+        ? remote.username
+        : local.username,
+    totalSpins: Math.max(local.totalSpins, remote.totalSpins),
+    createdAt:
+      local.createdAt <= remote.createdAt ? local.createdAt : remote.createdAt,
+  };
+}
+
 export const useGameStore = create<GameState>((set, get) => ({
   collection: {},
   profile: {
@@ -114,12 +160,27 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   initialize: async () => {
-    set({ isLoading: true });
-    const [collection, profile] = await Promise.all([
-      loadCollection(),
-      loadProfile(),
-    ]);
+    const collection = loadLocalCollection();
+    const profile = loadLocalProfile();
     set({ collection, profile, isLoading: false });
+
+    void Promise.all([fetchRemoteCollection(), fetchRemoteProfile()]).then(
+      ([remoteCollection, remoteProfile]) => {
+        if (!remoteCollection && !remoteProfile) return;
+
+        const current = get();
+        const nextCollection = remoteCollection
+          ? mergeCollections(current.collection, remoteCollection)
+          : current.collection;
+        const nextProfile = remoteProfile
+          ? mergeProfiles(current.profile, remoteProfile)
+          : current.profile;
+
+        set({ collection: nextCollection, profile: nextProfile });
+        persistLocalCollection(nextCollection);
+        persistLocalProfile(nextProfile);
+      }
+    );
   },
 
   setSpinMultiplier: (multiplier) => {

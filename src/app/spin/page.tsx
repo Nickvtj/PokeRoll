@@ -4,9 +4,9 @@ import dynamic from "next/dynamic";
 import { useCallback, useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Disc3, Volume2, VolumeX } from "lucide-react";
+import { SpinMachine } from "@/components/spin/SpinMachine";
 import { SpinLeverButton } from "@/components/spin/SpinLeverButton";
 import { RarityBadge } from "@/components/ui/RarityBadge";
-import { PanelSkeleton } from "@/components/ui/RouteLoading";
 import { RARITY_CONFIG, RARITY_ORDER } from "@/data/rarity";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
@@ -14,11 +14,6 @@ import { useSoundEffects, playSpinTick } from "@/hooks/use-sound-effects";
 import { useConfetti } from "@/hooks/use-confetti";
 import type { SpinMultiplier } from "@/types";
 import { cn } from "@/lib/utils";
-
-const SpinMachine = dynamic(
-  () => import("@/components/spin/SpinMachine").then((m) => m.SpinMachine),
-  { loading: () => <PanelSkeleton label="Carregando máquina..." /> }
-);
 
 const RevealAnimation = dynamic(
   () => import("@/components/spin/RevealAnimation").then((m) => m.RevealAnimation),

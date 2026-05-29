@@ -15,39 +15,7 @@ const profilePersist = createDebouncedJsonPersist<PlayerProfile>(
   STORAGE_KEYS.profile
 );
 
-export async function loadCollection(): Promise<
-  Record<number, CollectedPokemon>
-> {
-  if (isSupabaseConfigured) {
-    const supabase = getSupabase();
-    if (!supabase) return loadLocalCollection();
-
-    const userId = getLocalUserId();
-    const { data, error } = await supabase
-      .from("collections")
-      .select("*")
-      .eq("user_id", userId);
-
-    if (error || !data) return loadLocalCollection();
-
-    const collection: Record<number, CollectedPokemon> = {};
-    for (const row of data) {
-      collection[row.pokemon_id] = {
-        pokemonId: row.pokemon_id,
-        collectedAt: row.first_collected_at,
-        isDuplicate: row.count > 1,
-        count: row.count,
-        hasShiny: row.has_shiny ?? false,
-        useShiny: row.use_shiny ?? false,
-      };
-    }
-    return collection;
-  }
-
-  return loadLocalCollection();
-}
-
-function loadLocalCollection(): Record<number, CollectedPokemon> {
+export function loadLocalCollection(): Record<number, CollectedPokemon> {
   if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.collection);
@@ -55,6 +23,44 @@ function loadLocalCollection(): Record<number, CollectedPokemon> {
   } catch {
     return {};
   }
+}
+
+export async function fetchRemoteCollection(): Promise<
+  Record<number, CollectedPokemon> | null
+> {
+  if (!isSupabaseConfigured) return null;
+
+  const supabase = getSupabase();
+  if (!supabase) return null;
+
+  const userId = getLocalUserId();
+  const { data, error } = await supabase
+    .from("collections")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (error || !data) return null;
+
+  const collection: Record<number, CollectedPokemon> = {};
+  for (const row of data) {
+    collection[row.pokemon_id] = {
+      pokemonId: row.pokemon_id,
+      collectedAt: row.first_collected_at,
+      isDuplicate: row.count > 1,
+      count: row.count,
+      hasShiny: row.has_shiny ?? false,
+      useShiny: row.use_shiny ?? false,
+    };
+  }
+  return collection;
+}
+
+export async function loadCollection(): Promise<
+  Record<number, CollectedPokemon>
+> {
+  const remote = await fetchRemoteCollection();
+  if (remote) return remote;
+  return loadLocalCollection();
 }
 
 export function persistLocalCollection(
@@ -136,32 +142,7 @@ function saveLocalCollectionEntry(entry: CollectedPokemon): void {
   persistLocalCollection(collection);
 }
 
-export async function loadProfile(): Promise<PlayerProfile> {
-  if (isSupabaseConfigured) {
-    const supabase = getSupabase();
-    if (!supabase) return loadLocalProfile();
-
-    const userId = getLocalUserId();
-    const { data } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    if (data) {
-      return {
-        id: data.id,
-        username: data.username,
-        totalSpins: data.total_spins,
-        createdAt: data.created_at,
-      };
-    }
-  }
-
-  return loadLocalProfile();
-}
-
-function loadLocalProfile(): PlayerProfile {
+export function loadLocalProfile(): PlayerProfile {
   if (typeof window === "undefined") {
     return {
       id: "guest",
@@ -186,6 +167,35 @@ function loadLocalProfile(): PlayerProfile {
   };
   profilePersist.writeImmediate(profile);
   return profile;
+}
+
+export async function fetchRemoteProfile(): Promise<PlayerProfile | null> {
+  if (!isSupabaseConfigured) return null;
+
+  const supabase = getSupabase();
+  if (!supabase) return null;
+
+  const userId = getLocalUserId();
+  const { data } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    username: data.username,
+    totalSpins: data.total_spins,
+    createdAt: data.created_at,
+  };
+}
+
+export async function loadProfile(): Promise<PlayerProfile> {
+  const remote = await fetchRemoteProfile();
+  if (remote) return remote;
+  return loadLocalProfile();
 }
 
 export function persistLocalProfile(profile: PlayerProfile): void {

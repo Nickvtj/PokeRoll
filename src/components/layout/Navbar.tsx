@@ -20,18 +20,31 @@ const navItems = [
   { href: "/album", label: "Álbum", icon: BookOpen },
 ] as const;
 
-function ProfileButton({ className }: { className?: string }) {
+const PREFETCH_ROUTES = [
+  "/",
+  "/battle",
+  "/games",
+  "/spin",
+  "/album",
+  "/profile",
+] as const;
+
+function useRoutePrefetch(pathname: string) {
   const router = useRouter();
-  const pathname = usePathname();
+
+  useEffect(() => {
+    for (const href of PREFETCH_ROUTES) {
+      if (href === pathname || (href !== "/" && pathname.startsWith(`${href}/`))) {
+        continue;
+      }
+      router.prefetch(href);
+    }
+  }, [pathname, router]);
+}
+function ProfileButton({ className }: { className?: string }) {
   const username = useGameStore((s) => s.profile.username);
   const level = useEconomyStore((s) => s.level);
   const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
-
-  useEffect(() => {
-    if (pathname !== "/profile") {
-      router.prefetch("/profile");
-    }
-  }, [pathname, router]);
 
   return (
     <Link
@@ -64,6 +77,8 @@ export function Navbar() {
   const pathname = usePathname();
   const uniqueCount = useGameStore((s) => Object.keys(s.collection).length);
 
+  useRoutePrefetch(pathname);
+
   return (
     <>
       <header className="hidden lg:grid fixed top-0 left-0 right-0 z-40 grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-3 glass glass-blur border-b border-white/10">
@@ -85,7 +100,7 @@ export function Navbar() {
                 ? pathname === "/"
                 : pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link key={href} href={href}>
+              <Link key={href} href={href} prefetch>
                 <span
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors whitespace-nowrap",
@@ -121,7 +136,7 @@ export function Navbar() {
                 ? pathname === "/"
                 : pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link key={href} href={href}>
+              <Link key={href} href={href} prefetch>
                 <span
                   className={cn(
                     "flex flex-col items-center gap-0.5 py-1.5 rounded-xl",

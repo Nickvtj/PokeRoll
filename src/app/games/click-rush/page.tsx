@@ -1,10 +1,9 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { MousePointerClick } from "lucide-react";
+import { ClickMinigame } from "@/components/minigame/ClickMinigame";
 import { GamePageShell } from "@/components/minigame/GamePageShell";
-import { PanelSkeleton } from "@/components/ui/RouteLoading";
 import {
   CLICK_BASE_COINS_MAX,
   CLICK_BASE_COINS_MIN,
@@ -13,11 +12,6 @@ import {
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordMinigameToSupabase } from "@/lib/economy-supabase";
 import type { ClickGameRewardBreakdown } from "@/lib/minigame-engine";
-
-const ClickMinigame = dynamic(
-  () => import("@/components/minigame/ClickMinigame").then((m) => m.ClickMinigame),
-  { loading: () => <PanelSkeleton label="Carregando Click Rush..." /> }
-);
 
 export default function ClickRushGamePage() {
   const addCoins = useEconomyStore((s) => s.addCoins);
