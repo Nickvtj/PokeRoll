@@ -5,9 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Coins, Star, Gift, RotateCcw } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { useEconomyStore } from "@/stores/economy-store";
+import { fireMinigameRecordConfetti } from "@/lib/confetti";
 import { playCoinGain, playReward } from "@/lib/sound-engine";
+import { useRouter } from "next/navigation";
 
 export function RewardPopup() {
+  const router = useRouter();
   const show = useEconomyStore((s) => s.showReward);
   const reward = useEconomyStore((s) => s.lastReward);
   const onPlayAgain = useEconomyStore((s) => s.rewardPlayAgain);
@@ -15,6 +18,7 @@ export function RewardPopup() {
 
   useEffect(() => {
     if (!show || !reward) return;
+    if (reward.isNewRecord) fireMinigameRecordConfetti();
     if (reward.coins && reward.coins > 0) {
       void playCoinGain();
     } else {
@@ -26,6 +30,12 @@ export function RewardPopup() {
     const replay = onPlayAgain;
     close();
     replay?.();
+  };
+
+  const handleClose = () => {
+    const path = reward?.onClosePath;
+    close();
+    if (path) router.push(path);
   };
 
   return (
@@ -89,10 +99,10 @@ export function RewardPopup() {
               )}
               <AnimatedButton
                 variant={onPlayAgain ? "secondary" : "gold"}
-                onClick={close}
+                onClick={handleClose}
                 className="w-full"
               >
-                {onPlayAgain ? "Fechar" : "Coletar"}
+                {reward.closeLabel ?? (reward.onClosePath ? "Voltar" : onPlayAgain ? "Fechar" : "Coletar")}
               </AnimatedButton>
             </div>
           </motion.div>

@@ -124,37 +124,39 @@ export function fireCelebrationConfetti(rarity: Rarity, isNew: boolean) {
   });
 }
 
+/** Confete curto (legado) */
 export function fireHighScoreConfetti() {
+  fireMinigameRecordConfetti();
+}
+
+/** Celebração leve de novo recorde nos minigames */
+export function fireMinigameRecordConfetti() {
   const scale = confettiScale();
   const base = { zIndex: CONFETTI_Z, disableForReducedMotion: true };
-  
-  // Explosão lateral esquerda
+  const colors = ["#facc15", "#fbbf24", "#ffffff", "#a855f7"];
+
   confetti({
     ...base,
-    particleCount: Math.round(40 * scale),
+    particleCount: Math.round(22 * scale),
     angle: 60,
-    spread: 55,
-    origin: { x: 0, y: 0.7 },
-    colors: ["#facc15", "#fbbf24", "#ffffff", "#6366f1"],
+    spread: 50,
+    origin: { x: 0, y: 0.65 },
+    colors,
   });
-  
-  // Explosão lateral direita
   confetti({
     ...base,
-    particleCount: Math.round(40 * scale),
+    particleCount: Math.round(22 * scale),
     angle: 120,
-    spread: 55,
-    origin: { x: 1, y: 0.7 },
-    colors: ["#facc15", "#fbbf24", "#ffffff", "#6366f1"],
+    spread: 50,
+    origin: { x: 1, y: 0.65 },
+    colors,
   });
-  
-  // Chuva central de estrelas
   confetti({
     ...base,
-    particleCount: Math.round(20 * scale),
-    spread: 80,
-    origin: { x: 0.5, y: 0.6 },
-    colors: ["#facc15", "#ffffff"],
+    particleCount: Math.round(10 * scale),
+    spread: 60,
+    origin: { x: 0.5, y: 0.55 },
+    colors,
     shapes: ["star"],
   });
 }

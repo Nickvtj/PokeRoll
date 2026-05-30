@@ -287,7 +287,7 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
 
       <MonotypeSynergyBanner synergy={monotypeSynergy} className="shrink-0" />
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 flex-1 min-h-0 overflow-y-auto overscroll-contain p-1 -m-1 pr-2">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 auto-rows-min flex-1 min-h-0 overflow-y-auto overscroll-contain p-1 pb-4 pr-2">
         {filtered.map((pokemon) => {
           const countInTeam = team.filter((t) => t === pokemon.id).length;
           const selected = countInTeam > 0;

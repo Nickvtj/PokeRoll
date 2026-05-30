@@ -114,7 +114,7 @@ export function preloadPrioritySpritesDeferred(
 
   const ids = [...priority];
 
-  scheduleIdle(() => preloadInBatches(ids), 2500);
+  scheduleIdle(() => preloadInBatches(ids), 6000);
 }
 
 /** @deprecated Use preloadPrioritySpritesDeferred */

@@ -12,6 +12,7 @@ interface BattleActionPanelProps {
   bonuses: { battleDamage: number; critChance: number };
   onPickMove: (index: number) => void;
   onCancel: () => void;
+  className?: string;
 }
 
 const EFFECTIVENESS_STYLE: Record<string, string> = {
@@ -99,7 +100,7 @@ function MoveButton({
   );
 }
 
-export function BattleActionPanel({ state, bonuses, onPickMove, onCancel }: BattleActionPanelProps) {
+export function BattleActionPanel({ state, bonuses, onPickMove, onCancel, className }: BattleActionPanelProps) {
   const phase = state.tacticalPhase;
   const pending = state.pendingSelection ?? {};
 
@@ -150,7 +151,8 @@ export function BattleActionPanel({ state, bonuses, onPickMove, onCancel }: Batt
     <div
       className={cn(
         "mt-3 relative z-20 shrink-0",
-        BATTLE_CLASSIC_THEME ? "battle-classic-dialog p-3" : "glass-card p-3"
+        BATTLE_CLASSIC_THEME ? "battle-classic-dialog p-3" : "glass-card p-3",
+        className
       )}
     >
       <AnimatePresence mode="wait">

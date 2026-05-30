@@ -33,7 +33,7 @@ function TeamPreviewSlot({
 }) {
   const collection = useGameStore((s) => s.collection);
   const pokemonBattleXp = useEconomyStore((s) => s.pokemonBattleXp);
-  const removeFromTeam = useEconomyStore((s) => s.removeFromTeam);
+  const removeFromTeamAtSlot = useEconomyStore((s) => s.removeFromTeamAtSlot);
 
   if (pokemonId == null) {
     return (
@@ -67,7 +67,7 @@ function TeamPreviewSlot({
       className={compact ? "min-h-[88px]" : "flex-1 min-h-[112px]"}
     >
       <button
-        onClick={() => removeFromTeam(pokemonId)}
+        onClick={() => removeFromTeamAtSlot(slotIndex)}
         className={cn(
           "relative flex flex-col items-center rounded-xl border text-center transition-all h-full w-full overflow-hidden",
           BATTLE_CLASSIC_THEME ? "battle-prep-card battle-prep-card-selected battle-classic-card-active" : "bg-white/[0.04] border-2",

@@ -2,14 +2,11 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
-
 interface GamePageShellProps {
   title: string;
   subtitle: string;
   icon: React.ReactNode;
   children: React.ReactNode;
-  tips?: React.ReactNode;
 }
 
 export function GamePageShell({
@@ -17,7 +14,6 @@ export function GamePageShell({
   subtitle,
   icon,
   children,
-  tips,
 }: GamePageShellProps) {
   return (
     <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
@@ -39,12 +35,6 @@ export function GamePageShell({
       </div>
 
       {children}
-
-      {tips && (
-        <div className={cn("glass-card p-4 text-xs text-white/40 space-y-1 leading-relaxed")}>
-          {tips}
-        </div>
-      )}
     </div>
   );
 }

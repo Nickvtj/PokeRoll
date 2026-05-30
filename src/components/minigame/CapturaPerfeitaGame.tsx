@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Target } from "lucide-react";
+import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import {
@@ -206,18 +207,12 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
         </div>
         <h3 className="text-xl font-bold">Captura Perfeita</h3>
         <p className="text-white/50 text-sm leading-relaxed">
-          Acerte o timing e capture Pokémon em sequência. Centro dourado = perfeito
-          (2 moedas). Zona verde = capturado (1 moeda). Errou? A sequência termina.
+          Acerte o timing e capture Pokémon em sequência. Centro dourado = perfeito (2
+          moedas). Zona verde = capturado (1 moeda). Errou? A sequência termina.
         </p>
-        <p className="text-xs text-amber-400/90">Perfeito = 2 moedas · Bom = 1 moeda</p>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={startGame}
-          className="px-8 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-500 font-bold text-slate-900"
-        >
+        <AnimatedButton variant="primary" size="lg" onClick={startGame} className="w-full max-w-xs mx-auto">
           ENCONTRAR POKÉMON!
-        </motion.button>
+        </AnimatedButton>
       </div>
     );
   }
@@ -335,9 +330,6 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
             phase === "animating" && "opacity-60 pointer-events-none"
           )}
         >
-          <p className="text-[10px] text-white/40 mb-2 text-center uppercase tracking-wider">
-            Centro dourado = perfeito (+2 🪙)
-          </p>
           <div className="relative h-12 rounded-2xl bg-slate-950/80 border-2 border-white/5 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
             {/* Brilho de fundo da barra */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />

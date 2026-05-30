@@ -1,7 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { BookOpen } from "lucide-react";
-import { AlbumGrid } from "@/components/album/AlbumGrid";
+import { PanelSkeleton } from "@/components/ui/RouteLoading";
+
+const AlbumGrid = dynamic(
+  () => import("@/components/album/AlbumGrid").then((m) => ({ default: m.AlbumGrid })),
+  { loading: () => <PanelSkeleton label="Carregando álbum..." /> }
+);
 
 export default function AlbumPage() {
   return (

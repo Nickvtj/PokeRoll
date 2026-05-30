@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Gamepad2, Target, MousePointerClick, Brain, Coins, Sparkles } from "lucide-react";
 import {
   CLICK_BASE_COINS_MAX,
@@ -12,6 +10,7 @@ import {
 } from "@/data/economy-balance";
 import { useEconomyStore } from "@/stores/economy-store";
 import { cn } from "@/lib/utils";
+import { usePrefetchOnIntent } from "@/lib/use-prefetch-on-intent";
 
 const GAMES = [
   {
@@ -44,24 +43,43 @@ const GAMES = [
     iconColor: "text-violet-400",
     iconBg: "bg-violet-500/15",
   },
+  {
+    href: "/games/danca-pikachu",
+    title: "Dança Pikachu",
+    desc: "Siga o ritmo das setas e mostre seus reflexos com o Pikachu.",
+    reward: "1 moeda a cada 500 pontos",
+    icon: Sparkles,
+    color: "from-amber-500/20 to-yellow-500/10 border-amber-500/25",
+    iconColor: "text-yellow-400",
+    iconBg: "bg-yellow-500/15",
+  },
 ] as const;
 
+function GameCardLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  const intent = usePrefetchOnIntent(href);
+  return (
+    <Link href={href} {...intent} className="block group">
+      {children}
+    </Link>
+  );
+}
+
 export default function GamesHubPage() {
-  const router = useRouter();
   const gamesPlayed = useEconomyStore((s) => s.clickGamesPlayed);
   const gamesToday = useEconomyStore((s) => s.clickGamesToday);
   const highScores = useEconomyStore((s) => s.highScores);
-
-  useEffect(() => {
-    for (const game of GAMES) {
-      router.prefetch(game.href);
-    }
-  }, [router]);
 
   const highScoreMap: Record<string, number | undefined> = {
     "/games/captura": highScores?.perfectCapture,
     "/games/click-rush": highScores?.clickRush,
     "/games/memory": highScores?.memory,
+    "/games/danca-pikachu": highScores?.dancaPikachu,
   };
 
   return (
@@ -90,7 +108,7 @@ export default function GamesHubPage() {
           const record = highScoreMap[game.href];
           
           return (
-            <Link key={game.href} href={game.href} prefetch className="block group">
+            <GameCardLink key={game.href} href={game.href}>
               <div
                 className={cn(
                   "glass-card p-4 border bg-gradient-to-br transition-all relative overflow-hidden",
@@ -124,7 +142,7 @@ export default function GamesHubPage() {
                   </div>
                 </div>
               </div>
-            </Link>
+            </GameCardLink>
           );
         })}
       </div>

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Home, Disc3, BookOpen, Swords, Gamepad2, ChevronRight } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { CoinCounter } from "@/components/ui/CoinCounter";
@@ -11,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
 import { TrainerAvatarDisplay } from "@/components/profile/TrainerAvatarDisplay";
+import { usePrefetchOnIntent } from "@/lib/use-prefetch-on-intent";
 
 const navItems = [
   { href: "/", label: "Início", icon: Home },
@@ -20,28 +20,23 @@ const navItems = [
   { href: "/album", label: "Álbum", icon: BookOpen },
 ] as const;
 
-const PREFETCH_ROUTES = [
-  "/",
-  "/battle",
-  "/games",
-  "/spin",
-  "/album",
-  "/profile",
-] as const;
-
-function useRoutePrefetch(pathname: string) {
-  const router = useRouter();
-
-  useEffect(() => {
-    for (const href of PREFETCH_ROUTES) {
-      if (href === pathname || (href !== "/" && pathname.startsWith(`${href}/`))) {
-        continue;
-      }
-      router.prefetch(href);
-    }
-  }, [pathname, router]);
+function NavItemLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  const intent = usePrefetchOnIntent(href);
+  return (
+    <Link href={href} {...intent}>
+      {children}
+    </Link>
+  );
 }
+
 function ProfileButton({ className }: { className?: string }) {
+  const profilePrefetch = usePrefetchOnIntent("/profile");
   const username = useGameStore((s) => s.profile.username);
   const level = useEconomyStore((s) => s.level);
   const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
@@ -49,7 +44,7 @@ function ProfileButton({ className }: { className?: string }) {
   return (
     <Link
       href="/profile"
-      prefetch
+      {...profilePrefetch}
       className={cn(
         "group flex items-center gap-2 px-3 py-1.5 rounded-xl glass text-xs border border-white/10 shrink-0",
         "hover:bg-indigo-500/15 hover:border-indigo-400/40 hover:shadow-lg hover:shadow-indigo-500/20",
@@ -77,8 +72,6 @@ export function Navbar() {
   const pathname = usePathname();
   const uniqueCount = useGameStore((s) => Object.keys(s.collection).length);
 
-  useRoutePrefetch(pathname);
-
   return (
     <>
       <header className="hidden lg:grid fixed top-0 left-0 right-0 z-40 grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-3 glass glass-blur border-b border-white/10">
@@ -100,7 +93,7 @@ export function Navbar() {
                 ? pathname === "/"
                 : pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link key={href} href={href} prefetch>
+              <NavItemLink key={href} href={href}>
                 <span
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors whitespace-nowrap",
@@ -112,7 +105,7 @@ export function Navbar() {
                   <Icon className="w-3.5 h-3.5 shrink-0" />
                   {label}
                 </span>
-              </Link>
+              </NavItemLink>
             );
           })}
         </nav>
@@ -136,7 +129,7 @@ export function Navbar() {
                 ? pathname === "/"
                 : pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link key={href} href={href} prefetch>
+              <NavItemLink key={href} href={href}>
                 <span
                   className={cn(
                     "flex flex-col items-center gap-0.5 py-1.5 rounded-xl",
@@ -146,7 +139,7 @@ export function Navbar() {
                   <Icon className="w-4 h-4" />
                   <span className="text-[8px] font-medium">{label}</span>
                 </span>
-              </Link>
+              </NavItemLink>
             );
           })}
         </div>

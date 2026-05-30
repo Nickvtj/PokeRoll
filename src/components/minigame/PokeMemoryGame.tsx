@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Brain } from "lucide-react";
+import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import {
   MEMORY_GAME_DURATION_SEC,
@@ -147,14 +148,14 @@ export function PokeMemoryGame({ onComplete, onReady }: PokeMemoryGameProps) {
             timedOut: false,
           });
         }
-      }, 450);
+      }, 320);
     } else {
       window.setTimeout(() => {
         void playMemoryMismatch();
         setFlipped([]);
         resolvingRef.current = false;
         setResolving(false);
-      }, 850);
+      }, 580);
     }
   };
 
@@ -166,21 +167,13 @@ export function PokeMemoryGame({ onComplete, onReady }: PokeMemoryGameProps) {
         </div>
         <h3 className="text-xl font-bold">Poké-Memory</h3>
         <p className="text-white/50 text-sm leading-relaxed">
-          Encontre os {MEMORY_PAIR_COUNT} pares em {MEMORY_GAME_DURATION_SEC} segundos. Errou?
-          As cartas viram de novo. Continue até acabar o tempo.
+          Encontre os {MEMORY_PAIR_COUNT} pares em {MEMORY_GAME_DURATION_SEC} segundos. Errou? As
+          cartas viram de novo — continue até acabar o tempo. Recompensa: {MEMORY_COINS_PER_PAIR}{" "}
+          moeda por par, até {MEMORY_PAIR_COUNT * MEMORY_COINS_PER_PAIR} moedas ao completar.
         </p>
-        <p className="text-xs text-violet-400/90">
-          Recompensa: {MEMORY_COINS_PER_PAIR} moeda/par · até{" "}
-          {MEMORY_PAIR_COUNT * MEMORY_COINS_PER_PAIR} moedas ao completar
-        </p>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={start}
-          className="px-8 py-3 rounded-2xl bg-gradient-to-r from-violet-400 to-purple-500 font-bold text-slate-900"
-        >
+        <AnimatedButton variant="primary" size="lg" onClick={start} className="w-full max-w-xs mx-auto">
           COMEÇAR!
-        </motion.button>
+        </AnimatedButton>
       </div>
     );
   }
@@ -279,7 +272,7 @@ function MemoryCardTile({
           scale: matched ? 1.03 : 1,
         }}
         transition={{
-          rotateY: { duration: 0.42, ease: [0.33, 1, 0.45, 1] },
+          rotateY: { duration: 0.26, ease: [0.33, 1, 0.45, 1] },
           scale: matched
             ? { type: "spring", stiffness: 420, damping: 18 }
             : { duration: 0.2 },

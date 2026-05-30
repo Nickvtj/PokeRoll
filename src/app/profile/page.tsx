@@ -2,11 +2,14 @@
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { User, Gift, Trophy, CalendarDays, Palette, Award } from "lucide-react";
-import { ProfileCard } from "@/components/profile/ProfileCard";
 import { PanelSkeleton } from "@/components/ui/RouteLoading";
 import { cn } from "@/lib/utils";
+
+const ProfileCard = dynamic(
+  () => import("@/components/profile/ProfileCard").then((m) => ({ default: m.ProfileCard })),
+  { loading: () => <PanelSkeleton label="Carregando resumo..." /> }
+);
 
 const ProfileCustomizePanel = dynamic(
   () => import("@/components/profile/ProfileCustomizePanel").then((m) => m.ProfileCustomizePanel),
@@ -75,28 +78,25 @@ export default function ProfilePage() {
       </div>
 
       <div className="glass-card p-1.5 grid grid-cols-3 sm:grid-cols-6 gap-1">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={cn(
-              "relative flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl text-[10px] font-semibold transition-colors",
-              activeTab === id
-                ? "text-indigo-300"
-                : "text-white/40 hover:text-white/70"
-            )}
-          >
-            {activeTab === id && (
-              <motion.div
-                layoutId="profile-tab-bg"
-                className="absolute inset-0 bg-indigo-500/20 border border-indigo-500/30 rounded-xl"
-                transition={{ type: "spring", damping: 20, stiffness: 300 }}
-              />
-            )}
-            <Icon className="w-4 h-4 relative z-10" />
-            <span className="relative z-10 leading-tight text-center">{label}</span>
-          </button>
-        ))}
+        {TABS.map(({ id, label, icon: Icon }) => {
+          const isActive = activeTab === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              className={cn(
+                "relative flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl text-[10px] font-semibold transition-colors duration-200",
+                isActive
+                  ? "text-indigo-300 bg-indigo-500/20 border border-indigo-500/30"
+                  : "text-white/40 hover:text-white/70 border border-transparent"
+              )}
+            >
+              <Icon className="w-4 h-4 relative z-10" />
+              <span className="relative z-10 leading-tight text-center">{label}</span>
+            </button>
+          );
+        })}
       </div>
 
       <ProfileTabContent tab={activeTab} />

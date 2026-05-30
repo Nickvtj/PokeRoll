@@ -86,12 +86,18 @@ body {
     background: rgba(15, 22, 41, 0.32);
   }
 
+  html[data-visual-quality="low"] .glass-blur {
+    background: rgba(10, 14, 26, 0.92);
+  }
+
   html[data-visual-quality="medium"] .glass-blur {
     @apply backdrop-blur-sm;
+    background: rgba(10, 14, 26, 0.88);
   }
 
   html[data-visual-quality="high"] .glass-blur {
     @apply backdrop-blur-md;
+    background: rgba(10, 14, 26, 0.82);
   }
 
   .neon-text {

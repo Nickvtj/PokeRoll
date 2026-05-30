@@ -68,6 +68,7 @@ interface EconomyStore extends EconomyState {
 
   setTeam: (team: number[]) => void;
   removeFromTeam: (pokemonId: number) => void;
+  removeFromTeamAtSlot: (slotIndex: number) => void;
   toggleFavoritePokemon: (id: number) => void;
   isFavoritePokemon: (id: number) => boolean;
   getPokemonProgress: (id: number) => { level: number; xp: number; xpInLevel: number; xpPct: number };
@@ -78,7 +79,7 @@ interface EconomyStore extends EconomyState {
   recordBattleWin: () => void;
   recordBattleLoss: () => void;
   recordClickGame: (coinsEarned: number) => void;
-  updateHighScore: (game: "clickRush" | "perfectCapture" | "memory", score: number) => boolean;
+  updateHighScore: (game: "clickRush" | "perfectCapture" | "memory" | "dancaPikachu", score: number) => boolean;
   convertDuplicate: () => void;
 
   checkDailyLogin: () => number;
@@ -109,60 +110,61 @@ function calcLevel(xp: number) {
   return Math.min(50, Math.floor(xp / XP_PER_LEVEL) + 1);
 }
 
-export const useEconomyStore = create<EconomyStore>((set, get) => ({
-  ...getDefaultEconomy(),
-  lastReward: null,
-  showReward: false,
-  rewardPlayAgain: null,
-  coinAnimation: null,
+export const useEconomyStore = create<EconomyStore>((set, get) => {
+  const store: EconomyStore = {
+    ...getDefaultEconomy(),
+    lastReward: null,
+    showReward: false,
+    rewardPlayAgain: null,
+    coinAnimation: null,
 
-  initializeEconomy: () => {
-    const data = loadEconomy();
+    initializeEconomy: () => {
+      const data = loadEconomy();
 
-    if (data.pokemonBattleXp) {
-      const migratedXp: Record<string, { level: number; xp: number }> = {};
-      let hasChange = false;
-      for (const [key, val] of Object.entries(data.pokemonBattleXp)) {
-        // Se já tem XP total migrado, não precisa recalcular
-        if (val.xp > 500) {
-           migratedXp[key] = val;
-           continue;
+      if (data.pokemonBattleXp) {
+        const migratedXp: Record<string, { level: number; xp: number }> = {};
+        let hasChange = false;
+        for (const [key, val] of Object.entries(data.pokemonBattleXp)) {
+          // Se já tem XP total migrado, não precisa recalcular
+          if (val.xp > 500) {
+             migratedXp[key] = val;
+             continue;
+          }
+          hasChange = true;
+          const total = migrateLegacyTotalXp(val.level, val.xp);
+          migratedXp[key] = { xp: total, level: calcPokemonLevelFromTotalXp(total) };
         }
-        hasChange = true;
-        const total = migrateLegacyTotalXp(val.level, val.xp);
-        migratedXp[key] = { xp: total, level: calcPokemonLevelFromTotalXp(total) };
-      }
-      if (hasChange) {
-        set({ ...data, pokemonBattleXp: { ...data.pokemonBattleXp, ...migratedXp } });
+        if (hasChange) {
+          set({ ...data, pokemonBattleXp: { ...data.pokemonBattleXp, ...migratedXp } });
+        } else {
+          set({ ...data });
+        }
       } else {
         set({ ...data });
       }
-    } else {
-      set({ ...data });
-    }
 
-    void Promise.all([loadEconomyFromSupabase(), loadAchievementsFromSupabase()]).then(
-      ([remote, remoteAchievements]) => {
-        if (!remote) return;
-        const local = get();
-        set(
-          mergeEconomyState(
-            getEconomySnapshot(local),
-            remote,
-            remoteAchievements ?? []
-          )
-        );
-        persistEconomy(getEconomySnapshot(get()));
+      void Promise.all([loadEconomyFromSupabase(), loadAchievementsFromSupabase()]).then(
+        ([remote, remoteAchievements]) => {
+          if (!remote) return;
+          const local = get();
+          set(
+            mergeEconomyState(
+              getEconomySnapshot(local),
+              remote,
+              remoteAchievements ?? []
+            )
+          );
+          persistEconomy(getEconomySnapshot(get()));
+        }
+      );
+
+      if (data.welcomeClaimed) {
+        get().checkDailyLogin();
+        get().resetDailyIfNeeded();
       }
-    );
+    },
 
-    if (data.welcomeClaimed) {
-      get().checkDailyLogin();
-      get().resetDailyIfNeeded();
-    }
-  },
-
-  getLevelCap: () => useGymStore.getState().getLevelCap(),
+    getLevelCap: () => useGymStore.getState().getLevelCap(),
 
   grantPokemonXp: (pokemonId, amount) => {
     if (amount <= 0) return null;
@@ -355,6 +357,13 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
 
   removeFromTeam: (pokemonId) => {
     set((s) => ({ team: s.team.filter((id) => id !== pokemonId) }));
+    get().sync();
+  },
+
+  removeFromTeamAtSlot: (slotIndex) => {
+    set((s) => ({
+      team: s.team.filter((_, i) => i !== slotIndex),
+    }));
     get().sync();
   },
 
@@ -678,7 +687,10 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     get().sync();
     return true;
   },
-}));
+  };
+
+  return store;
+});
 
 function getEconomySnapshot(state: EconomyStore): EconomyState {
   return {

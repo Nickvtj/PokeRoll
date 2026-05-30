@@ -51,14 +51,15 @@ export const PokemonSelectorItem = memo(function PokemonSelectorItem({
   const showMonotypeFx = selected && synergyActive;
 
   return (
-    <div className="pokemon-selector-item-container" style={{ contentVisibility: 'auto' }}>
-      <MonotypeSynergyAura active={showMonotypeFx} type={synergyType}>
+    <div className="w-full min-w-0">
+      <MonotypeSynergyAura active={showMonotypeFx} type={synergyType} className="w-full">
         <motion.div
           role="button"
           tabIndex={disabled ? -1 : 0}
           whileTap={{ scale: disabled ? 1 : 0.98 }}
           onClick={() => !disabled && onToggle(pokemonId)}
           className={cn(
+            "relative w-full",
             BATTLE_CLASSIC_THEME
               ? cn(
                   "battle-prep-card",
@@ -66,7 +67,7 @@ export const PokemonSelectorItem = memo(function PokemonSelectorItem({
                   isFavorite && !selected && "border-pink-400/30"
                 )
               : cn(
-                  "relative text-center transition-all cursor-pointer rounded-xl border p-2 bg-white/[0.04]",
+                  "text-center transition-all cursor-pointer rounded-xl border p-2 bg-white/[0.04]",
                   selected ? "border-2" : "border-white/10 hover:border-white/20",
                   isFavorite && !selected && "border-pink-400/30"
                 ),

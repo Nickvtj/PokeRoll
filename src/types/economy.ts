@@ -32,6 +32,7 @@ export interface EconomyState {
     clickRush?: number;
     perfectCapture?: number;
     memory?: number;
+    dancaPikachu?: number;
   };
 }
 
@@ -46,6 +47,10 @@ export interface RewardPayload {
   xp?: number;
   freeSpin?: boolean;
   message: string;
+  closeLabel?: string;
+  onClosePath?: string;
+  /** Dispara confete de recorde ao abrir o modal */
+  isNewRecord?: boolean;
 }
 
 /** Callback efêmero — não persiste no storage */

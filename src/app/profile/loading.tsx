@@ -1,5 +1,5 @@
-import { RouteLoading } from "@/components/ui/RouteLoading";
+import { RouteLoadingMinimal } from "@/components/ui/RouteLoading";
 
 export default function Loading() {
-  return <RouteLoading label="Carregando perfil..." />;
+  return <RouteLoadingMinimal />;
 }

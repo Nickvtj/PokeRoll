@@ -2,11 +2,8 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { POKEMON_MAP } from "@/data/pokemon";
-import {
-  parseAvatarId,
-  TRAINER_AVATARS,
-} from "@/data/trainer-avatars";
+import { getPokemonSpriteUrl } from "@/data/pokemon-sprites";
+import { parseAvatarId, TRAINER_AVATARS } from "@/data/trainer-avatars";
 
 interface TrainerAvatarDisplayProps {
   avatarId: string;
@@ -32,8 +29,8 @@ export function TrainerAvatarDisplay({
   const parsed = parseAvatarId(avatarId);
 
   if (parsed.kind === "pokemon") {
-    const pokemon = POKEMON_MAP[Number(parsed.ref)];
-    if (pokemon) {
+    const pokemonId = Number(parsed.ref);
+    if (pokemonId >= 1 && pokemonId <= 151) {
       return (
         <div
           className={cn(
@@ -43,8 +40,8 @@ export function TrainerAvatarDisplay({
           )}
         >
           <Image
-            src={pokemon.image}
-            alt={pokemon.name}
+            src={getPokemonSpriteUrl(pokemonId)}
+            alt={`Pokémon ${pokemonId}`}
             width={sizes.image}
             height={sizes.image}
             className="object-contain w-full h-full p-0.5"

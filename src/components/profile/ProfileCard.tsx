@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   Disc3,
   Trophy,
@@ -97,11 +96,9 @@ export function ProfileCard() {
           <span className="text-white/50">{TOTAL_POKEMON - unique} faltando</span>
         </div>
         <div className="progress-bar">
-          <motion.div
-            className="progress-fill"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
+          <div
+            className="progress-fill transition-[width] duration-1000 ease-out"
+            style={{ width: `${progress}%` }}
           />
         </div>
         <div className="flex items-center justify-between text-sm mt-3 pt-3 border-t border-white/10">

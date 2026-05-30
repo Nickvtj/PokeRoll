@@ -10,6 +10,7 @@ import {
   UltraBallIcon,
   MasterBallIcon,
 } from "@/components/ui/PokeBallIcons";
+import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { ComboCounter } from "@/components/minigame/ComboCounter";
 import {
   CLICK_BASE_COINS_MAX,
@@ -296,34 +297,13 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
         <h3 className="text-xl font-bold">Click Rush</h3>
         <p className="text-white/50 text-sm leading-relaxed">
           Pokébolas aparecem na tela. Clique o máximo que conseguir em{" "}
-          {CLICK_GAME_DURATION_SEC} segundos. Combos aumentam sua pontuação!
+          {CLICK_GAME_DURATION_SEC} segundos — combos aumentam sua pontuação! Itens especiais: +
+          {CLICK_TIME_BONUS_SEC}s extras, congela o tempo, pontos em dobro e Frenesi Master.
+          Recompensa: {CLICK_BASE_COINS_MIN}~{CLICK_BASE_COINS_MAX} moedas conforme seu desempenho.
         </p>
-        <div className="grid grid-cols-2 gap-2 mt-4">
-          <p className="text-[10px] text-amber-400/80 flex items-center gap-1 justify-center">
-            <Timer className="w-3 h-3" /> +{CLICK_TIME_BONUS_SEC}s extras
-          </p>
-          <p className="text-[10px] text-blue-400/80 flex items-center gap-1 justify-center">
-            <Snowflake className="w-3 h-3" /> Congela o tempo
-          </p>
-          <p className="text-[10px] text-yellow-400/80 flex items-center gap-1 justify-center">
-            <Zap className="w-3 h-3" /> Pontos em dobro
-          </p>
-          <p className="text-[10px] text-purple-400/80 flex items-center gap-1 justify-center">
-            <Star className="w-3 h-3" /> Frenesi Master
-          </p>
-        </div>
-        <p className="text-xs text-amber-400/90 mt-4">
-          Recompensa: {CLICK_BASE_COINS_MIN}~{CLICK_BASE_COINS_MAX} moedas · quanto melhor, mais
-          você ganha
-        </p>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={start}
-          className="px-8 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 font-bold text-slate-900"
-        >
+        <AnimatedButton variant="primary" size="lg" onClick={start} className="w-full max-w-xs mx-auto">
           COMEÇAR!
-        </motion.button>
+        </AnimatedButton>
       </div>
     );
   }
