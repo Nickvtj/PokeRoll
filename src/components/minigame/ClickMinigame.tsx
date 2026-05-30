@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { MousePointerClick, Timer } from "lucide-react";
+import { MousePointerClick, Timer, Snowflake, Zap, Star } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import {
   GreatBallIcon,
@@ -30,7 +30,7 @@ import {
   type SpawnedBall,
 } from "@/lib/minigame-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
-import { playClickCombo, playClickPop, playClickRare } from "@/lib/sound-engine";
+import { playClickCombo, playClickPop, playClickRare, playClickFreeze, playClickDouble, playClickFrenzy, playClickBonusActive } from "@/lib/sound-engine";
 import { cn } from "@/lib/utils";
 
 interface ClickMinigameProps {
@@ -48,12 +48,17 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
   const [rareEvents, setRareEvents] = useState<RareEvent[]>([]);
   const [popups, setPopups] = useState<{ id: string; x: number; y: number; text: string }[]>([]);
 
+  // Novos estados de bônus
+  const [freezeActive, setFreezeActive] = useState(false);
+  const [doubleActive, setDoubleActive] = useState(false);
+
   const comboTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scoreRef = useRef(0);
   const maxComboRef = useRef(0);
   const endedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
   const rareSpawnCooldown = useRef(0);
+  const timeBallsSpawned = useRef(0); // Limite de bolas de tempo por jogo
 
   const team = useEconomyStore((s) => s.team);
   const bonuses = getEconomyBonuses(team);
@@ -88,6 +93,7 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
     scoreRef.current = 0;
     maxComboRef.current = 0;
     rareSpawnCooldown.current = 0;
+    timeBallsSpawned.current = 0;
   }, []);
 
   useEffect(() => {
@@ -95,14 +101,14 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
   }, [onReady, start]);
 
   useEffect(() => {
-    if (!playing) return;
+    if (!playing || freezeActive) return;
 
     const interval = setInterval(() => {
       setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [playing]);
+  }, [playing, freezeActive]);
 
   useEffect(() => {
     if (playing && timeLeft === 0) {
@@ -119,10 +125,26 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
         let alive = prev.filter((b) => now - b.createdAt < b.lifetime);
         while (alive.length < 3) {
           const next = spawnBall(alive);
+          if (next.kind === "time") {
+            if (timeBallsSpawned.current >= 2) {
+              next.kind = "normal";
+              next.type = rollBallType();
+            } else {
+              timeBallsSpawned.current++;
+            }
+          }
           alive = [...alive, next];
         }
         if (Math.random() < 0.38) {
           const next = spawnBall(alive);
+          if (next.kind === "time") {
+            if (timeBallsSpawned.current >= 2) {
+              next.kind = "normal";
+              next.type = rollBallType();
+            } else {
+              timeBallsSpawned.current++;
+            }
+          }
           alive = [...alive.slice(-10), next];
         }
         return alive;
@@ -166,28 +188,72 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
   };
 
   const handleBallClick = (ball: SpawnedBall) => {
+    // Efeito: Bônus de Tempo
     if (ball.kind === "time") {
       void playClickRare();
       setTimeLeft((t) => Math.min(CLICK_MAX_TIME_SEC, t + CLICK_TIME_BONUS_SEC));
       setBalls((prev) => prev.filter((b) => b.id !== ball.id));
       setPopups((prev) => [
         ...prev.slice(-8),
-        {
-          id: `pop-${Date.now()}`,
-          x: ball.x,
-          y: ball.y,
-          text: `+${CLICK_TIME_BONUS_SEC}s!`,
-        },
+        { id: `pop-${Date.now()}`, x: ball.x, y: ball.y, text: `+${CLICK_TIME_BONUS_SEC}s!` },
       ]);
       resetComboTimer();
       return;
     }
 
+    // Efeito: Congelar Tempo (3 segundos)
+    if (ball.kind === "freeze") {
+      void playClickFreeze();
+      setFreezeActive(true);
+      setTimeout(() => setFreezeActive(false), 3000);
+      setBalls((prev) => prev.filter((b) => b.id !== ball.id));
+      setPopups((prev) => [
+        ...prev.slice(-8),
+        { id: `pop-${Date.now()}`, x: ball.x, y: ball.y, text: "CONGELADO!" },
+      ]);
+      return;
+    }
+
+    // Efeito: Pontos em Dobro (5 segundos)
+    if (ball.kind === "double") {
+      void playClickDouble();
+      setDoubleActive(true);
+      setTimeout(() => setDoubleActive(false), 5000);
+      setBalls((prev) => prev.filter((b) => b.id !== ball.id));
+      setPopups((prev) => [
+        ...prev.slice(-8),
+        { id: `pop-${Date.now()}`, x: ball.x, y: ball.y, text: "2X PONTOS!" },
+      ]);
+      return;
+    }
+
+    // Efeito: Frenesi (Limpa tela + 100 pontos)
+    if (ball.kind === "frenzy") {
+      void playClickFrenzy();
+      setScore((s) => {
+        const next = s + 100;
+        scoreRef.current = next;
+        return next;
+      });
+      setBalls([]);
+      setPopups((prev) => [
+        ...prev.slice(-8),
+        { id: `pop-${Date.now()}`, x: ball.x, y: ball.y, text: "+100 FRENESI!" },
+      ]);
+      return;
+    }
+
     const newCombo = combo + 1;
-    void playClickPop();
+    if (freezeActive || doubleActive) {
+      void playClickBonusActive();
+    } else {
+      void playClickPop();
+    }
     if (newCombo >= 3 && newCombo % 3 === 0) void playClickCombo(newCombo);
 
-    const points = calcClickScore(ball.type, newCombo, bonuses.comboBonus);
+    let points = calcClickScore(ball.type, newCombo, bonuses.comboBonus);
+    if (doubleActive) points *= 2; // Aplica o dobro se ativo
+
     setScore((s) => {
       const next = s + points;
       scoreRef.current = next;
@@ -232,10 +298,21 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
           Pokébolas aparecem na tela. Clique o máximo que conseguir em{" "}
           {CLICK_GAME_DURATION_SEC} segundos. Combos aumentam sua pontuação!
         </p>
-        <p className="text-xs text-cyan-400/80">
-          Raro: Pokébola dourada com relógio — +{CLICK_TIME_BONUS_SEC}s extras
-        </p>
-        <p className="text-xs text-amber-400/90">
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          <p className="text-[10px] text-amber-400/80 flex items-center gap-1 justify-center">
+            <Timer className="w-3 h-3" /> +{CLICK_TIME_BONUS_SEC}s extras
+          </p>
+          <p className="text-[10px] text-blue-400/80 flex items-center gap-1 justify-center">
+            <Snowflake className="w-3 h-3" /> Congela o tempo
+          </p>
+          <p className="text-[10px] text-yellow-400/80 flex items-center gap-1 justify-center">
+            <Zap className="w-3 h-3" /> Pontos em dobro
+          </p>
+          <p className="text-[10px] text-purple-400/80 flex items-center gap-1 justify-center">
+            <Star className="w-3 h-3" /> Frenesi Master
+          </p>
+        </div>
+        <p className="text-xs text-amber-400/90 mt-4">
           Recompensa: {CLICK_BASE_COINS_MIN}~{CLICK_BASE_COINS_MAX} moedas · quanto melhor, mais
           você ganha
         </p>
@@ -265,9 +342,44 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
       </div>
 
       <div
-        className="relative glass-card rounded-2xl overflow-hidden select-none touch-none"
+        className={cn(
+          "relative glass-card rounded-2xl overflow-hidden select-none touch-none transition-all duration-500",
+          freezeActive && "ring-4 ring-blue-400 shadow-[inset_0_0_50px_rgba(56,189,248,0.3)]",
+          doubleActive && "ring-4 ring-yellow-400 shadow-[inset_0_0_50px_rgba(250,204,21,0.3)]"
+        )}
         style={{ height: 360 }}
       >
+        {/* Overlay de Gelo */}
+        <AnimatePresence>
+          {freezeActive && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-10 pointer-events-none"
+              style={{
+                background: "linear-gradient(45deg, rgba(186,230,253,0.2) 0%, transparent 100%)",
+                backdropFilter: "contrast(1.1) brightness(1.2) saturate(0.8)",
+              }}
+            >
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/ice-crystals.png')] opacity-30" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Overlay de Raios/Brilho */}
+        <AnimatePresence>
+          {doubleActive && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0.1, 0.3, 0.1] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, repeat: Infinity }}
+              className="absolute inset-0 z-10 pointer-events-none bg-yellow-400/5 shadow-[0_0_100px_rgba(250,204,21,0.2)_inset]"
+            />
+          )}
+        </AnimatePresence>
+
         <AnimatePresence>
           {balls.map((ball) => (
             <motion.button
@@ -278,18 +390,18 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
               onClick={() => handleBallClick(ball)}
               className={cn(
                 "absolute flex items-center justify-center",
-                ball.kind === "time" ? "w-14 h-14" : "w-12 h-12"
+                ball.kind !== "normal" ? "w-14 h-14" : "w-12 h-12"
               )}
               style={{ left: `${ball.x}%`, top: `${ball.y}%` }}
             >
               {ball.kind === "time" ? (
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-amber-400/30 blur-md animate-pulse" />
-                  <div className="relative flex flex-col items-center">
-                    <PokeballIcon size={48} />
-                    <Timer className="absolute -bottom-1 -right-1 w-4 h-4 text-amber-300 drop-shadow" />
-                  </div>
-                </div>
+                <SpecialBallVisual icon={<Timer className="w-4 h-4 text-amber-300" />} color="bg-amber-400/30" />
+              ) : ball.kind === "freeze" ? (
+                <SpecialBallVisual icon={<Snowflake className="w-4 h-4 text-blue-300" />} color="bg-blue-400/30" />
+              ) : ball.kind === "double" ? (
+                <SpecialBallVisual icon={<Zap className="w-4 h-4 text-yellow-300" />} color="bg-yellow-400/30" />
+              ) : ball.kind === "frenzy" ? (
+                <SpecialBallVisual icon={<Star className="w-4 h-4 text-purple-300" />} color="bg-purple-400/30" />
               ) : (
                 <BallVisual type={ball.type} />
               )}
@@ -338,4 +450,18 @@ function BallVisual({ type }: { type: BallType }) {
     default:
       return <PokeballIcon size={44} />;
   }
+}
+
+function SpecialBallVisual({ icon, color }: { icon: React.ReactNode; color: string }) {
+  return (
+    <div className="relative">
+      <div className={cn("absolute inset-0 rounded-full blur-md animate-pulse", color)} />
+      <div className="relative flex flex-col items-center">
+        <PokeballIcon size={48} />
+        <div className="absolute -bottom-1 -right-1 drop-shadow bg-slate-900 rounded-full p-0.5 border border-white/10">
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
 }

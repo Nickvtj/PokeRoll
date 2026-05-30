@@ -13,7 +13,7 @@ import {
 } from "@/data/economy-balance";
 import { applyMinigameCoinBonus } from "@/lib/minigame-rewards";
 
-export type SpawnedBallKind = "normal" | "time";
+export type SpawnedBallKind = "normal" | "time" | "freeze" | "double" | "frenzy";
 
 export interface SpawnedBall {
   id: string;
@@ -60,19 +60,25 @@ export function rollBallType(): BallType {
 }
 
 export function spawnBall(existing: SpawnedBall[] = []): SpawnedBall {
-  const hasTimeBall = existing.some((b) => b.kind === "time");
-  const kind: SpawnedBallKind =
-    !hasTimeBall && Math.random() < CLICK_TIME_BALL_CHANCE ? "time" : "normal";
+  const roll = Math.random();
+  let kind: SpawnedBallKind = "normal";
+
+  // Lógica de chances para itens especiais (Balanceado: Tempo ultra raro)
+  if (roll < 0.005) kind = "time";      // 0.5% (era 2%)
+  else if (roll < 0.04) kind = "freeze"; // 3.5%
+  else if (roll < 0.08) kind = "double"; // 4%
+  else if (roll < 0.095) kind = "frenzy"; // 1.5%
+
   const { x, y } = pickSpawnPosition(existing);
 
   return {
     id: `ball-${++spawnId}`,
-    type: kind === "time" ? "poke" : rollBallType(),
+    type: kind === "frenzy" ? "master" : rollBallType(),
     kind,
     x,
     y,
     createdAt: Date.now(),
-    lifetime: kind === "time" ? 2600 : 1400 + Math.random() * 900,
+    lifetime: kind === "normal" ? 1400 + Math.random() * 900 : 2500,
   };
 }
 

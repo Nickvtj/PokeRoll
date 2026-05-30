@@ -78,6 +78,7 @@ interface EconomyStore extends EconomyState {
   recordBattleWin: () => void;
   recordBattleLoss: () => void;
   recordClickGame: (coinsEarned: number) => void;
+  updateHighScore: (game: "clickRush" | "perfectCapture" | "memory", score: number) => boolean;
   convertDuplicate: () => void;
 
   checkDailyLogin: () => number;
@@ -118,12 +119,27 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
   initializeEconomy: () => {
     const data = loadEconomy();
 
-    const migratedXp: Record<string, { level: number; xp: number }> = {};
-    for (const [key, val] of Object.entries(data.pokemonBattleXp ?? {})) {
-      const total = migrateLegacyTotalXp(val.level, val.xp);
-      migratedXp[key] = { xp: total, level: calcPokemonLevelFromTotalXp(total) };
+    if (data.pokemonBattleXp) {
+      const migratedXp: Record<string, { level: number; xp: number }> = {};
+      let hasChange = false;
+      for (const [key, val] of Object.entries(data.pokemonBattleXp)) {
+        // Se já tem XP total migrado, não precisa recalcular
+        if (val.xp > 500) {
+           migratedXp[key] = val;
+           continue;
+        }
+        hasChange = true;
+        const total = migrateLegacyTotalXp(val.level, val.xp);
+        migratedXp[key] = { xp: total, level: calcPokemonLevelFromTotalXp(total) };
+      }
+      if (hasChange) {
+        set({ ...data, pokemonBattleXp: { ...data.pokemonBattleXp, ...migratedXp } });
+      } else {
+        set({ ...data });
+      }
+    } else {
+      set({ ...data });
     }
-    set({ ...data, pokemonBattleXp: { ...data.pokemonBattleXp, ...migratedXp } });
 
     void Promise.all([loadEconomyFromSupabase(), loadAchievementsFromSupabase()]).then(
       ([remote, remoteAchievements]) => {
@@ -343,15 +359,13 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
   },
 
   toggleFavoritePokemon: (id) => {
-    set((s) => {
-      const favorites = s.favoritePokemon ?? [];
-      const exists = favorites.includes(id);
-      return {
-        favoritePokemon: exists
-          ? favorites.filter((f) => f !== id)
-          : [...favorites, id],
-      };
-    });
+    const favorites = get().favoritePokemon ?? [];
+    const exists = favorites.includes(id);
+    const nextFavorites = exists
+      ? favorites.filter((f) => f !== id)
+      : [...favorites, id];
+    
+    set({ favoritePokemon: nextFavorites });
     get().sync();
   },
 
@@ -403,6 +417,22 @@ export const useEconomyStore = create<EconomyStore>((set, get) => ({
     }));
     get().incrementMission("clicks");
     get().sync();
+  },
+
+  updateHighScore: (game, score) => {
+    const currentScores = get().highScores ?? {};
+    const previous = currentScores[game] ?? 0;
+    if (score > previous) {
+      set({
+        highScores: {
+          ...currentScores,
+          [game]: score,
+        },
+      });
+      get().sync();
+      return true; // Novo recorde!
+    }
+    return false;
   },
 
   convertDuplicate: () => {

@@ -329,6 +329,42 @@ export async function playClickRare(): Promise<void> {
   );
 }
 
+export async function playClickFreeze(): Promise<void> {
+  await playNoteSequence(
+    [
+      { freq: 880, dur: 0.05, vol: 0.1, type: "sine" },
+      { freq: 1320, dur: 0.15, vol: 0.08, type: "sine" },
+    ],
+    0.02
+  );
+}
+
+export async function playClickDouble(): Promise<void> {
+  await playNoteSequence(
+    [
+      { freq: 440, dur: 0.05, vol: 0.1, type: "triangle" },
+      { freq: 880, dur: 0.05, vol: 0.1, type: "triangle" },
+      { freq: 1760, dur: 0.1, vol: 0.1, type: "triangle" },
+    ],
+    0.02
+  );
+}
+
+export async function playClickFrenzy(): Promise<void> {
+  await playNoteSequence(
+    [
+      { freq: 220, dur: 0.05, vol: 0.12, type: "square" },
+      { freq: 440, dur: 0.05, vol: 0.1, type: "square" },
+      { freq: 880, dur: 0.15, vol: 0.08, type: "square" },
+    ],
+    0.02
+  );
+}
+
+export async function playClickBonusActive(): Promise<void> {
+  await playTone(880 + Math.random() * 200, 0.04, "sine", 0.06);
+}
+
 export async function playCardFlip(): Promise<void> {
   await playTone(380, 0.04, "triangle", 0.06);
 }

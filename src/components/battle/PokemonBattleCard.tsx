@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
@@ -10,6 +11,7 @@ import {
   BattleSleepOverlay,
   BattleStatusBadge,
 } from "@/components/battle/BattleAttackFx";
+import { battleAudio } from "@/lib/battle-audio";
 import type { BattleFighter } from "@/types/battle";
 
 export type BattleTurnHighlight = "attack" | "defend" | "idle-dim" | "none";
@@ -74,6 +76,13 @@ export function PokemonBattleCard({
   const typeFxClass =
     isFlashing && moveType ? `battle-card-hit-${moveType in HIT_TYPES ? moveType : "default"}` : "";
 
+  // Tocar sons baseados na fase da animação
+  useEffect(() => {
+    if (isStriking) {
+      battleAudio.playAttack(moveType || "normal");
+    }
+  }, [isStriking, moveType]);
+
   return (
     <motion.div
       role={isSelectable ? "button" : undefined}
@@ -95,41 +104,36 @@ export function PokemonBattleCard({
           ? { opacity: 0.4, scale: 1, x: 0, y: 0, filter: "brightness(1)" }
           : isStriking
             ? {
-                y: [0, fighter.isPlayer ? -20 : 20, 0],
-                scale: [1, 1.08, 1],
-                filter: ["brightness(1)", "brightness(1.35)", "brightness(1)"],
+                y: side === "player" ? [0, -40, 0] : [0, 40, 0],
+                scale: [1, 1.15, 1],
+                filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"],
+                zIndex: 50,
               }
             : isFlashing
               ? {
-                  x: moveType === "electric" ? [0, -4, 4, -3, 3, 0] : 0,
-                  opacity:
-                    moveType === "electric"
-                      ? [1, 0.4, 1, 0.5, 1]
-                      : [1, 0.2, 1, 0.2, 1, 0.2, 1],
+                  x: [0, -8, 8, -6, 6, -4, 4, 0],
+                  scale: [1, 0.9, 1.1, 1],
                   filter: [
                     "brightness(1)",
-                    "brightness(2.8)",
+                    "brightness(3)",
                     "brightness(1)",
-                    "brightness(2.4)",
-                    "brightness(1)",
-                    "brightness(2.2)",
+                    "brightness(2.5)",
                     "brightness(1)",
                   ],
-                  scale: moveType === "fighting" ? [1, 0.94, 1.02, 1] : 1,
                 }
               : isDimmed
                 ? { opacity: 0.45, scale: 0.96, x: 0, y: 0, filter: "brightness(0.8)" }
                 : isSelectable
-                  ? { opacity: 1, scale: [1, 1.02, 1], y: 0 }
+                  ? { opacity: 1, scale: 1.02, y: 0, filter: "brightness(1.1)" }
                   : { opacity: 1, scale: 1, x: 0, y: 0, filter: "brightness(1)" }
       }
       transition={
         isFlashing
-          ? { duration: moveType === "electric" ? 0.55 : 0.65, ease: "linear" }
+          ? { duration: 0.4, ease: "easeInOut" }
           : isStriking
-            ? { duration: 0.28, ease: "easeOut" }
+            ? { duration: 0.25, ease: "backOut" }
             : isSelectable
-              ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
+              ? { duration: 0.3 }
               : { duration: 0.2 }
       }
       className={cn(

@@ -12,11 +12,14 @@ import {
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordMinigameToSupabase } from "@/lib/economy-supabase";
 import type { ClickGameRewardBreakdown } from "@/lib/minigame-engine";
+import { fireHighScoreConfetti } from "@/lib/confetti";
 
 export default function ClickRushGamePage() {
   const addCoins = useEconomyStore((s) => s.addCoins);
   const addXp = useEconomyStore((s) => s.addXp);
   const recordClickGame = useEconomyStore((s) => s.recordClickGame);
+  const updateHighScore = useEconomyStore((s) => s.updateHighScore);
+  const highScores = useEconomyStore((s) => s.highScores);
   const showRewardPopup = useEconomyStore((s) => s.showRewardPopup);
   const team = useEconomyStore((s) => s.team);
   const bonuses = getEconomyBonuses(team);
@@ -25,6 +28,11 @@ export default function ClickRushGamePage() {
   const handleComplete = (score: number, reward: ClickGameRewardBreakdown, maxCombo: number) => {
     const { coins, baseCoins, comboBonus } = reward;
     const xp = Math.max(4, Math.round(score / 15));
+
+    // Verifica recorde ANTES de salvar o jogo
+    const isNewRecord = updateHighScore("clickRush", score);
+    if (isNewRecord) fireHighScoreConfetti();
+
     if (coins > 0) addCoins(coins);
     addXp(xp);
     recordClickGame(coins);
@@ -37,11 +45,15 @@ export default function ClickRushGamePage() {
       {
         coins,
         xp,
-        message: `Click Rush: ${score} pts · combo ${maxCombo} (${rewardParts.join(" · ")}) → +${coins} moedas`,
+        message: isNewRecord 
+          ? `NOVO RECORDE! ${score} pts · combo ${maxCombo} → +${coins} moedas`
+          : `Click Rush: ${score} pts · combo ${maxCombo} (${rewardParts.join(" · ")}) → +${coins} moedas`,
       },
       () => restartRef.current?.()
     );
   };
+
+  const currentRecord = highScores?.clickRush ?? 0;
 
   return (
     <GamePageShell
@@ -50,6 +62,9 @@ export default function ClickRushGamePage() {
       icon={<MousePointerClick className="w-7 h-7 text-cyan-400 shrink-0" />}
       tips={
         <>
+          {currentRecord > 0 && (
+            <p className="text-amber-400 font-bold mb-1">Seu recorde: {currentRecord} pts 🏆</p>
+          )}
           <p>Faça combos clicando sem pausa. Mais pontos e combo alto = mais moedas.</p>
           {bonuses.coinBonus > 0 && (
             <p className="text-amber-400">

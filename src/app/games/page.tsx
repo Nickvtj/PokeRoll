@@ -50,12 +50,19 @@ export default function GamesHubPage() {
   const router = useRouter();
   const gamesPlayed = useEconomyStore((s) => s.clickGamesPlayed);
   const gamesToday = useEconomyStore((s) => s.clickGamesToday);
+  const highScores = useEconomyStore((s) => s.highScores);
 
   useEffect(() => {
     for (const game of GAMES) {
       router.prefetch(game.href);
     }
   }, [router]);
+
+  const highScoreMap: Record<string, number | undefined> = {
+    "/games/captura": highScores?.perfectCapture,
+    "/games/click-rush": highScores?.clickRush,
+    "/games/memory": highScores?.memory,
+  };
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
@@ -79,36 +86,47 @@ export default function GamesHubPage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {GAMES.map((game) => (
-          <Link key={game.href} href={game.href} prefetch className="block group">
-            <div
-              className={cn(
-                "glass-card p-4 border bg-gradient-to-br transition-all",
-                "group-hover:scale-[1.01] group-active:scale-[0.99]",
-                game.color
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={cn(
-                    "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border border-white/10",
-                    game.iconBg
-                  )}
-                >
-                  <game.icon className={cn("w-5 h-5", game.iconColor)} />
-                </div>
-                <div className="flex-1 min-w-0 space-y-1">
-                  <h2 className="font-bold">{game.title}</h2>
-                  <p className="text-white/50 text-sm leading-snug">{game.desc}</p>
-                  <p className="text-[11px] text-amber-400/90 flex items-center gap-1 pt-0.5">
-                    <Coins className="w-3 h-3" />
-                    {game.reward}
-                  </p>
+        {GAMES.map((game) => {
+          const record = highScoreMap[game.href];
+          
+          return (
+            <Link key={game.href} href={game.href} prefetch className="block group">
+              <div
+                className={cn(
+                  "glass-card p-4 border bg-gradient-to-br transition-all relative overflow-hidden",
+                  "group-hover:scale-[1.01] group-active:scale-[0.99]",
+                  game.color
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={cn(
+                      "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border border-white/10",
+                      game.iconBg
+                    )}
+                  >
+                    <game.icon className={cn("w-5 h-5", game.iconColor)} />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <h2 className="font-bold">{game.title}</h2>
+                      {record !== undefined && (
+                        <span className="text-[10px] font-black bg-white/10 px-2 py-0.5 rounded-full border border-white/5 text-amber-300">
+                          RECORDE: {record}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-white/50 text-sm leading-snug">{game.desc}</p>
+                    <p className="text-[11px] text-amber-400/90 flex items-center gap-1 pt-0.5">
+                      <Coins className="w-3 h-3" />
+                      {game.reward}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

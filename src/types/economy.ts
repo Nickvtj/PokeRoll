@@ -28,6 +28,11 @@ export interface EconomyState {
   /** Lucky Eggs no inventário (ativar no header) */
   luckyEggCount?: number;
   rareCandyCount?: number;
+  highScores?: {
+    clickRush?: number;
+    perfectCapture?: number;
+    memory?: number;
+  };
 }
 
 export interface CoinTransaction {

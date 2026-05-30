@@ -21,6 +21,27 @@ const EFFECTIVENESS_STYLE: Record<string, string> = {
   normal: "text-cyan-200/90 border-cyan-400/35 bg-cyan-500/10",
 };
 
+const TYPE_COLORS: Record<string, string> = {
+  fire: "from-orange-600/20 to-orange-900/40 border-orange-500/50",
+  water: "from-blue-600/20 to-blue-900/40 border-blue-500/50",
+  grass: "from-green-600/20 to-green-900/40 border-green-500/50",
+  electric: "from-yellow-400/20 to-yellow-700/40 border-yellow-400/50",
+  ice: "from-cyan-400/20 to-cyan-700/40 border-cyan-400/50",
+  fighting: "from-red-600/20 to-red-900/40 border-red-500/50",
+  poison: "from-purple-600/20 to-purple-900/40 border-purple-500/50",
+  ground: "from-amber-700/20 to-amber-900/40 border-amber-600/50",
+  flying: "from-indigo-400/20 to-indigo-700/40 border-indigo-400/50",
+  psychic: "from-pink-500/20 to-pink-800/40 border-pink-400/50",
+  bug: "from-lime-600/20 to-lime-900/40 border-lime-500/50",
+  rock: "from-stone-600/20 to-stone-900/40 border-stone-500/50",
+  ghost: "from-violet-700/20 to-violet-900/40 border-violet-600/50",
+  dragon: "from-indigo-700/20 to-indigo-900/40 border-indigo-600/50",
+  dark: "from-slate-800/40 to-black/60 border-slate-700/50",
+  steel: "from-gray-500/20 to-gray-700/40 border-gray-400/50",
+  fairy: "from-pink-300/20 to-pink-500/40 border-pink-300/50",
+  normal: "from-slate-500/20 to-slate-700/40 border-slate-400/50",
+};
+
 function MoveButton({
   preview,
   onPick,
@@ -33,47 +54,44 @@ function MoveButton({
   const effText = getEffectivenessText(preview);
   const effClass = EFFECTIVENESS_STYLE[preview.effectiveness] ?? EFFECTIVENESS_STYLE.normal;
   const typeLabel = TYPE_LABELS_PT[move.type] ?? move.type;
+  const typeStyle = TYPE_COLORS[move.type] || TYPE_COLORS.normal;
 
   return (
     <motion.button
       type="button"
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.02, brightness: 1.1 }}
       whileTap={{ scale: 0.97 }}
       onClick={onPick}
       className={cn(
-        "w-full text-left rounded-xl border p-3 transition-all relative overflow-hidden",
-        BATTLE_CLASSIC_THEME ? "battle-prep-card hover:border-indigo-400/50" : "glass-card hover:border-white/25",
-        isSuper && "border-emerald-400/60 ring-2 ring-emerald-400/35 shadow-[0_0_20px_rgba(52,211,153,0.15)]"
+        "w-full text-left rounded-xl border p-3 transition-all relative overflow-hidden bg-gradient-to-br",
+        BATTLE_CLASSIC_THEME ? "hover:brightness-125" : "hover:border-white/40",
+        typeStyle,
+        isSuper && "ring-2 ring-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
       )}
     >
       {isSuper && (
-        <span className="absolute top-0 right-0 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest bg-emerald-500 text-emerald-950 rounded-bl-lg">
+        <span className="absolute top-0 right-0 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest bg-white text-black rounded-bl-lg animate-pulse">
           Super efetivo
         </span>
       )}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className={cn("text-sm font-bold truncate", isSuper ? "text-emerald-100" : "text-white")}>
+          <p className={cn("text-sm font-bold truncate text-white shadow-sm")}>
             {move.name}
           </p>
-          <p className="text-[10px] text-white/45 capitalize mt-0.5">
+          <p className="text-[10px] text-white/70 font-medium capitalize mt-0.5">
             {typeLabel}
             {move.category === "damage" ? ` · Poder ${move.power}` : " · Status"}
           </p>
         </div>
-        <Swords className={cn("w-4 h-4 shrink-0 mt-0.5", isSuper ? "text-emerald-300" : "text-indigo-300")} />
+        <Swords className={cn("w-4 h-4 shrink-0 mt-0.5 text-white/80")} />
       </div>
 
-      <div className={cn("mt-2 rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wide", effClass)}>
+      <div className={cn("mt-2 rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wide bg-black/20 backdrop-blur-sm", effClass)}>
         {effText}
         {preview.estimatedDamage[1] > 0 && (
-          <span className="font-normal normal-case ml-1 opacity-80">
+          <span className="font-normal normal-case ml-1 opacity-90">
             · ~{preview.estimatedDamage[0]}–{preview.estimatedDamage[1]} dmg
-          </span>
-        )}
-        {preview.statusChance > 0 && move.statusEffect && (
-          <span className="font-normal normal-case ml-1 opacity-80">
-            · {Math.round(preview.statusChance * 100)}% {move.statusEffect}
           </span>
         )}
       </div>

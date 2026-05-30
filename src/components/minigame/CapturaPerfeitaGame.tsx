@@ -338,26 +338,43 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
           <p className="text-[10px] text-white/40 mb-2 text-center uppercase tracking-wider">
             Centro dourado = perfeito (+2 🪙)
           </p>
-          <div className="relative h-10 rounded-full bg-white/10 border border-white/10 overflow-hidden">
+          <div className="relative h-12 rounded-2xl bg-slate-950/80 border-2 border-white/5 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
+            {/* Brilho de fundo da barra */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+            
+            {/* Zona Verde (Captura) */}
             <div
-              className="absolute top-0 bottom-0 bg-emerald-500/35 border-x border-emerald-400/50"
+              className="absolute top-0 bottom-0 bg-emerald-500/30 border-x-2 border-emerald-400/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
               style={{
                 left: `${zoneCenter - zoneHalf}%`,
                 width: `${config.zonePct}%`,
               }}
-            />
+            >
+              <div className="absolute inset-0 bg-emerald-400/10 animate-pulse" />
+            </div>
+
+            {/* Zona Dourada (Perfeito) */}
             <div
-              className="absolute top-0 bottom-0 bg-amber-400/25"
+              className="absolute top-1 bottom-1 bg-amber-400/40 rounded-lg border border-amber-300/60 shadow-[0_0_20px_rgba(251,191,36,0.4)]"
               style={{
                 left: `${zoneCenter - perfectHalf}%`,
                 width: `${perfectHalf * 2}%`,
               }}
-            />
+            >
+               <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent" />
+            </div>
+
+            {/* Cursor (Thumb) */}
             <div
               ref={cursorThumbRef}
-              className="absolute top-1 bottom-1 w-1.5 rounded-full bg-white shadow-lg shadow-white/50"
+              className="absolute top-0 bottom-0 w-1.5 z-20"
               style={{ left: "calc(50% - 3px)" }}
-            />
+            >
+              <div className="h-full w-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] relative">
+                <div className="absolute top-[-4px] left-[-2px] right-[-2px] h-2 bg-white rounded-full shadow-[0_0_10px_white]" />
+                <div className="absolute bottom-[-4px] left-[-2px] right-[-2px] h-2 bg-white rounded-full shadow-[0_0_10px_white]" />
+              </div>
+            </div>
           </div>
         </button>
       )}

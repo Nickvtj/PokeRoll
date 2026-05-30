@@ -10,12 +10,15 @@ import { GamePageShell } from "@/components/minigame/GamePageShell";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordMinigameToSupabase } from "@/lib/economy-supabase";
 import { POKEMON_MAP } from "@/data/pokemon";
+import { fireHighScoreConfetti } from "@/lib/confetti";
 
 export default function CapturaGamePage() {
   const addCoins = useEconomyStore((s) => s.addCoins);
   const addXp = useEconomyStore((s) => s.addXp);
   const grantPokemonXp = useEconomyStore((s) => s.grantPokemonXp);
   const recordClickGame = useEconomyStore((s) => s.recordClickGame);
+  const updateHighScore = useEconomyStore((s) => s.updateHighScore);
+  const highScores = useEconomyStore((s) => s.highScores);
   const showRewardPopup = useEconomyStore((s) => s.showRewardPopup);
   const team = useEconomyStore((s) => s.team);
   const bonuses = getEconomyBonuses(team);
@@ -37,6 +40,11 @@ export default function CapturaGamePage() {
 
     recordClickGame(coins);
     const score = streak * 100 + perfectHits * 50;
+    
+    // Verifica recorde
+    const isNewRecord = updateHighScore("perfectCapture", score);
+    if (isNewRecord) fireHighScoreConfetti();
+    
     void recordMinigameToSupabase(score, coins, perfectHits);
 
     const names =
@@ -47,8 +55,9 @@ export default function CapturaGamePage() {
             .join(", ")
         : pokemon.name;
 
-    const headline =
-      streak === 0
+    const headline = isNewRecord
+      ? `NOVO RECORDE! Sequência de ${streak}!`
+      : streak === 0
         ? `Errou! Nenhuma captura desta vez.`
         : endedOnMiss
           ? `Sequência de ${streak}! Parou em ${pokemon.name}.`
@@ -64,6 +73,8 @@ export default function CapturaGamePage() {
     );
   };
 
+  const currentRecord = highScores?.perfectCapture ?? 0;
+
   return (
     <GamePageShell
       title="Captura Perfeita"
@@ -71,6 +82,9 @@ export default function CapturaGamePage() {
       icon={<Target className="w-7 h-7 text-emerald-400 shrink-0" />}
       tips={
         <>
+          {currentRecord > 0 && (
+            <p className="text-amber-400 font-bold mb-1">Seu recorde: {currentRecord} pts 🏆</p>
+          )}
           <p>Centro dourado = perfeito (2 moedas). Zona verde = capturado (1 moeda).</p>
           {bonuses.coinBonus > 0 && (
             <p className="text-amber-400">

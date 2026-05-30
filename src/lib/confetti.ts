@@ -123,3 +123,38 @@ export function fireCelebrationConfetti(rarity: Rarity, isNew: boolean) {
     colors: [color, "#22c55e", "#ffffff", "#6366f1"],
   });
 }
+
+export function fireHighScoreConfetti() {
+  const scale = confettiScale();
+  const base = { zIndex: CONFETTI_Z, disableForReducedMotion: true };
+  
+  // Explosão lateral esquerda
+  confetti({
+    ...base,
+    particleCount: Math.round(40 * scale),
+    angle: 60,
+    spread: 55,
+    origin: { x: 0, y: 0.7 },
+    colors: ["#facc15", "#fbbf24", "#ffffff", "#6366f1"],
+  });
+  
+  // Explosão lateral direita
+  confetti({
+    ...base,
+    particleCount: Math.round(40 * scale),
+    angle: 120,
+    spread: 55,
+    origin: { x: 1, y: 0.7 },
+    colors: ["#facc15", "#fbbf24", "#ffffff", "#6366f1"],
+  });
+  
+  // Chuva central de estrelas
+  confetti({
+    ...base,
+    particleCount: Math.round(20 * scale),
+    spread: 80,
+    origin: { x: 0.5, y: 0.6 },
+    colors: ["#facc15", "#ffffff"],
+    shapes: ["star"],
+  });
+}
