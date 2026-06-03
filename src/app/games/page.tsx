@@ -103,7 +103,7 @@ export default function GamesHubPage() {
         <span>{gamesToday} hoje</span>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {GAMES.map((game) => {
           const record = highScoreMap[game.href];
           
@@ -111,34 +111,43 @@ export default function GamesHubPage() {
             <GameCardLink key={game.href} href={game.href}>
               <div
                 className={cn(
-                  "glass-card p-4 border bg-gradient-to-br transition-all relative overflow-hidden",
-                  "group-hover:scale-[1.01] group-active:scale-[0.99]",
+                  "glass-card p-5 border bg-gradient-to-br transition-all relative overflow-hidden h-full flex flex-col",
+                  "group-hover:scale-[1.02] group-hover:shadow-lg group-hover:shadow-indigo-500/10 group-active:scale-[0.98]",
                   game.color
                 )}
               >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={cn(
-                      "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border border-white/10",
-                      game.iconBg
-                    )}
-                  >
-                    <game.icon className={cn("w-5 h-5", game.iconColor)} />
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <h2 className="font-bold">{game.title}</h2>
-                      {record !== undefined && (
-                        <span className="text-[10px] font-black bg-white/10 px-2 py-0.5 rounded-full border border-white/5 text-amber-300">
-                          RECORDE: {record}
-                        </span>
+                <div className="flex flex-col h-full space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div
+                      className={cn(
+                        "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border border-white/10 shadow-inner",
+                        game.iconBg
                       )}
+                    >
+                      <game.icon className={cn("w-6 h-6", game.iconColor)} />
                     </div>
-                    <p className="text-white/50 text-sm leading-snug">{game.desc}</p>
-                    <p className="text-[11px] text-amber-400/90 flex items-center gap-1 pt-0.5">
+                    {record !== undefined && (
+                      <span className="text-[10px] font-black bg-white/10 px-2 py-1 rounded-lg border border-white/5 text-amber-300">
+                        RECORDE: {record}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-2">
+                    <h2 className="text-lg font-bold tracking-tight">{game.title}</h2>
+                    <p className="text-white/50 text-xs leading-relaxed line-clamp-2">
+                      {game.desc}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                    <p className="text-[10px] text-amber-400/90 font-bold flex items-center gap-1">
                       <Coins className="w-3 h-3" />
                       {game.reward}
                     </p>
+                    <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                      <Sparkles className="w-3 h-3 text-white/30 group-hover:text-white/60" />
+                    </div>
                   </div>
                 </div>
               </div>

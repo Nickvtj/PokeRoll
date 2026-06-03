@@ -17,7 +17,7 @@ import { useEconomyStore } from "@/stores/economy-store";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { ProfileIdentityCard } from "@/components/profile/ProfileIdentityCard";
 import { TrainerItemsPanel } from "@/components/profile/TrainerItemsPanel";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, cn } from "@/lib/utils";
 
 interface StatItemProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -28,10 +28,17 @@ interface StatItemProps {
 
 function StatItem({ icon: Icon, label, value, color }: StatItemProps) {
   return (
-    <div className="rounded-xl bg-white/5 border border-white/10 p-3 space-y-1">
-      <Icon className={`w-4 h-4 ${color}`} />
-      <p className="text-lg font-bold leading-none">{value}</p>
-      <p className="text-[10px] text-white/45">{label}</p>
+    <div className="group relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/10 p-4 transition-all hover:bg-white/[0.06] hover:border-white/20">
+      <div className={`absolute -right-2 -bottom-2 opacity-5 transition-transform group-hover:scale-110 group-hover:rotate-12`}>
+        <Icon className="w-12 h-12" />
+      </div>
+      <div className="relative z-10 space-y-1">
+        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-2 bg-white/5", color.replace("text-", "bg-").replace("-400", "-500/10"))}>
+          <Icon className={cn("w-4 h-4", color)} />
+        </div>
+        <p className="text-xl font-black tracking-tight leading-none">{value}</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-white/30">{label}</p>
+      </div>
     </div>
   );
 }
@@ -44,11 +51,15 @@ function StatGroup({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-2">
-      <p className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">
-        {title}
-      </p>
-      <div className="grid grid-cols-2 gap-2">{children}</div>
+    <div className="space-y-3">
+      <div className="flex items-center gap-3 px-1">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10" />
+        <p className="text-[10px] uppercase font-black tracking-[0.2em] text-white/20">
+          {title}
+        </p>
+        <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10" />
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">{children}</div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { ELITE_FOUR, isEliteMemberUnlocked } from "@/data/gyms";
-import { Lock } from "lucide-react";
+import { Lock, Swords } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { BattleArena } from "@/components/battle/BattleArena";
 import { TeamSelector } from "@/components/battle/TeamSelector";
@@ -14,6 +14,7 @@ import { useTacticalBattle } from "@/hooks/use-tactical-battle";
 import type { BattleState } from "@/types/battle";
 import type { EliteId } from "@/types/gym";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 export function EliteFourScreen({
   onBattleActiveChange,
@@ -33,6 +34,7 @@ export function EliteFourScreen({
   const [activeElite, setActiveElite] = useState<EliteId | null>(null);
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
+  const [autoBattle, setAutoBattle] = useState(false);
 
   const leagueUnlocked = isEliteUnlocked();
   const economyBonuses = getEconomyBonuses(team);
@@ -78,8 +80,10 @@ export function EliteFourScreen({
     getBonuses: () => ({
       battleDamage: economyBonuses.battleDamage,
       critChance: economyBonuses.critChance,
+      defenseBoost: economyBonuses.defenseBoost,
     }),
     onTurnComplete: handleTurnComplete,
+    autoBattle,
   });
 
   const startElite = useCallback(
@@ -116,6 +120,7 @@ export function EliteFourScreen({
         bonuses={{
           battleDamage: economyBonuses.battleDamage,
           critChance: economyBonuses.critChance,
+          defenseBoost: economyBonuses.defenseBoost,
         }}
         onPickActor={pickActor}
         onPickTarget={pickTarget}
@@ -131,6 +136,8 @@ export function EliteFourScreen({
           resetLoop();
           startElite(elite);
         }}
+        autoBattle={autoBattle}
+        onToggleAutoBattle={() => setAutoBattle(!autoBattle)}
       />
     );
   }

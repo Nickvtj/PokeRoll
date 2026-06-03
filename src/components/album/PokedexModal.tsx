@@ -81,7 +81,7 @@ export function PokedexModal({
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", damping: 20, stiffness: 280 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 w-full max-w-md"
+            className="relative z-10 w-full max-w-[380px]"
           >
             <div
               className="glass-card overflow-hidden"
@@ -91,25 +91,25 @@ export function PokedexModal({
               }}
             >
               {/* Header — padrão PokéRoll */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-white/5">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                    <BookOpen className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <BookOpen className="w-3.5 h-3.5 text-white" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-300/80 leading-none">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-indigo-300/80 leading-none">
                       Pokédex
                     </p>
-                    <p className="text-white font-bold text-sm leading-tight mt-0.5">
+                    <p className="text-white font-bold text-xs leading-tight mt-0.5">
                       #{String(pokemon.id).padStart(3, "0")}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-xl glass flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                  className="w-7 h-7 rounded-lg glass flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
 
@@ -119,26 +119,26 @@ export function PokedexModal({
                   type="button"
                   onClick={() => setActiveTab("profile")}
                   className={cn(
-                    "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5",
+                    "flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5",
                     activeTab === "profile"
                       ? "text-indigo-300 border-b-2 border-indigo-400 bg-indigo-500/5"
                       : "text-white/40 hover:text-white/60"
                   )}
                 >
-                  <BookOpen className="w-3.5 h-3.5" />
+                  <BookOpen className="w-3 h-3" />
                   Perfil
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("moves")}
                   className={cn(
-                    "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5",
+                    "flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5",
                     activeTab === "moves"
                       ? "text-amber-300 border-b-2 border-amber-400 bg-amber-500/5"
                       : "text-white/40 hover:text-white/60"
                   )}
                 >
-                  <Swords className="w-3.5 h-3.5" />
+                  <Swords className="w-3 h-3" />
                   Ataques
                 </button>
               </div>
@@ -146,24 +146,24 @@ export function PokedexModal({
               {activeTab === "profile" ? (
                 <>
               {/* Nome + tipos */}
-              <div className="px-5 pt-4 pb-3 border-b border-white/10">
+              <div className="px-4 pt-2 pb-2 border-b border-white/10">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h2
-                      className="text-2xl font-bold tracking-tight"
+                      className="text-lg font-bold tracking-tight"
                       style={{ color: config.color }}
                     >
                       {pokemon.name}
                     </h2>
-                    <p className="text-xs text-white/50 mt-0.5">{info.category}</p>
+                    <p className="text-[9px] text-white/50">{info.category}</p>
                   </div>
                   <RarityBadge rarity={pokemon.rarity} size="sm" />
                 </div>
-                <div className="flex gap-1.5 mt-3">
+                <div className="flex gap-1 mt-1.5">
                   {info.types.map((type) => (
                     <span
                       key={type}
-                      className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white uppercase tracking-wide"
+                      className="px-2 py-0.5 rounded-full text-[8px] font-bold text-white uppercase tracking-wide"
                       style={{
                         backgroundColor: `${getTypeColor(type)}CC`,
                         boxShadow: `0 0 8px ${getTypeColor(type)}40`,
@@ -178,12 +178,12 @@ export function PokedexModal({
               {/* Imagem + stats */}
               <div className="flex gap-0 border-b border-white/10">
                 <div
-                  className="flex-shrink-0 w-40 flex flex-col items-center justify-center p-4"
+                  className="flex-shrink-0 w-28 flex flex-col items-center justify-center p-2"
                   style={{
                     background: `radial-gradient(circle at center, ${config.color}15 0%, transparent 70%)`,
                   }}
                 >
-                  <div className="relative w-28 h-28">
+                  <div className="relative w-20 h-20">
                     <div
                       className="absolute inset-0 rounded-full opacity-30 blur-xl"
                       style={{ backgroundColor: config.color }}
@@ -191,18 +191,18 @@ export function PokedexModal({
                     <Image
                       src={displayImage}
                       alt={pokemon.name}
-                      width={112}
-                      height={112}
+                      width={80}
+                      height={80}
                       className="relative z-10 object-contain drop-shadow-2xl"
                       unoptimized
                     />
                     {pokemon.rarity === "legendary" && (
-                      <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-amber-400 animate-pulse" />
+                      <Sparkles className="absolute -top-1 -right-1 w-3.5 h-3.5 text-amber-400 animate-pulse" />
                     )}
                   </div>
                 </div>
 
-                <div className="flex-1 p-4 space-y-1">
+                <div className="flex-1 p-2.5 space-y-0.5">
                   <StatRow label="Altura" value={`${info.height.toFixed(1)} m`} />
                   <StatRow label="Peso" value={`${info.weight.toFixed(1)} kg`} />
                   <StatRow label="Geração" value={`${pokemon.generation}ª`} />
@@ -212,20 +212,20 @@ export function PokedexModal({
                   <StatRow
                     label="Cópias"
                     value={`${collection.count}x`}
-                    icon={<Copy className="w-3 h-3 text-cyan-400" />}
+                    icon={<Copy className="w-2.5 h-2.5 text-cyan-400" />}
                   />
                   <StatRow
                     label="Coletado"
                     value={new Date(collection.collectedAt).toLocaleDateString("pt-BR")}
-                    icon={<Calendar className="w-3 h-3 text-indigo-400" />}
+                    icon={<Calendar className="w-2.5 h-2.5 text-indigo-400" />}
                   />
                 </div>
               </div>
 
               {/* Shiny toggle */}
               {collection.hasShiny && (
-                <div className="px-5 py-3 border-b border-white/10">
-                  <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider mb-2">
+                <div className="px-4 py-2 border-b border-white/10">
+                  <p className="text-[9px] text-white/50 font-semibold uppercase tracking-wider mb-2">
                     Aparência na batalha
                   </p>
                   <div className="flex gap-2">
@@ -233,7 +233,7 @@ export function PokedexModal({
                       type="button"
                       onClick={() => collection.useShiny && toggleUseShiny(pokemon.id)}
                       className={cn(
-                        "flex-1 py-2 rounded-xl text-xs font-bold border transition-all",
+                        "flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-all",
                         !usingShiny
                           ? "border-indigo-400/50 bg-indigo-500/20 text-indigo-200"
                           : "border-white/10 bg-white/5 text-white/50 hover:border-white/20"
@@ -245,7 +245,7 @@ export function PokedexModal({
                       type="button"
                       onClick={() => !collection.useShiny && toggleUseShiny(pokemon.id)}
                       className={cn(
-                        "flex-1 py-2 rounded-xl text-xs font-bold border transition-all",
+                        "flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-all",
                         usingShiny
                           ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
                           : "border-white/10 bg-white/5 text-white/50 hover:border-white/20"
@@ -258,42 +258,39 @@ export function PokedexModal({
               )}
 
               {/* XP de batalha + insígnias */}
-              <div className="px-5 py-4 border-b border-white/10 space-y-3">
+              <div className="px-4 py-3 border-b border-white/10 space-y-2">
                 <div>
-                  <div className="flex justify-between text-xs mb-1">
+                  <div className="flex justify-between text-[10px] mb-1">
                     <span className="text-white/50 font-semibold">Nível de Batalha</span>
                     <span className="text-indigo-300 font-bold">Nv. {xpProgress.level}</span>
                   </div>
-                  <div className="progress-bar h-2">
+                  <div className="progress-bar h-1.5">
                     <div
                       className="progress-fill bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all"
                       style={{ width: `${xpProgress.pct}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-white/40 mt-1">
-                    {xpProgress.xpInLevel}/{xpProgress.xpNeeded} XP · Total {xpData.xp} XP
-                  </p>
                 </div>
 
                 <div>
-                  <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider mb-2">
+                  <p className="text-[9px] text-white/50 font-semibold uppercase tracking-wider mb-1.5">
                     Insígnias conquistadas
                   </p>
                   {gymBadges.length > 0 ? (
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <PokemonGymBadges gymIds={gymBadges} size="sm" max={8} />
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      <PokemonGymBadges gymIds={gymBadges} size="xs" max={8} />
                     </div>
                   ) : (
-                    <p className="text-[10px] text-white/30">
-                      Nenhuma insígnia ainda. Vença líderes de ginásio com este Pokémon!
+                    <p className="text-[9px] text-white/30">
+                      Nenhuma insígnia ainda.
                     </p>
                   )}
                 </div>
               </div>
 
               {/* Descrição */}
-              <div className="px-5 py-4">
-                <p className="text-xs leading-relaxed text-white/60">
+              <div className="px-4 py-3">
+                <p className="text-[11px] leading-relaxed text-white/60 line-clamp-3">
                   {info.description}
                 </p>
               </div>
@@ -303,11 +300,11 @@ export function PokedexModal({
               )}
 
               {/* Footer + botão */}
-              <div className="px-5 pb-5 space-y-3">
-                <p className="text-center text-[10px] font-medium uppercase tracking-wider text-white/30">
+              <div className="px-4 pb-4 space-y-2">
+                <p className="text-center text-[9px] font-medium uppercase tracking-wider text-white/30">
                   Região de Kanto · PokéRoll
                 </p>
-                <AnimatedButton variant="secondary" onClick={onClose} className="w-full">
+                <AnimatedButton variant="secondary" size="sm" onClick={onClose} className="w-full">
                   Fechar
                 </AnimatedButton>
               </div>

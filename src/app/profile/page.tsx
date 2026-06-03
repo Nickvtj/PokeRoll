@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { User, Gift, Trophy, CalendarDays, Palette, Award } from "lucide-react";
 import { PanelSkeleton } from "@/components/ui/RouteLoading";
 import { cn } from "@/lib/utils";
@@ -68,38 +69,59 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<TabId>("resumo");
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8 space-y-5">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
-          <User className="w-8 h-8 text-purple-400" />
-          Meu Perfil
-        </h1>
-        <p className="text-white/50 text-sm">Escolha uma seção para explorar</p>
-      </div>
+    <div className="max-w-5xl mx-auto px-4 py-8 lg:py-12">
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        {/* Sidebar */}
+        <div className="w-full lg:w-64 shrink-0 space-y-6">
+          <div className="space-y-2 lg:px-2">
+            <h1 className="text-3xl font-bold flex items-center gap-2 lg:gap-3">
+              <User className="w-8 h-8 text-purple-400" />
+              Perfil
+            </h1>
+            <p className="text-white/50 text-sm hidden lg:block">Gerencie sua jornada e aparência</p>
+          </div>
 
-      <div className="glass-card p-1.5 grid grid-cols-3 sm:grid-cols-6 gap-1">
-        {TABS.map(({ id, label, icon: Icon }) => {
-          const isActive = activeTab === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setActiveTab(id)}
-              className={cn(
-                "relative flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl text-[10px] font-semibold transition-colors duration-200",
-                isActive
-                  ? "text-indigo-300 bg-indigo-500/20 border border-indigo-500/30"
-                  : "text-white/40 hover:text-white/70 border border-transparent"
-              )}
-            >
-              <Icon className="w-4 h-4 relative z-10" />
-              <span className="relative z-10 leading-tight text-center">{label}</span>
-            </button>
-          );
-        })}
-      </div>
+          <nav className="glass-card p-2 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible no-scrollbar">
+            {TABS.map(({ id, label, icon: Icon }) => {
+              const isActive = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setActiveTab(id)}
+                  className={cn(
+                    "relative flex items-center gap-3 py-3 px-4 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 lg:shrink",
+                    isActive
+                      ? "text-indigo-300 bg-indigo-500/20 border border-indigo-500/30 shadow-lg shadow-indigo-500/10"
+                      : "text-white/40 hover:text-white/70 border border-transparent hover:bg-white/5"
+                  )}
+                >
+                  <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-indigo-300" : "text-white/30")} />
+                  <span className="leading-tight">{label}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute left-0 lg:w-1 lg:h-4 lg:bg-indigo-400 lg:rounded-r-full hidden lg:block"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
 
-      <ProfileTabContent tab={activeTab} />
+        {/* Content Area */}
+        <div className="flex-1 w-full min-w-0">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ProfileTabContent tab={activeTab} />
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

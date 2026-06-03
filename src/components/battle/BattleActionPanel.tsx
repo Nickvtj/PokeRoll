@@ -9,7 +9,7 @@ import type { BattleState, MovePreview } from "@/types/battle";
 
 interface BattleActionPanelProps {
   state: BattleState;
-  bonuses: { battleDamage: number; critChance: number };
+  bonuses: { battleDamage: number; critChance: number; defenseBoost?: number };
   onPickMove: (index: number) => void;
   onCancel: () => void;
   className?: string;

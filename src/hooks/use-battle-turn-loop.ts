@@ -28,6 +28,7 @@ export interface BattleCombatHighlight {
 interface BattleTurnBonuses {
   battleDamage: number;
   critChance: number;
+  defenseBoost?: number;
 }
 
 interface UseBattleTurnLoopOptions {

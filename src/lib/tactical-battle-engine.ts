@@ -117,7 +117,7 @@ export function previewMove(
   actorSlot: number,
   targetSlot: number,
   move: BattleMove,
-  bonuses: { battleDamage: number; critChance: number }
+  bonuses: { battleDamage: number; critChance: number; defenseBoost?: number }
 ): MovePreview {
   const actor = findFighter(state.playerTeam, actorSlot, true);
   const target = findFighter(state.enemyTeam, targetSlot, false);
@@ -150,21 +150,25 @@ function estimateDamageRange(
   defender: BattleFighter,
   move: BattleMove,
   typeMult: number,
-  bonuses: { battleDamage: number; critChance: number }
+  bonuses: { battleDamage: number; critChance: number; defenseBoost?: number }
 ): { min: number; max: number } {
   if (typeMult === 0 || move.category === "status") return { min: 0, max: 0 };
 
   const damageMult = 1 + bonuses.battleDamage;
+  const defenseMult = 1 + (bonuses.defenseBoost || 0);
   const powerFactor = move.power / 50;
-  let defense = defender.stats.defense;
+  
+  const effectiveDefense = (defender.stats.defense * defenseMult) * 0.85;
 
   const rawMin =
     ((attacker.stats.attack * damageMult * powerFactor) /
-      (attacker.stats.attack + defense * 0.85 + 14)) *
+      (attacker.stats.attack + effectiveDefense + 14)) *
     50 *
     typeMult;
   const rawMax = rawMin * 1.45;
-  const cap = Math.max(8, Math.round(defender.maxHp * 0.42));
+  
+  // Teto de dano liberado (100% da vida em vez de 42%)
+  const cap = Math.max(8, Math.round(defender.maxHp * 1.0));
 
   return {
     min: Math.max(typeMult > 1 ? 2 : 1, Math.min(Math.round(rawMin), cap)),
@@ -177,7 +181,8 @@ function calcMoveDamage(
   defender: BattleFighter,
   move: BattleMove,
   damageMult: number,
-  critChance: number
+  critChance: number,
+  defenseBoost = 0
 ): { damage: number; isCrit: boolean; typeLabel: string | null; typeMult: number } {
   const { multiplier: typeMult, label: typeLabel } = getTypeEffectiveness(
     move.type,
@@ -189,19 +194,23 @@ function calcMoveDamage(
   }
 
   const isCrit = Math.random() < critChance;
+  const defenseMult = 1 + defenseBoost;
   const powerFactor = move.power / 50;
-  let defense = defender.stats.defense;
+  
+  const effectiveDefense = (defender.stats.defense * defenseMult) * 0.85;
 
   let raw =
     ((attacker.stats.attack * damageMult * powerFactor) /
-      (attacker.stats.attack + defense * 0.85 + 14)) *
+      (attacker.stats.attack + effectiveDefense + 14)) *
       50 *
       typeMult +
     Math.random() * 4;
 
   if (isCrit) raw *= 1.45;
   const damage = Math.max(typeMult > 1 ? 2 : 1, Math.round(raw));
-  const maxHit = Math.max(8, Math.round(defender.maxHp * 0.42));
+  
+  // Teto de dano liberado
+  const maxHit = Math.max(8, Math.round(defender.maxHp * 1.0));
 
   return {
     damage: Math.min(damage, maxHit),
@@ -335,7 +344,7 @@ export function resolveAction(
   targetSlot: number,
   moveIndex: number,
   actorIsPlayer: boolean,
-  bonuses: { battleDamage: number; critChance: number },
+  bonuses: { battleDamage: number; critChance: number; defenseBoost?: number },
   monotypeBonus = 0
 ): ResolvedAction | null {
   const actorTeam = actorIsPlayer ? state.playerTeam : state.enemyTeam;
@@ -392,7 +401,8 @@ export function resolveAction(
     target,
     move,
     damageMult,
-    bonuses.critChance
+    bonuses.critChance,
+    bonuses.defenseBoost
   );
 
   let statusApplied: StatusEffect | undefined;
@@ -632,7 +642,7 @@ export function selectMove(state: BattleState, moveIndex: number): BattleState {
 
 export function executePlayerAction(
   state: BattleState,
-  bonuses: { battleDamage: number; critChance: number },
+  bonuses: { battleDamage: number; critChance: number; defenseBoost?: number },
   monotypeBonus: number
 ): { result: ResolvedAction | null; nextPhase: TacticalPhase } {
   const pending = state.pendingSelection ?? {};
@@ -695,7 +705,7 @@ export function getCurrentEnemyAction(state: BattleState) {
 
 export function executeEnemyAction(
   state: BattleState,
-  bonuses: { battleDamage: number; critChance: number }
+  bonuses: { battleDamage: number; critChance: number; defenseBoost?: number }
 ): { result: ResolvedAction | null; done: boolean; actedSlot: number | null } {
   const action = getCurrentEnemyAction(state);
   if (!action) return { result: null, done: false, actedSlot: null };
@@ -804,6 +814,53 @@ export function getMonotypeBonus(playerTeam: BattleFighter[]): number {
   const shared = types[0];
   if (types.every((t) => t === shared)) return TEAM_MONOTYPE_DAMAGE_BONUS;
   return 0;
+}
+
+export function buildAutoPlayerAction(state: BattleState): {
+  actorSlot: number;
+  targetSlot: number;
+  moveIndex: number;
+} | null {
+  const livingPlayers = getLivingFighters(state.playerTeam).filter(f => f.status?.effect !== "sleep");
+  if (livingPlayers.length === 0) return null;
+
+  const livingEnemies = getLivingFighters(state.enemyTeam);
+  if (livingEnemies.length === 0) return null;
+
+  let bestScore = -Infinity;
+  let selection: { actorSlot: number; targetSlot: number; moveIndex: number } | null = null;
+
+  for (const actor of livingPlayers) {
+    const actorSlot = actor.slotIndex ?? 0;
+    const moves = actor.equippedMoves ?? [];
+    
+    for (let mi = 0; mi < moves.length; mi++) {
+      const move = moves[mi];
+      
+      for (const target of livingEnemies) {
+        const targetSlot = target.slotIndex ?? 0;
+        const { multiplier } = getTypeEffectiveness(move.type, target.stats.type);
+        
+        let score = multiplier * (move.power || 30);
+        if (move.category === "status" && !target.status) score += 40;
+        if (move.category === "status" && target.status) score -= 30;
+        
+        // Prioriza nocautear o inimigo
+        if (move.category === "damage") {
+          const powerFactor = move.power / 50;
+          const damage = Math.round(((actor.stats.attack * powerFactor) / (actor.stats.attack + target.stats.defense + 14)) * 50 * multiplier);
+          if (damage >= target.currentHp) score += 200;
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          selection = { actorSlot, targetSlot, moveIndex: mi };
+        }
+      }
+    }
+  }
+
+  return selection;
 }
 
 export function getEffectivenessText(preview: MovePreview): string {

@@ -30,6 +30,7 @@ export function TrainingPanel({
 
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
+  const [autoBattle, setAutoBattle] = useState(false);
 
   const handleTurnComplete = useCallback(
     (state: BattleState, done: boolean) => {
@@ -86,8 +87,10 @@ export function TrainingPanel({
     getBonuses: () => ({
       battleDamage: economyBonuses.battleDamage,
       critChance: economyBonuses.critChance,
+      defenseBoost: economyBonuses.defenseBoost,
     }),
     onTurnComplete: handleTurnComplete,
+    autoBattle,
   });
 
   const beginBattle = useCallback(() => {
@@ -125,6 +128,7 @@ export function TrainingPanel({
         bonuses={{
           battleDamage: economyBonuses.battleDamage,
           critChance: economyBonuses.critChance,
+          defenseBoost: economyBonuses.defenseBoost,
         }}
         onPickActor={pickActor}
         onPickTarget={pickTarget}
@@ -135,6 +139,8 @@ export function TrainingPanel({
           resetLoop();
           beginBattle();
         }}
+        autoBattle={autoBattle}
+        onToggleAutoBattle={() => setAutoBattle(!autoBattle)}
       />
     );
   }

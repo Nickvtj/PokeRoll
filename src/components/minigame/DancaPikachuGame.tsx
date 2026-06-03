@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import Image from "next/image";
-import { playCaptureHit, playCaptureMiss, playCapturePerfect } from "@/lib/sound-engine";
+import { playCaptureHit, playCaptureMiss, playCapturePerfect, playDanceBGM } from "@/lib/sound-engine";
 
 // --- Tipos e Constantes ---
 
@@ -144,14 +144,19 @@ export function DancaPikachuGame({
   const [discoMode, setDiscoMode] = useState(0);
   const [laneFlashes, setLaneFlashes] = useState<Record<LaneId, number>>({});
   const [loseLifeAnimation, setLoseLifeAnimation] = useState(false);
+  const [dancingPokemonIds, setDancingPokemonIds] = useState<number[]>([]);
+  const [lastLaneHit, setLastLaneHit] = useState<LaneId | null>(null);
 
   const gameLoopRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   const lastNoteTimeRef = useRef<number>(0);
   const scoreRef = useRef(0);
   const pikachuTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const flashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const patternIndexRef = useRef(0);
   const patternPosRef = useRef(0);
+  const bgmRef = useRef<{ stop: () => void } | null>(null);
+
   const keyToLane = useMemo(() => {
     const map: Record<string, LaneId> = {};
     for (const lane of GAME_CONFIG.lanes) {
@@ -165,6 +170,7 @@ export function DancaPikachuGame({
   const finishGame = useCallback(() => {
     setPhase("ended");
     if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
+    if (bgmRef.current) bgmRef.current.stop();
     onComplete(scoreRef.current);
   }, [onComplete]);
 
@@ -177,20 +183,35 @@ export function DancaPikachuGame({
     setNotes([]);
     setLaneFlashes({});
     setDiscoMode(0);
+    setDancingPokemonIds([]);
+    setLastLaneHit(null);
     startTimeRef.current = performance.now();
     lastNoteTimeRef.current = 0;
     patternIndexRef.current = 0;
     patternPosRef.current = 0;
+
+    void playDanceBGM().then((bgm) => {
+      bgmRef.current = bgm;
+    });
   }, []);
 
   useEffect(() => {
     onReady?.(startGame);
+    return () => {
+      if (bgmRef.current) bgmRef.current.stop();
+      if (pikachuTimeoutRef.current) clearTimeout(pikachuTimeoutRef.current);
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+    };
   }, [onReady, startGame]);
 
   const flashLane = useCallback((laneId: LaneId) => {
     const t = performance.now();
     setLaneFlashes((prev) => ({ ...prev, [laneId]: t }));
-    setTimeout(() => {
+    setLastLaneHit(laneId);
+    
+    if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+    flashTimeoutRef.current = setTimeout(() => {
+      setLastLaneHit(null);
       setLaneFlashes((prev) => {
         if (prev[laneId] !== t) return prev;
         const next = { ...prev };
@@ -227,19 +248,29 @@ export function DancaPikachuGame({
                 setLastHitQuality(null);
               }, 350);
 
-              setScore((s) => {
-                setCombo((c) => {
-                  const next = c + 1;
-                  setMaxCombo((m) => Math.max(m, next));
-                  return next;
+              setCombo((c) => {
+                const next = c + 1;
+                setMaxCombo((m) => Math.max(m, next));
+
+                // Adiciona novos pokémons dançantes a cada 10 de combo
+                if (next % 10 === 0 && next > 0) {
+                  setDancingPokemonIds((currentIds) => {
+                    if (currentIds.length >= 8) return currentIds;
+                    const pool = [1, 4, 7, 39, 133, 150, 151, 52, 113, 143];
+                    const newId = pool[Math.floor(Math.random() * pool.length)];
+                    return [...currentIds, newId];
+                  });
+                }
+
+                setScore((s) => {
+                  let points = quality === "PERFECT" ? 100 : 50;
+                  if (next >= 10) points = Math.round(points * 1.5);
+                  if (next >= 25) points = Math.round(points * 2);
+                  if (next >= 50) points = Math.round(points * 2.5);
+                  return s + points;
                 });
 
-                let points = quality === "PERFECT" ? 100 : 50;
-                if (combo >= 10) points = Math.round(points * 1.5);
-                if (combo >= 25) points = Math.round(points * 2);
-                if (combo >= 50) points = Math.round(points * 2.5);
-
-                return s + points;
+                return next;
               });
 
               if (quality === "PERFECT") void playCapturePerfect();
@@ -251,11 +282,12 @@ export function DancaPikachuGame({
           return note;
         });
 
-        if (!foundHit) setCombo(0);
+        // Removido o reset do combo aqui para evitar frustração com toques extras.
+        // O combo agora só reseta no tick() quando uma nota passa direto (miss).
         return nextNotes;
       });
     },
-    [phase, combo, flashLane]
+    [phase, flashLane]
   );
 
   useEffect(() => {
@@ -515,10 +547,93 @@ export function DancaPikachuGame({
                 >
                   {lastHitQuality}
                 </p>
+                {combo > 0 && (
+                  <motion.p
+                    initial={{ scale: 0.5 }}
+                    animate={{ scale: 1 }}
+                    className="text-xl font-black text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+                  >
+                    {combo}x
+                  </motion.p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Outros Pokémons Dançantes (Platéia) */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {dancingPokemonIds.map((id, index) => {
+              // Posições fixas para os slots da platéia
+              const slots = [
+                { x: -140, y: 80, rot: -10 },
+                { x: 140, y: 80, rot: 10 },
+                { x: -130, y: 180, rot: -15 },
+                { x: 130, y: 180, rot: 15 },
+                { x: -150, y: 280, rot: -5 },
+                { x: 150, y: 280, rot: 5 },
+                { x: -110, y: 40, rot: -20 },
+                { x: 110, y: 40, rot: 20 },
+              ];
+              const pos = slots[index % slots.length];
+              
+              return (
+                <motion.div
+                  key={`audience-${index}-${id}`}
+                  initial={{ opacity: 0, scale: 0, x: pos.x, y: pos.y + 50 }}
+                  animate={{ 
+                    opacity: 0.65, 
+                    scale: 0.75,
+                    x: pos.x,
+                    y: pos.y,
+                    rotate: pos.rot,
+                  }}
+                  className="absolute left-1/2 top-0"
+                >
+                  <motion.div
+                    animate={{
+                      y: [0, -15, 0],
+                      scale: [1, 1.1, 0.95, 1],
+                      rotate: [pos.rot, pos.rot + 5, pos.rot - 5, pos.rot],
+                    }}
+                    transition={{
+                      duration: 1.2,
+                      repeat: Infinity,
+                      delay: index * 0.15,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <Image
+                      src={`/sprites/${id}.png`}
+                      alt="Dancing Audience"
+                      width={70}
+                      height={70}
+                      className="object-contain filter brightness-110 drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]"
+                      unoptimized
+                    />
+                  </motion.div>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Efeito de Flash na Tela ao acertar - Na cor da pista */}
+        <AnimatePresence>
+          {Object.entries(laneFlashes).map(([laneId, timestamp]) => {
+            const lane = GAME_CONFIG.lanes.find((l) => l.id === laneId);
+            if (!lane) return null;
+            return (
+              <motion.div
+                key={`flash-${laneId}-${timestamp}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.15 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className={cn("absolute inset-0 pointer-events-none z-40", lane.bg)}
+              />
+            );
+          })}
+        </AnimatePresence>
 
         {/* Pistas: nota e alvo na mesma coluna = alinhamento perfeito */}
         <div

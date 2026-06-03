@@ -20,11 +20,13 @@ interface BattleArenaProps {
   onContinue?: () => void;
   onPlayAgain?: () => void;
   continueLabel?: string;
-  bonuses?: { battleDamage: number; critChance: number };
+  bonuses?: { battleDamage: number; critChance: number; defenseBoost?: number };
   onPickActor?: (slot: number) => void;
   onPickTarget?: (slot: number) => void;
   onPickMove?: (index: number) => void;
   onCancelSelection?: () => void;
+  autoBattle?: boolean;
+  onToggleAutoBattle?: () => void;
 }
 
 export function BattleArena({
@@ -38,6 +40,8 @@ export function BattleArena({
   onPickTarget,
   onPickMove,
   onCancelSelection,
+  autoBattle = false,
+  onToggleAutoBattle,
 }: BattleArenaProps) {
   if (!state) {
     return (
@@ -112,31 +116,55 @@ export function BattleArena({
         <BattleCoinFlipOverlay playerStarts={state.playerStarts ?? true} />
       )}
 
-      {state.gymMeta && (
-        <div
-          className={cn(
-            BATTLE_CLASSIC_THEME
-              ? "battle-classic-gym-banner"
-              : "glass-card px-3 py-2 text-center text-xs font-bold border"
-          )}
-          style={
-            BATTLE_CLASSIC_THEME
-              ? { color: state.gymMeta.themeColor }
-              : {
-                  borderColor: `${state.gymMeta.themeColor}40`,
-                  color: state.gymMeta.themeColor,
-                }
-          }
-        >
-          {state.gymMeta.gymName} · {state.gymMeta.trainerName}
-          {state.gymMeta.stage > 0 && (
-            <span className={BATTLE_CLASSIC_THEME ? "text-white/45 font-normal" : "text-white/50 font-normal"}>
-              {" "}
-              ({state.gymMeta.stage}/{state.gymMeta.totalStages})
-            </span>
-          )}
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-4 mb-2">
+        {state.gymMeta ? (
+          <div
+            className={cn(
+              BATTLE_CLASSIC_THEME
+                ? "battle-classic-gym-banner flex-1"
+                : "glass-card px-3 py-2 text-center text-xs font-bold border flex-1"
+            )}
+            style={
+              BATTLE_CLASSIC_THEME
+                ? { color: state.gymMeta.themeColor }
+                : {
+                    borderColor: `${state.gymMeta.themeColor}40`,
+                    color: state.gymMeta.themeColor,
+                  }
+            }
+          >
+            {state.gymMeta.gymName} · {state.gymMeta.trainerName}
+            {state.gymMeta.stage > 0 && (
+              <span className={BATTLE_CLASSIC_THEME ? "text-white/45 font-normal" : "text-white/50 font-normal"}>
+                {" "}
+                ({state.gymMeta.stage}/{state.gymMeta.totalStages})
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
+
+        {onToggleAutoBattle && (
+          <button
+            onClick={onToggleAutoBattle}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-[10px] font-black tracking-tighter transition-all flex items-center gap-1.5 border",
+              autoBattle
+                ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-300"
+                : "bg-white/5 border-white/10 text-white/30"
+            )}
+          >
+            <motion.div
+              animate={autoBattle ? { rotate: 360 } : {}}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            >
+              <Swords className="w-3 h-3" />
+            </motion.div>
+            AUTO BATTLE: {autoBattle ? "ON" : "OFF"}
+          </button>
+        )}
+      </div>
 
       <div className={state.phase === "coinFlip" ? "opacity-40 pointer-events-none" : ""}>
         {tactical && <BattleTurnBanner phase={phase} />}

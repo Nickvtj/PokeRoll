@@ -33,8 +33,12 @@ export function RareCandyModal({ open, onClose }: RareCandyModalProps) {
         const q = searchQuery.trim().toLowerCase();
         if (q && !p.name.toLowerCase().includes(q)) return false;
         return true;
+      }).sort((a, b) => {
+        const levelA = getPokemonProgress(a.id).level;
+        const levelB = getPokemonProgress(b.id).level;
+        return levelB - levelA;
       }),
-    [collection, searchQuery]
+    [collection, searchQuery, getPokemonProgress]
   );
   const levelCap = getLevelCap();
 

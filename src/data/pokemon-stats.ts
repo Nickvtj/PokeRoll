@@ -134,6 +134,7 @@ export function getTeamPassiveBonuses(pokemonIds: number[]) {
   let coinBonus = 0;
   let xpBonus = 0;
   let battleDamage = 0;
+  let defenseBoost = 0;
   let critChance = 0;
   let comboBonus = 0;
 
@@ -149,6 +150,9 @@ export function getTeamPassiveBonuses(pokemonIds: number[]) {
         break;
       case "battle_damage":
         battleDamage += ability.value;
+        break;
+      case "defense_boost":
+        defenseBoost += ability.value;
         break;
       case "crit_chance":
         critChance += ability.value;
@@ -169,5 +173,5 @@ export function getTeamPassiveBonuses(pokemonIds: number[]) {
     }
   }
 
-  return { coinBonus, xpBonus, battleDamage, critChance, comboBonus };
+  return { coinBonus, xpBonus, battleDamage, defenseBoost, critChance, comboBonus };
 }

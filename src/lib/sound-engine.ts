@@ -424,3 +424,43 @@ export async function playCapturePerfect(): Promise<void> {
     0.03
   );
 }
+
+/** Loop de música rítmica para o minigame de dança */
+export async function playDanceBGM(): Promise<{ stop: () => void }> {
+  const ctx = await getAudioContext();
+  if (!ctx) return { stop: () => {} };
+
+  let active = true;
+  const stop = () => { active = false; };
+
+  const playBeat = async () => {
+    if (!active) return;
+    
+    // Bumbo (Low kick)
+    void playTone(60, 0.1, "sine", 0.15);
+    
+    await new Promise(r => setTimeout(r, 250));
+    if (!active) return;
+    
+    // Hi-hat
+    void playTone(800, 0.02, "square", 0.05);
+    
+    await new Promise(r => setTimeout(r, 250));
+    if (!active) return;
+    
+    // Snare (Palminha)
+    void playTone(200, 0.1, "triangle", 0.1);
+    
+    await new Promise(r => setTimeout(r, 250));
+    if (!active) return;
+
+    // Hi-hat
+    void playTone(800, 0.02, "square", 0.05);
+
+    await new Promise(r => setTimeout(r, 250));
+    if (active) void playBeat();
+  };
+
+  void playBeat();
+  return { stop };
+}

@@ -27,11 +27,12 @@ export default function DancaPikachuPage() {
   const restartRef = useRef<(() => void) | null>(null);
 
   const handleComplete = (score: number) => {
-    const baseCoins = Math.floor(score / 300);
+    // Reduzida a taxa de conversão para equilibrar a economia
+    const baseCoins = Math.floor(score / 500);
     const coinBonus = Math.round(baseCoins * bonuses.coinBonus);
     const totalCoins = baseCoins + coinBonus;
 
-    const xp = Math.max(5, Math.floor(score / 80));
+    const xp = Math.max(5, Math.floor(score / 150));
 
     const isNewRecord = updateHighScore("dancaPikachu", score);
 
@@ -58,7 +59,7 @@ export default function DancaPikachuPage() {
   return (
     <GamePageShell
       title="Dança Pikachu"
-      subtitle="Reflexos · Ritmo · 1 moeda / 300 pts"
+      subtitle="Reflexos · Ritmo · 1 moeda / 500 pts"
       icon={<Music className="w-7 h-7 text-yellow-400 shrink-0" />}
     >
       <DancaPikachuGame
