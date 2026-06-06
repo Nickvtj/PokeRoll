@@ -1,4 +1,8 @@
-import type { JitsuBeltConfig } from "@/types/jitsu";
+import {
+  JITSU_COINS_WIN_MAX,
+  JITSU_COINS_WIN_MIN,
+} from "@/data/economy-balance";
+import type { JitsuBeltConfig, JitsuBeltId } from "@/types/jitsu";
 
 export const JITSU_BELTS: JitsuBeltConfig[] = [
   { id: "white", label: "Faixa Branca", emoji: "⚪", color: "#e2e8f0", minXp: 0 },
@@ -75,3 +79,27 @@ export const JITSU_BELT_RANK_REWARDS: Partial<Record<JitsuBeltConfig["id"], numb
   brown: 150,
   black: 250,
 };
+
+/** Bônus extra de moedas por vitória conforme a faixa atual */
+export const JITSU_BELT_WIN_BONUS: Record<JitsuBeltId, number> = {
+  white: 0,
+  yellow: 1,
+  orange: 2,
+  green: 4,
+  blue: 6,
+  purple: 8,
+  brown: 10,
+  black: 14,
+};
+
+export function getBeltWinBonus(beltId: JitsuBeltId): number {
+  return JITSU_BELT_WIN_BONUS[beltId] ?? 0;
+}
+
+export function getJitsuCoinRange(): { min: number; max: number } {
+  const maxBeltBonus = Math.max(...Object.values(JITSU_BELT_WIN_BONUS));
+  return {
+    min: JITSU_COINS_WIN_MIN,
+    max: JITSU_COINS_WIN_MAX + maxBeltBonus,
+  };
+}

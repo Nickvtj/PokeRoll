@@ -24,14 +24,14 @@ export const CAPTURE_COINS_MAX = CAPTURE_COINS_PER_CATCH;
 
 export const CLICK_GAME_DURATION_SEC = 30;
 /** Click Rush — moedas por desempenho (pontos + combo) */
-export const CLICK_BASE_COINS_MIN = 1;
-export const CLICK_BASE_COINS_MAX = 8;
-/** Limites de pontos para cada faixa de moeda base (1→7 moedas) */
-export const CLICK_SCORE_TIER_THRESHOLDS = [150, 300, 500, 700, 900, 1100] as const;
-export const CLICK_COMBO_BONUS_TIER_1 = 20;
-export const CLICK_COMBO_BONUS_TIER_2 = 40;
-export const CLICK_COMBO_BONUS_COINS_1 = 1;
-export const CLICK_COMBO_BONUS_COINS_2 = 2;
+export const CLICK_BASE_COINS_MIN = 3;
+export const CLICK_BASE_COINS_MAX = 18;
+/** Limites de pontos para cada faixa de moeda base */
+export const CLICK_SCORE_TIER_THRESHOLDS = [120, 250, 400, 600, 800, 1000] as const;
+export const CLICK_COMBO_BONUS_TIER_1 = 18;
+export const CLICK_COMBO_BONUS_TIER_2 = 35;
+export const CLICK_COMBO_BONUS_COINS_1 = 2;
+export const CLICK_COMBO_BONUS_COINS_2 = 4;
 
 export const MEMORY_PAIR_COUNT = 12;
 export const MEMORY_GAME_DURATION_SEC = 60;
@@ -43,9 +43,9 @@ export const JITSU_HAND_SIZE = 5;
 export const JITSU_TURN_TIMER_SEC = 25;
 /** Chance de cada carta comprada/gerada ser especial */
 export const JITSU_SPECIAL_CARD_CHANCE = 0.18;
-export const JITSU_COINS_WIN_MIN = 5;
-export const JITSU_COINS_WIN_MAX = 15;
-export const JITSU_COINS_LOSS = 2;
+export const JITSU_COINS_WIN_MIN = 8;
+export const JITSU_COINS_WIN_MAX = 18;
+export const JITSU_COINS_LOSS = 3;
 export const JITSU_XP_WIN = 12;
 export const JITSU_XP_LOSS = 4;
 
@@ -85,7 +85,6 @@ export const LUCKY_EGG_PER_MILESTONE = 1;
 
 /** Poké-Memory: moedas só ao completar — 2 por par */
 export const MEMORY_COINS_PER_PAIR = 2;
-
 /** Rare Candy: a cada 5 níveis de treinador */
 export const RARE_CANDY_PER_MILESTONE = 3;
 export const TRAINER_LEVEL_MILESTONE = 5;

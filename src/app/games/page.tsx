@@ -6,12 +6,10 @@ import { JitsuBeltIcon } from "@/components/minigame/jitsu/JitsuBeltIcon";
 import {
   CLICK_BASE_COINS_MAX,
   CLICK_BASE_COINS_MIN,
-  JITSU_COINS_WIN_MAX,
-  JITSU_COINS_WIN_MIN,
   MEMORY_COINS_PER_PAIR,
   MEMORY_PAIR_COUNT,
 } from "@/data/economy-balance";
-import { getBeltForXp } from "@/data/jitsu-belts";
+import { getBeltForXp, getJitsuCoinRange } from "@/data/jitsu-belts";
 import { useEconomyStore } from "@/stores/economy-store";
 import { cn } from "@/lib/utils";
 import { usePrefetchOnIntent } from "@/lib/use-prefetch-on-intent";
@@ -55,7 +53,7 @@ const GAMES = [
     title: "Desafio Elemental",
     desc: "Vença batalhas táticas com Fogo, Água e Planta. Suba de faixa!",
     icon: Swords,
-    reward: `${JITSU_COINS_WIN_MIN} a ${JITSU_COINS_WIN_MAX} moedas`,
+    reward: `${getJitsuCoinRange().min} a ${getJitsuCoinRange().max} moedas (+ faixa)`,
     gradient: "from-rose-600/20 to-transparent",
     border: "border-rose-500/25 hover:border-rose-400/45",
     iconColor: "text-rose-400",

@@ -7,11 +7,7 @@ import { ArrowLeft, Swords } from "lucide-react";
 import { JitsuBeltIcon } from "@/components/minigame/jitsu/JitsuBeltIcon";
 import type { PokeJitsuGameResult } from "@/components/minigame/PokeJitsuGame";
 import { MinigameGameSkeleton } from "@/components/ui/RouteLoading";
-import {
-  JITSU_COINS_WIN_MAX,
-  JITSU_COINS_WIN_MIN,
-} from "@/data/economy-balance";
-import { getBeltForXp, getBeltProgress } from "@/data/jitsu-belts";
+import { getBeltForXp, getBeltProgress, getBeltWinBonus, getJitsuCoinRange } from "@/data/jitsu-belts";
 import { calcJitsuRewards } from "@/lib/jitsu-engine";
 import { recordMinigameToSupabase } from "@/lib/economy-supabase";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
@@ -36,14 +32,18 @@ export default function JitsuGamePage() {
   const bonuses = getEconomyBonuses(team);
   const belt = getBeltForXp(jitsuXp);
   const beltProgress = getBeltProgress(jitsuXp);
+  const jitsuCoinRange = getJitsuCoinRange();
+  const currentBeltBonus = getBeltWinBonus(belt.id);
   const restartRef = useRef<(() => void) | null>(null);
 
   const handleComplete = (result: PokeJitsuGameResult) => {
     const { beltPromoted, rankCoinBonus } = recordJitsuMatch(result.won);
+    const beltAfter = getBeltForXp(useEconomyStore.getState().jitsuXp ?? 0);
+    const beltWinBonus = result.won ? getBeltWinBonus(beltAfter.id) : 0;
     const { coins, accountXp, score } = calcJitsuRewards(
       result.won,
       bonuses.coinBonus,
-      rankCoinBonus
+      beltWinBonus + rankCoinBonus
     );
 
     if (coins > 0) addCoins(coins);
@@ -108,7 +108,8 @@ export default function JitsuGamePage() {
             <span className="truncate">Desafio Elemental</span>
           </h1>
           <p className="text-white/50 text-xs mt-0.5 leading-relaxed">
-            Card-Jitsu · Fogo, Água e Planta · {JITSU_COINS_WIN_MIN}–{JITSU_COINS_WIN_MAX} moedas/vitória
+            Card-Jitsu · Fogo, Água e Planta · {jitsuCoinRange.min}–{jitsuCoinRange.max} moedas/vitória
+            {currentBeltBonus > 0 && ` (+${currentBeltBonus} faixa ${belt.label.replace("Faixa ", "")})`}
           </p>
         </div>
         <div
