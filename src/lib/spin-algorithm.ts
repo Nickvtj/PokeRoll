@@ -1,6 +1,6 @@
 import { RARITY_CHANCES } from "@/data/rarity";
 import { SHINY_CHANCE } from "@/data/pokemon-sprites";
-import { getPokemonByRarity, POKEMON_LIST } from "@/data/pokemon";
+import { getPokemonByRarity, POKEMON_LIST, getPokemonById, MEW_ID } from "@/data/pokemon";
 import { getSpinResultImage } from "@/lib/pokemon-display";
 import type { Pokemon, Rarity, SpinResult } from "@/types";
 
@@ -54,8 +54,12 @@ export function pickPokemonFromRarity(rarity: Rarity): Pokemon {
   return pool[pool.length - 1];
 }
 
-/** Executa um spin completo: raridade → Pokémon */
-export function executeSpin(): Pokemon {
+/** Executa um spin completo: raridade, depois Pokémon */
+export function executeSpin(options?: { mewUnlocked?: boolean }): Pokemon {
+  if (options?.mewUnlocked && Math.random() < 0.12) {
+    const mew = getPokemonById(MEW_ID);
+    if (mew) return mew;
+  }
   const rarity = rollRarity();
   return pickPokemonFromRarity(rarity);
 }

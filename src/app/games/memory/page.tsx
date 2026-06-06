@@ -61,8 +61,8 @@ export default function MemoryGamePage() {
         coins,
         xp: accountXp,
         message: isNewRecord
-          ? `NOVO RECORDE! ${label} → +${coins} moedas`
-          : `Poké-Memory: ${label} → +${coins} moedas`,
+          ? `NOVO RECORDE! ${label} · +${coins} moedas`
+          : `Poké Memory: ${label} · +${coins} moedas`,
         isNewRecord,
         onClosePath: "/games",
         closeLabel: "Voltar",
@@ -73,7 +73,7 @@ export default function MemoryGamePage() {
 
   return (
     <GamePageShell
-      title="Poké-Memory"
+      title="Poké Memory"
       subtitle={`${MEMORY_PAIR_COUNT} pares · ${MEMORY_GAME_DURATION_SEC}s · ${MEMORY_COINS_PER_PAIR} moeda/par ao completar`}
       icon={<Brain className="w-7 h-7 text-violet-400 shrink-0" />}
     >

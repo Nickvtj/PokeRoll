@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Gamepad2, Target, MousePointerClick, Brain, Coins, Sparkles } from "lucide-react";
+import { Gamepad2, Target, MousePointerClick, Brain, Coins, Play, Sparkles } from "lucide-react";
 import {
   CLICK_BASE_COINS_MAX,
   CLICK_BASE_COINS_MIN,
@@ -16,52 +16,39 @@ const GAMES = [
   {
     href: "/games/captura",
     title: "Captura Perfeita",
-    desc: "Acerte o timing na zona verde enquanto a Pokébola balança.",
-    reward: "1 moeda por captura",
+    desc: "Acerte o timing na zona verde.",
+    reward: "1 moeda / captura",
     icon: Target,
-    color: "from-emerald-500/20 to-cyan-500/10 border-emerald-500/25",
+    gradient: "from-emerald-600/20 to-transparent",
+    border: "border-emerald-500/25 hover:border-emerald-400/45",
     iconColor: "text-emerald-400",
     iconBg: "bg-emerald-500/15",
   },
   {
     href: "/games/click-rush",
     title: "Click Rush",
-    desc: "Clique nas Pokébolas o máximo que puder em 30 segundos.",
-    reward: `${CLICK_BASE_COINS_MIN}~${CLICK_BASE_COINS_MAX} moedas · por desempenho`,
+    desc: "Clique nas Pokébolas em 30 segundos.",
+    reward: `${CLICK_BASE_COINS_MIN} a ${CLICK_BASE_COINS_MAX} moedas`,
     icon: MousePointerClick,
-    color: "from-cyan-500/20 to-blue-500/10 border-cyan-500/25",
+    gradient: "from-cyan-600/20 to-transparent",
+    border: "border-cyan-500/25 hover:border-cyan-400/45",
     iconColor: "text-cyan-400",
     iconBg: "bg-cyan-500/15",
   },
   {
     href: "/games/memory",
-    title: "Poké-Memory",
-    desc: "Vire as cartas e encontre todos os pares antes do tempo acabar.",
-    reward: `${MEMORY_PAIR_COUNT * MEMORY_COINS_PER_PAIR} moedas ao completar`,
+    title: "Poké Memory",
+    desc: "Encontre todos os pares a tempo.",
     icon: Brain,
-    color: "from-violet-500/20 to-purple-500/10 border-violet-500/25",
+    reward: `${MEMORY_PAIR_COUNT * MEMORY_COINS_PER_PAIR} moedas`,
+    gradient: "from-violet-600/20 to-transparent",
+    border: "border-violet-500/25 hover:border-violet-400/45",
     iconColor: "text-violet-400",
     iconBg: "bg-violet-500/15",
   },
-  {
-    href: "/games/danca-pikachu",
-    title: "Dança Pikachu",
-    desc: "Siga o ritmo das setas e mostre seus reflexos com o Pikachu.",
-    reward: "1 moeda a cada 500 pontos",
-    icon: Sparkles,
-    color: "from-amber-500/20 to-yellow-500/10 border-amber-500/25",
-    iconColor: "text-yellow-400",
-    iconBg: "bg-yellow-500/15",
-  },
 ] as const;
 
-function GameCardLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
+function GameCardLink({ href, children }: { href: string; children: React.ReactNode }) {
   const intent = usePrefetchOnIntent(href);
   return (
     <Link href={href} {...intent} className="block group">
@@ -79,78 +66,75 @@ export default function GamesHubPage() {
     "/games/captura": highScores?.perfectCapture,
     "/games/click-rush": highScores?.clickRush,
     "/games/memory": highScores?.memory,
-    "/games/danca-pikachu": highScores?.dancaPikachu,
   };
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Gamepad2 className="w-8 h-8 text-indigo-400" />
-          Jogos
-        </h1>
-        <p className="text-white/55 text-sm leading-relaxed">
-          Três minigames rápidos para ganhar moedas entre as batalhas. Sem limite diário, jogue
-          quando quiser!
-        </p>
-      </div>
-
-      <div className="glass-card px-4 py-3 flex items-center justify-between text-xs text-white/45">
-        <span className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-          {gamesPlayed} partidas no total
-        </span>
-        <span>{gamesToday} hoje</span>
+    <div className="max-w-4xl mx-auto px-4 py-6 lg:py-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div className="space-y-0.5">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Gamepad2 className="w-7 h-7 text-indigo-400" />
+            Jogos
+          </h1>
+          <p className="text-white/50 text-sm">Minigames para farmar moedas.</p>
+        </div>
+        <div className="glass-card px-3 py-2 flex items-center gap-3 text-xs text-white/45 shrink-0 rounded-xl">
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            {gamesPlayed} partidas
+          </span>
+          <span className="w-px h-3.5 bg-white/10" />
+          <span>{gamesToday} hoje</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {GAMES.map((game) => {
           const record = highScoreMap[game.href];
-          
+          const Icon = game.icon;
+
           return (
             <GameCardLink key={game.href} href={game.href}>
-              <div
+              <article
                 className={cn(
-                  "glass-card p-5 border bg-gradient-to-br transition-all relative overflow-hidden h-full flex flex-col",
-                  "group-hover:scale-[1.02] group-hover:shadow-lg group-hover:shadow-indigo-500/10 group-active:scale-[0.98]",
-                  game.color
+                  "relative rounded-2xl border overflow-hidden bg-gradient-to-br backdrop-blur-sm min-h-[108px]",
+                  "transition-all duration-200 group-hover:scale-[1.015] group-active:scale-[0.99]",
+                  game.gradient,
+                  game.border
                 )}
               >
-                <div className="flex flex-col h-full space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div
-                      className={cn(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border border-white/10 shadow-inner",
-                        game.iconBg
-                      )}
-                    >
-                      <game.icon className={cn("w-6 h-6", game.iconColor)} />
-                    </div>
-                    {record !== undefined && (
-                      <span className="text-[10px] font-black bg-white/10 px-2 py-1 rounded-lg border border-white/5 text-amber-300">
-                        RECORDE: {record}
-                      </span>
+                <div className="absolute inset-0 bg-slate-950/45" />
+                <div className="relative z-10 p-5 flex items-center gap-4">
+                  <div
+                    className={cn(
+                      "w-14 h-14 rounded-xl flex items-center justify-center border border-white/10 shrink-0",
+                      game.iconBg
                     )}
+                  >
+                    <Icon className={cn("w-7 h-7", game.iconColor)} />
                   </div>
 
-                  <div className="flex-1 space-y-2">
-                    <h2 className="text-lg font-bold tracking-tight">{game.title}</h2>
-                    <p className="text-white/50 text-xs leading-relaxed line-clamp-2">
-                      {game.desc}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                    <p className="text-[10px] text-amber-400/90 font-bold flex items-center gap-1">
-                      <Coins className="w-3 h-3" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-bold truncate">{game.title}</h2>
+                      {record !== undefined && (
+                        <span className="text-[9px] font-black bg-black/40 px-1.5 py-0.5 rounded text-amber-300 tabular-nums shrink-0">
+                          REC {record}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-white/50 mt-0.5 line-clamp-2">{game.desc}</p>
+                    <p className="text-[11px] text-amber-400/85 font-bold flex items-center gap-1 mt-1.5">
+                      <Coins className="w-3.5 h-3.5 shrink-0" />
                       {game.reward}
                     </p>
-                    <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                      <Sparkles className="w-3 h-3 text-white/30 group-hover:text-white/60" />
-                    </div>
                   </div>
+
+                  <span className="flex items-center gap-0.5 text-xs font-bold text-white/25 group-hover:text-white/60 transition-colors shrink-0">
+                    <Play className="w-4 h-4 fill-current" />
+                  </span>
                 </div>
-              </div>
+              </article>
             </GameCardLink>
           );
         })}

@@ -5,6 +5,7 @@ import { RARITY_CONFIG } from "@/data/rarity";
 import { StickerBadge } from "@/components/ui/StickerBadge";
 import { SpinMachineIdle } from "@/components/spin/SpinMachineIdle";
 import type { Pokemon, SpinResult } from "@/types";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SpinMachineProps {
@@ -207,8 +208,9 @@ export function SpinMachine({
             {showResult && (
               <div className="absolute -top-2 -right-2 z-30 flex flex-col items-end gap-1">
                 {result.isNewShinyUnlock && (
-                  <span className="px-1.5 py-0.5 rounded-md bg-amber-500/30 border border-amber-400/40 text-[8px] font-black text-amber-200 uppercase">
-                    ✨ Shiny
+                  <span className="px-1.5 py-0.5 rounded-md bg-amber-500/30 border border-amber-400/40 text-[8px] font-black text-amber-200 uppercase flex items-center gap-0.5">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    Shiny
                   </span>
                 )}
                 <StickerBadge variant={result.isNew ? "new" : "duplicate"} size="sm" />

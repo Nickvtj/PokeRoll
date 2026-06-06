@@ -72,7 +72,7 @@ export function SpinCurrencyDisplay({ multiplier, className }: SpinCurrencyDispl
           <span className="font-bold text-amber-400">
             {cost} {cost === 1 ? "moeda" : "moedas"}
           </span>
-          {!canAfford && " — moedas insuficientes!"}
+          {!canAfford && ". Moedas insuficientes!"}
         </p>
       )}
     </div>

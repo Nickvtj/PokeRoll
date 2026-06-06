@@ -8,8 +8,10 @@ import { CoinCounter } from "@/components/ui/CoinCounter";
 import { TrainerItemsBar } from "@/components/layout/TrainerItemsBar";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/stores/game-store";
+import { TOTAL_POKEMON } from "@/data/pokemon";
 import { useEconomyStore } from "@/stores/economy-store";
 import { TrainerAvatarDisplay } from "@/components/profile/TrainerAvatarDisplay";
+import { GuardedNavLink } from "@/components/layout/BattleNavGuard";
 import { usePrefetchOnIntent } from "@/lib/use-prefetch-on-intent";
 
 const navItems = [
@@ -27,11 +29,10 @@ function NavItemLink({
   href: string;
   children: React.ReactNode;
 }) {
-  const intent = usePrefetchOnIntent(href);
   return (
-    <Link href={href} {...intent}>
+    <GuardedNavLink href={href}>
       {children}
-    </Link>
+    </GuardedNavLink>
   );
 }
 
@@ -42,9 +43,8 @@ function ProfileButton({ className }: { className?: string }) {
   const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
 
   return (
-    <Link
+    <GuardedNavLink
       href="/profile"
-      {...profilePrefetch}
       className={cn(
         "group flex items-center gap-2 px-3 py-1.5 rounded-xl glass text-xs border border-white/10 shrink-0",
         "hover:bg-indigo-500/15 hover:border-indigo-400/40 hover:shadow-lg hover:shadow-indigo-500/20",
@@ -64,7 +64,7 @@ function ProfileButton({ className }: { className?: string }) {
         Nv.{level}
       </span>
       <ChevronRight className="w-3.5 h-3.5 text-white/25 group-hover:text-indigo-300 group-hover:translate-x-0.5 transition-all hidden sm:block" />
-    </Link>
+    </GuardedNavLink>
   );
 }
 
@@ -75,16 +75,15 @@ export function Navbar() {
   return (
     <>
       <header className="hidden lg:grid fixed top-0 left-0 right-0 z-40 grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-3 glass glass-blur border-b border-white/10">
-        <Link
+        <GuardedNavLink
           href="/"
           className="flex items-center gap-2 group shrink-0 justify-self-start"
-          title="PokéRoll"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
             <PokeballIcon size={22} />
           </div>
           <h1 className="font-bold text-lg neon-text leading-none">PokéRoll</h1>
-        </Link>
+        </GuardedNavLink>
 
         <nav className="flex items-center gap-0.5 justify-self-center">
           {navItems.map(({ href, label, icon: Icon }) => {
@@ -115,7 +114,7 @@ export function Navbar() {
           <CoinCounter size="sm" />
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass text-xs whitespace-nowrap shrink-0">
             <BookOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span>{uniqueCount}/150</span>
+            <span>{uniqueCount}/{TOTAL_POKEMON}</span>
           </div>
           <ProfileButton />
         </div>

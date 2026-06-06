@@ -32,7 +32,6 @@ export interface EconomyState {
     clickRush?: number;
     perfectCapture?: number;
     memory?: number;
-    dancaPikachu?: number;
   };
 }
 

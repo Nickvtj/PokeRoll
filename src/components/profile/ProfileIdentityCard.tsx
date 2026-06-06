@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Pencil, Check, X, Star } from "lucide-react";
+import { Calendar, Pencil, Check, X, Star, Coins, Swords, Trophy, Disc3 } from "lucide-react";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { TrainerAvatarDisplay } from "@/components/profile/TrainerAvatarDisplay";
+import { ProfileStatCard } from "@/components/profile/ProfileStatCard";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
 import { XP_PER_LEVEL } from "@/data/economy-balance";
+import { formatNumber } from "@/lib/utils";
 
 export function ProfileIdentityCard() {
   const profile = useGameStore((s) => s.profile);
@@ -17,6 +19,9 @@ export function ProfileIdentityCard() {
   const level = useEconomyStore((s) => s.level);
   const rank = useEconomyStore((s) => s.rank);
   const xp = useEconomyStore((s) => s.xp);
+  const coins = useEconomyStore((s) => s.coins);
+  const battleWins = useEconomyStore((s) => s.battleWins);
+  const freeSpins = useEconomyStore((s) => s.freeSpins);
   const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
 
   const [editingName, setEditingName] = useState(false);
@@ -43,98 +48,99 @@ export function ProfileIdentityCard() {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500/10 via-transparent to-purple-500/10 p-6 border border-white/10">
-      {/* Background Decor */}
-      <div className="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full" />
-      <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-purple-500/10 blur-3xl rounded-full" />
+    <div className="relative overflow-hidden rounded-2xl bg-slate-900/50 ring-1 ring-inset ring-indigo-500/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.14),transparent_55%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(168,85,247,0.08),transparent_50%)]" />
 
-      <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-        <div className="relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-          <TrainerAvatarDisplay
-            avatarId={selectedAvatarId}
-            username={profile.username}
-            size="lg"
-            className="w-24 h-24 shadow-2xl shrink-0 border-2 border-white/20 relative z-10"
-          />
-          <div className="absolute -bottom-1 -right-1 bg-indigo-500 text-white p-1.5 rounded-full shadow-lg border border-white/20 z-20">
-            <Star className="w-3.5 h-3.5 fill-white" />
-          </div>
-        </div>
-
-        <div className="flex-1 w-full text-center md:text-left space-y-4">
-          <div className="space-y-1">
-            {editingName ? (
-              <div className="flex items-center justify-center md:justify-start gap-2">
-                <input
-                  type="text"
-                  value={nameDraft}
-                  onChange={(e) => setNameDraft(e.target.value)}
-                  maxLength={20}
-                  className="w-full max-w-[240px] px-4 py-2 rounded-xl bg-white/5 border border-indigo-500/50 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void saveUsername();
-                    if (e.key === "Escape") cancelEdit();
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => void saveUsername()}
-                  className="p-2 rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                >
-                  <Check className="w-5 h-5" />
-                </button>
+      <div className="relative z-10 p-5 lg:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-5 lg:gap-6 items-start">
+          <div className="flex flex-col items-center md:items-start gap-3">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/40 to-purple-500/40 rounded-2xl blur opacity-40 group-hover:opacity-60 transition duration-500" />
+              <TrainerAvatarDisplay
+                avatarId={selectedAvatarId}
+                username={profile.username}
+                size="lg"
+                className="w-20 h-20 lg:w-24 lg:h-24 shadow-2xl shrink-0 ring-2 ring-indigo-400/30 relative z-10 rounded-2xl"
+              />
+              <div className="absolute -bottom-1 -right-1 bg-indigo-500 text-white p-1 rounded-lg shadow-lg ring-1 ring-indigo-300/30 z-20">
+                <Star className="w-3 h-3 fill-white" />
               </div>
-            ) : (
-              <div className="flex items-center justify-center md:justify-start gap-3">
-                <h2 className="text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
-                  {profile.username}
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setEditingName(true)}
-                  className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 transition-all"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-            <div className="flex items-center justify-center md:justify-start gap-2 text-white/40 text-xs">
-              <Calendar className="w-3.5 h-3.5" />
-              Treinador desde {new Date(profile.createdAt).toLocaleDateString("pt-BR")}
             </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-            <div className="px-4 py-1.5 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-black shadow-inner flex items-center gap-2">
+            <div className="px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-200 text-[10px] font-black tracking-wider ring-1 ring-inset ring-indigo-400/20">
               NÍVEL {level}
             </div>
-            <div className="px-4 py-1.5 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-black shadow-inner">
-              RANK {String(rank).toUpperCase()}
-            </div>
-            {highestRarity && (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-white/5 border border-white/10">
-                <span className="text-[10px] text-white/30 font-bold uppercase">Melhor drop:</span>
-                <RarityBadge rarity={highestRarity} size="sm" />
-              </div>
-            )}
           </div>
 
-          <div className="space-y-2 max-w-sm mx-auto md:mx-0 pt-2">
-            <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-widest text-white/30">
-              <span>Experiência</span>
-              <span className="text-white/60">
-                {xpInLevel} / {XP_PER_LEVEL} XP
-              </span>
+          <div className="space-y-4 min-w-0">
+            <div className="space-y-1.5 text-center md:text-left">
+              {editingName ? (
+                <div className="flex items-center justify-center md:justify-start gap-2">
+                  <input
+                    type="text"
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    maxLength={20}
+                    className="w-full max-w-[220px] px-3 py-1.5 rounded-xl bg-black/30 ring-1 ring-indigo-500/40 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void saveUsername();
+                      if (e.key === "Escape") cancelEdit();
+                    }}
+                  />
+                  <button type="button" onClick={() => void saveUsername()} className="p-1.5 rounded-lg bg-emerald-500 text-white">
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button type="button" onClick={cancelEdit} className="p-1.5 rounded-lg bg-white/10 text-white/60">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center md:justify-start gap-2">
+                  <h2 className="text-2xl lg:text-3xl font-black tracking-tight truncate">{profile.username}</h2>
+                  <button
+                    type="button"
+                    onClick={() => setEditingName(true)}
+                    className="p-1 rounded-md text-white/30 hover:text-white/70 hover:bg-white/5 transition-all shrink-0"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1 text-white/40 text-[11px]">
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  Desde {new Date(profile.createdAt).toLocaleDateString("pt-BR")}
+                </span>
+                <span className="text-purple-300/80 font-semibold">RANK {String(rank).toUpperCase()}</span>
+                {highestRarity && (
+                  <span className="inline-flex items-center gap-1.5">
+                    Melhor drop: <RarityBadge rarity={highestRarity} size="sm" />
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-0.5">
-              <motion.div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
-                initial={{ width: 0 }}
-                animate={{ width: `${xpPct}%` }}
-                transition={{ duration: 1.2, ease: "easeOut" }}
-              />
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-white/30">
+                <span>Experiência</span>
+                <span className="text-white/55 tabular-nums">{xpInLevel} / {XP_PER_LEVEL} XP</span>
+              </div>
+              <div className="h-2 w-full bg-black/30 rounded-full overflow-hidden ring-1 ring-inset ring-white/[0.06]">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${xpPct}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <ProfileStatCard icon={Coins} label="Moedas" value={formatNumber(coins)} accent="amber" />
+              <ProfileStatCard icon={Swords} label="Vitórias" value={formatNumber(battleWins)} accent="red" />
+              <ProfileStatCard icon={Disc3} label="Spins" value={formatNumber(freeSpins)} accent="cyan" />
+              <ProfileStatCard icon={Trophy} label="Rank" value={String(rank).toUpperCase()} accent="purple" />
             </div>
           </div>
         </div>

@@ -21,7 +21,7 @@ export function AvatarPicker() {
       <div>
         <h3 className="font-bold text-sm">Avatares de treinador</h3>
         <p className="text-[11px] text-white/40 mt-1 leading-relaxed">
-          Desbloqueie novos treinadores conforme sobe de nível da conta — um a cada 5 níveis.
+          Desbloqueie novos treinadores conforme sobe de nível da conta. Um a cada 5 níveis.
         </p>
       </div>
 

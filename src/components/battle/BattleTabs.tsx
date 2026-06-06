@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Dumbbell, Map, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { playUiTab } from "@/lib/ui-sounds";
 
 export type BattleTabId = "training" | "gyms" | "elite";
 
@@ -28,7 +29,11 @@ export function BattleTabs({ active, onChange, eliteLocked }: BattleTabsProps) {
             key={id}
             type="button"
             disabled={locked}
-            onClick={() => !locked && onChange(id)}
+            onClick={() => {
+              if (locked || id === active) return;
+              playUiTab();
+              onChange(id);
+            }}
             className={cn(
               "relative flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl text-[10px] font-semibold transition-colors",
               active === id ? "text-indigo-300" : "text-white/40 hover:text-white/70",

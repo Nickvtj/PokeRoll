@@ -26,6 +26,22 @@ const RewardPopup = dynamic(
   { ssr: false }
 );
 
+const AchievementUnlockToast = dynamic(
+  () =>
+    import("@/components/ui/AchievementUnlockToast").then((m) => ({
+      default: m.AchievementUnlockToast,
+    })),
+  { ssr: false }
+);
+
+const BattleSurrenderGuard = dynamic(
+  () =>
+    import("@/components/layout/BattleSurrenderGuard").then((m) => ({
+      default: m.BattleSurrenderGuard,
+    })),
+  { ssr: false }
+);
+
 const PREFETCH_AFTER_INIT = ["/profile", "/games", "/battle"] as const;
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
@@ -87,6 +103,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       <WelcomeModal />
       <RewardAnimation />
       <RewardPopup />
+      <AchievementUnlockToast />
+      <BattleSurrenderGuard />
     </>
   );
 }

@@ -106,13 +106,14 @@ export function BattleCoinFlipOverlay({ playerStarts }: BattleCoinFlipOverlayPro
   const finalRotation = playerStarts ? 0 : 180;
 
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none overflow-hidden">
+    <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none overflow-hidden rounded-xl">
       <div
         className={cn(
-          "absolute inset-0 transition-opacity duration-700",
+          "absolute inset-0 transition-opacity duration-500 rounded-xl",
+          "bg-slate-950/75 backdrop-blur-[3px]",
           playerStarts
-            ? "bg-[radial-gradient(ellipse_at_center,rgba(52,211,153,0.12)_0%,transparent_65%)]"
-            : "bg-[radial-gradient(ellipse_at_center,rgba(248,113,113,0.12)_0%,transparent_65%)]"
+            ? "shadow-[inset_0_0_80px_rgba(52,211,153,0.08)]"
+            : "shadow-[inset_0_0_80px_rgba(248,113,113,0.08)]"
         )}
       />
 

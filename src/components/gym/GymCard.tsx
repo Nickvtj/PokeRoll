@@ -73,8 +73,9 @@ export function GymCard({ gym, unlocked, hasBadge, onChallenge }: GymCardProps) 
               <h3 className="font-bold text-sm">{gym.leaderName}</h3>
               {!unlocked && <Lock className="w-3.5 h-3.5 text-white/40" />}
               {hasBadge && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  ✓ {gym.badgeName}
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
+                  <Check className="w-2.5 h-2.5" />
+                  {gym.badgeName}
                 </span>
               )}
             </div>
@@ -152,8 +153,9 @@ export function GymCard({ gym, unlocked, hasBadge, onChallenge }: GymCardProps) 
       </div>
 
       {canClaim && (
-        <p className="px-3 pb-2 text-[10px] text-amber-400/80 text-center">
-          Toque em 🪙 para coletar {GYM_LEADER_COIN_REWARD} moedas pela vitória!
+        <p className="px-3 pb-2 text-[10px] text-amber-400/80 text-center flex items-center justify-center gap-1">
+          <Coins className="w-3 h-3" />
+          Toque para coletar {GYM_LEADER_COIN_REWARD} moedas pela vitória!
         </p>
       )}
 

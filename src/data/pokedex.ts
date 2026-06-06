@@ -70,6 +70,7 @@ const TYPES: Record<number, [string] | [string, string]> = {
   144: ["Ice", "Flying"], 145: ["Electric", "Flying"], 146: ["Fire", "Flying"],
   147: ["Dragon"], 148: ["Dragon"], 149: ["Dragon", "Flying"],
   150: ["Psychic"],
+  151: ["Psychic"],
 };
 
 const CATEGORIES: Record<number, string> = {
@@ -79,6 +80,7 @@ const CATEGORIES: Record<number, string> = {
   131: "Pokémon Transporte", 133: "Pokémon Evolução", 143: "Pokémon Cochilo",
   144: "Pokémon Congelante", 145: "Pokémon Elétrico", 146: "Pokémon Chama",
   150: "Pokémon Genético",
+  151: "Pokémon Novo",
 };
 
 const DESCRIPTIONS: Record<number, string> = {
@@ -95,6 +97,7 @@ const DESCRIPTIONS: Record<number, string> = {
   145: "Uma lendária ave Pokémon. Dizem que aparece nas nuvens escuras com um estrondo ensurdecedor.",
   146: "Uma lendária ave Pokémon. Dizem que vive no interior de vulcões ativos.",
   150: "Foi criado por um cientista após anos de horríveis experimentos de engenharia genética.",
+  151: "Dizem que possui o código genético de todos os Pokémon. Só aparece para treinadores que completaram todas as conquistas.",
 };
 
 /** Altura (m) e peso (kg) aproximados */

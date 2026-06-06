@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { playUiClick, playUiConfirm } from "@/lib/ui-sounds";
 import { cn } from "@/lib/utils";
 
 interface AnimatedButtonProps {
@@ -45,7 +46,13 @@ export function AnimatedButton({
     <motion.button
       whileHover={{ scale: disabled || loading ? 1 : 1.03 }}
       whileTap={{ scale: disabled || loading ? 1 : 0.97 }}
-      onClick={onClick}
+      onClick={(e) => {
+        if (!disabled && !loading) {
+          if (variant === "gold" || variant === "primary") playUiConfirm();
+          else playUiClick();
+        }
+        onClick?.(e as React.MouseEvent<HTMLButtonElement>);
+      }}
       disabled={disabled || loading}
       className={cn(
         "btn-shine relative inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed",

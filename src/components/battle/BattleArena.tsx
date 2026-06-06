@@ -1,17 +1,20 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Swords } from "lucide-react";
+import { motion } from "framer-motion";
+import { Swords, Target, Pointer } from "lucide-react";
 import { PokemonBattleCard, type BattleSelectionMode } from "@/components/battle/PokemonBattleCard";
 import { BattleActionPanel } from "@/components/battle/BattleActionPanel";
 import { BattleTurnBanner, battleSectionClass } from "@/components/battle/BattleTurnBanner";
 import { BattleResultModal } from "@/components/battle/BattleResultModal";
 import { BattleCoinFlipOverlay } from "@/components/battle/BattleCoinFlipOverlay";
+import { FloatingAutoBattleToggle } from "@/components/battle/FloatingAutoBattleToggle";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
 import type { BattleCombatHighlight } from "@/hooks/use-tactical-battle";
 import type { BattleTurnHighlight } from "@/components/battle/PokemonBattleCard";
 import type { BattleState } from "@/types/battle";
+import { getActorBestOpportunity, getBestMoveMatchup } from "@/lib/battle-matchup";
+import type { TypeMatchupHint } from "@/lib/battle-matchup";
 import { cn } from "@/lib/utils";
 
 interface BattleArenaProps {
@@ -107,15 +110,35 @@ export function BattleArena({
     return "pick-target";
   };
 
+  const livingEnemies = state.enemyTeam.filter((f) => f.currentHp > 0);
+  const selectedActor =
+    pending.actorSlot != null
+      ? state.playerTeam.find((f) => f.slotIndex === pending.actorSlot)
+      : null;
+
+  const getEnemyMatchup = (enemy: (typeof state.enemyTeam)[0]): TypeMatchupHint | null => {
+    if (!selectedActor || enemy.currentHp <= 0) return null;
+    if (phase === "player-pick-target" || phase === "player-pick-move") {
+      return getBestMoveMatchup(selectedActor, enemy);
+    }
+    return null;
+  };
+
+  const getPlayerMatchup = (player: (typeof state.playerTeam)[0]): TypeMatchupHint | null => {
+    if (player.currentHp <= 0 || phase !== "player-pick-actor") return null;
+    return getActorBestOpportunity(player, state.enemyTeam);
+  };
+
   const showModal =
     (state.phase === "victory" || state.phase === "defeat") && onContinue;
 
   const arenaContent = (
-    <>
+    <div className="relative">
       {state.phase === "coinFlip" && (
         <BattleCoinFlipOverlay playerStarts={state.playerStarts ?? true} />
       )}
 
+      <div className={state.phase === "coinFlip" ? "opacity-30 pointer-events-none select-none" : ""}>
       <div className="flex items-center justify-between gap-4 mb-2">
         {state.gymMeta ? (
           <div
@@ -144,29 +167,12 @@ export function BattleArena({
         ) : (
           <div className="flex-1" />
         )}
-
-        {onToggleAutoBattle && (
-          <button
-            onClick={onToggleAutoBattle}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-[10px] font-black tracking-tighter transition-all flex items-center gap-1.5 border",
-              autoBattle
-                ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-300"
-                : "bg-white/5 border-white/10 text-white/30"
-            )}
-          >
-            <motion.div
-              animate={autoBattle ? { rotate: 360 } : {}}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-            >
-              <Swords className="w-3 h-3" />
-            </motion.div>
-            AUTO BATTLE: {autoBattle ? "ON" : "OFF"}
-          </button>
-        )}
       </div>
 
-      <div className={state.phase === "coinFlip" ? "opacity-40 pointer-events-none" : ""}>
+      {onToggleAutoBattle && (
+        <FloatingAutoBattleToggle active={autoBattle} onToggle={onToggleAutoBattle} />
+      )}
+
         {tactical && <BattleTurnBanner phase={phase} />}
 
         <div
@@ -183,7 +189,11 @@ export function BattleArena({
               phase === "player-pick-target" && "animate-pulse"
             )}
           >
-            {phase === "player-pick-target" ? "🎯 Escolha o alvo" : "Inimigos"}
+            {phase === "player-pick-target" ? (
+              <span className="flex items-center gap-1"><Target className="w-3 h-3" /> Escolha o alvo</span>
+            ) : (
+              "Inimigos"
+            )}
           </p>
           <div className="grid grid-cols-3 gap-2 relative z-10">
             {state.enemyTeam.map((f, i) => {
@@ -201,11 +211,17 @@ export function BattleArena({
                   }
                   compact
                   side="enemy"
-                  selectable={tactical && phase === "player-pick-target" && f.currentHp > 0}
+                  selectable={
+                    tactical &&
+                    f.currentHp > 0 &&
+                    (phase === "player-pick-target" ||
+                      (phase === "player-pick-move" && pending.targetSlot === slot))
+                  }
                   onSelect={() => onPickTarget?.(slot)}
                   moveType={isVictim ? combatHighlight?.moveType : undefined}
                   attackPhase={isVictim ? combatHighlight?.phase : undefined}
                   statusApplied={isVictim ? combatHighlight?.statusApplied : undefined}
+                  typeMatchup={getEnemyMatchup(f)}
                 />
               );
             })}
@@ -249,7 +265,11 @@ export function BattleArena({
               phase === "player-pick-actor" && "animate-pulse"
             )}
           >
-            {phase === "player-pick-actor" ? "👆 Escolha quem ataca" : "Seu Time"}
+            {phase === "player-pick-actor" ? (
+              <span className="flex items-center gap-1"><Pointer className="w-3 h-3" /> Escolha quem ataca</span>
+            ) : (
+              "Seu Time"
+            )}
           </p>
           <div className="grid grid-cols-3 gap-2 relative z-10">
             {state.playerTeam.map((f, i) => {
@@ -281,6 +301,7 @@ export function BattleArena({
                     isVictim || isStriker ? combatHighlight?.phase : undefined
                   }
                   statusApplied={isVictim ? combatHighlight?.statusApplied : undefined}
+                  typeMatchup={getPlayerMatchup(f)}
                 />
               );
             })}
@@ -293,32 +314,11 @@ export function BattleArena({
             bonuses={bonuses}
             onPickMove={onPickMove}
             onCancel={onCancelSelection}
+            recentLog={state.log.slice(-4)}
           />
         )}
-
-        <div
-          className={cn(
-            "mt-3 relative z-10",
-            BATTLE_CLASSIC_THEME ? "battle-classic-dialog h-24" : "glass-card p-3 h-24 overflow-y-auto space-y-1"
-          )}
-        >
-          <AnimatePresence initial={false}>
-            {state.log.slice(-5).map((entry) => (
-              <motion.p
-                key={entry.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className={cn(
-                  BATTLE_CLASSIC_THEME ? "battle-classic-dialog-text" : "text-xs text-white/60"
-                )}
-              >
-                {entry.message}
-              </motion.p>
-            ))}
-          </AnimatePresence>
-        </div>
       </div>
-    </>
+    </div>
   );
 
   return (

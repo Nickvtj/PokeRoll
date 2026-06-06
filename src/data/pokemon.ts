@@ -32,6 +32,7 @@ const GEN1_NAMES: Record<number, string> = {
   136: "Flareon", 137: "Porygon", 138: "Omanyte", 139: "Omastar", 140: "Kabuto",
   141: "Kabutops", 142: "Aerodactyl", 143: "Snorlax", 144: "Articuno", 145: "Zapdos",
   146: "Moltres", 147: "Dratini", 148: "Dragonair", 149: "Dragonite", 150: "Mewtwo",
+  151: "Mew",
 };
 
 /** Atribuição manual de raridade — finais fortes sobem; rotas fracas ficam comuns */
@@ -41,6 +42,9 @@ const RARITY_MAP: Record<number, Rarity> = {
   145: "legendary",
   146: "legendary",
   150: "legendary",
+
+  // Secreto — só na roleta com todas as conquistas
+  151: "legendary",
 
   // Épicos — finais icônicos, pseudo-lendários e singles raríssimos
   3: "epic",
@@ -172,16 +176,24 @@ function createPokemon(id: number): Pokemon {
   };
 }
 
-/** 150 Pokémon da 1ª geração (IDs 1–150) */
+export const MEW_ID = 151;
+
+/** 150 Pokémon da 1ª geração (IDs 1–150) + Mew secreto */
 export const POKEMON_LIST: Pokemon[] = Array.from({ length: 150 }, (_, i) =>
   createPokemon(i + 1)
 );
 
-export const POKEMON_MAP: Record<number, Pokemon> = Object.fromEntries(
-  POKEMON_LIST.map((p) => [p.id, p])
-);
+export const MEW_POKEMON: Pokemon = createPokemon(MEW_ID);
 
-export const TOTAL_POKEMON = POKEMON_LIST.length;
+export const POKEMON_MAP: Record<number, Pokemon> = {
+  ...Object.fromEntries(POKEMON_LIST.map((p) => [p.id, p])),
+  [MEW_ID]: MEW_POKEMON,
+};
+
+/** Lista completa do álbum (150 + Mew secreto) */
+export const ALBUM_POKEMON_LIST: Pokemon[] = [...POKEMON_LIST, MEW_POKEMON];
+
+export const TOTAL_POKEMON = ALBUM_POKEMON_LIST.length;
 
 export function getPokemonById(id: number): Pokemon | undefined {
   return POKEMON_MAP[id];

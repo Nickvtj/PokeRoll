@@ -17,6 +17,7 @@ import {
   prepareEnemyTurn,
   resolveTacticalCoinFlip,
   deselectActor,
+  deselectTarget,
   resolveBattleIfOver,
   selectActor,
   selectMove,
@@ -71,6 +72,7 @@ export function useTacticalBattle({
   const coinFlipTimerRef = useRef<number | null>(null);
   const chainTimerRef = useRef<number | null>(null);
   const autoTimerRef = useRef<number | null>(null);
+  const combatTimersRef = useRef<number[]>([]);
   const finishTurnRef = useRef<(state: BattleState, done: boolean) => void>(() => {});
 
   const soundsStartedRef = useRef(false);
@@ -101,6 +103,22 @@ export function useTacticalBattle({
     autoBattleScheduledRef.current = false;
   }, []);
 
+  const clearCombatTimers = useCallback(() => {
+    for (const id of combatTimersRef.current) {
+      window.clearTimeout(id);
+    }
+    combatTimersRef.current = [];
+  }, []);
+
+  const scheduleCombatTimeout = useCallback((fn: () => void, ms: number) => {
+    const id = window.setTimeout(() => {
+      combatTimersRef.current = combatTimersRef.current.filter((t) => t !== id);
+      if (!fightingRef.current) return;
+      fn();
+    }, ms);
+    combatTimersRef.current.push(id);
+  }, []);
+
   const scheduleEnemyChain = useCallback(
     (delayMs: number) => {
       clearChainTimer();
@@ -108,6 +126,7 @@ export function useTacticalBattle({
       chainTimerRef.current = window.setTimeout(() => {
         enemyChainScheduledRef.current = false;
         chainTimerRef.current = null;
+        if (!fightingRef.current) return;
         runEnemyChainRef.current();
       }, delayMs);
     },
@@ -158,7 +177,7 @@ export function useTacticalBattle({
 
       playTacticalCombatSounds(next.log, logFrom, move, BATTLE_STRIKE_MS);
 
-      window.setTimeout(() => {
+      scheduleCombatTimeout(() => {
         setDisplayState(next);
         setCombatHighlight({
           strikerFlat,
@@ -168,7 +187,7 @@ export function useTacticalBattle({
           statusApplied,
         });
 
-        window.setTimeout(() => {
+        scheduleCombatTimeout(() => {
           setCombatHighlight({
             strikerFlat,
             victimFlat,
@@ -177,7 +196,7 @@ export function useTacticalBattle({
             statusApplied,
           });
 
-          window.setTimeout(() => {
+          scheduleCombatTimeout(() => {
             setCombatHighlight(null);
             setDisplayState(null);
             animatingRef.current = false;
@@ -190,7 +209,7 @@ export function useTacticalBattle({
         }, BATTLE_FLASH_MS);
       }, BATTLE_STRIKE_MS);
     },
-    [syncBattleState]
+    [syncBattleState, scheduleCombatTimeout]
   );
 
   const runEnemyChainRef = useRef<() => void>(() => {});
@@ -328,7 +347,8 @@ export function useTacticalBattle({
         autoTimerRef.current = window.setTimeout(() => {
           autoBattleScheduledRef.current = false;
           autoTimerRef.current = null;
-          
+          if (!fightingRef.current) return;
+
           let s = selectActor(stateRef.current!, selection.actorSlot);
           s = selectTarget(s, selection.targetSlot);
           s = selectMove(s, selection.moveIndex);
@@ -342,6 +362,7 @@ export function useTacticalBattle({
 
   useEffect(() => {
     if (!fighting) {
+      fightingRef.current = false;
       animatingRef.current = false;
       playerActionStartedRef.current = false;
       setCombatHighlight(null);
@@ -349,6 +370,7 @@ export function useTacticalBattle({
       clearCoinFlipTimer();
       clearChainTimer();
       clearAutoTimer();
+      clearCombatTimers();
       soundsStartedRef.current = false;
       return undefined;
     }
@@ -393,6 +415,7 @@ export function useTacticalBattle({
     scheduleEnemyChain,
     clearCoinFlipTimer,
     clearAutoTimer,
+    clearCombatTimers,
   ]);
 
   const pickActor = useCallback(
@@ -432,7 +455,21 @@ export function useTacticalBattle({
     (slot: number) => {
       if (animatingRef.current) return;
       const prev = stateRef.current;
-      if (!prev || prev.tacticalPhase !== "player-pick-target") return;
+      if (!prev) return;
+
+      const pending = prev.pendingSelection ?? {};
+
+      if (
+        prev.tacticalPhase === "player-pick-move" &&
+        pending.targetSlot === slot
+      ) {
+        const next = deselectTarget(prev);
+        stateRef.current = next;
+        setBattleState(next);
+        return;
+      }
+
+      if (prev.tacticalPhase !== "player-pick-target") return;
       const next = selectTarget(prev, slot);
       stateRef.current = next;
       setBattleState(next);
@@ -456,24 +493,33 @@ export function useTacticalBattle({
     if (animatingRef.current) return;
     const prev = stateRef.current;
     if (!prev) return;
-    const next: BattleState = {
-      ...prev,
-      tacticalPhase: "player-pick-actor",
-      pendingSelection: {},
-    };
+
+    let next: BattleState;
+    if (prev.tacticalPhase === "player-pick-move") {
+      next = deselectTarget(prev);
+    } else if (prev.tacticalPhase === "player-pick-target") {
+      next = deselectActor(prev);
+    } else {
+      return;
+    }
+
     stateRef.current = next;
     setBattleState(next);
   }, [setBattleState]);
 
   const resetLoop = useCallback(() => {
+    fightingRef.current = false;
     animatingRef.current = false;
     playerActionStartedRef.current = false;
+    enemyChainScheduledRef.current = false;
+    autoBattleScheduledRef.current = false;
     setCombatHighlight(null);
     setDisplayState(null);
     clearCoinFlipTimer();
     clearChainTimer();
     clearAutoTimer();
-  }, [clearCoinFlipTimer, clearChainTimer, clearAutoTimer]);
+    clearCombatTimers();
+  }, [clearCoinFlipTimer, clearChainTimer, clearAutoTimer, clearCombatTimers]);
 
   return {
     arenaState: displayState ?? battleState,

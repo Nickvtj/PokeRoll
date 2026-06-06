@@ -10,6 +10,7 @@ import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
 import { initBattle } from "@/lib/battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordBattleToSupabase } from "@/lib/economy-supabase";
+import { useBattleSessionStore } from "@/stores/battle-session-store";
 import { useTacticalBattle } from "@/hooks/use-tactical-battle";
 import type { BattleState } from "@/types/battle";
 
@@ -112,13 +113,23 @@ export function TrainingPanel({
     resetLoop();
     setBattleState(null);
     setFighting(false);
+    useBattleSessionStore.getState().setSession(false);
   };
 
   useEffect(() => {
-    const active = fighting || battleState != null;
-    onBattleActiveChange?.(active);
-    return () => onBattleActiveChange?.(false);
-  }, [fighting, battleState, onBattleActiveChange]);
+    const inBattleView = fighting || battleState != null;
+    const canLeave =
+      inBattleView &&
+      battleState != null &&
+      battleState.phase !== "victory" &&
+      battleState.phase !== "defeat";
+    onBattleActiveChange?.(inBattleView);
+    useBattleSessionStore.getState().setSession(canLeave, canLeave ? resetBattle : undefined);
+    return () => {
+      onBattleActiveChange?.(false);
+      useBattleSessionStore.getState().setSession(false);
+    };
+  }, [fighting, battleState, onBattleActiveChange, resetBattle]);
 
   if (fighting || battleState) {
     return (
@@ -146,6 +157,7 @@ export function TrainingPanel({
   }
 
   return (
+    <div className="flex-1 min-h-0 flex flex-col">
     <BattleTeamPrepLayout
       action={
         <AnimatedButton
@@ -162,5 +174,6 @@ export function TrainingPanel({
     >
       <TeamSelector className="flex-1 min-h-0" />
     </BattleTeamPrepLayout>
+    </div>
   );
 }

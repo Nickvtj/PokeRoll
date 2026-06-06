@@ -49,8 +49,8 @@ export default function ClickRushGamePage() {
         coins,
         xp,
         message: isNewRecord
-          ? `NOVO RECORDE! ${score} pts · combo ${maxCombo} → +${coins} moedas`
-          : `Click Rush: ${score} pts · combo ${maxCombo} (${rewardParts.join(" · ")}) → +${coins} moedas`,
+          ? `NOVO RECORDE! ${score} pts · combo ${maxCombo} · +${coins} moedas`
+          : `Click Rush: ${score} pts · combo ${maxCombo} (${rewardParts.join(" · ")}) · +${coins} moedas`,
         isNewRecord,
         onClosePath: "/games",
         closeLabel: "Voltar",

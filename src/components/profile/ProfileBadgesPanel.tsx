@@ -1,6 +1,6 @@
 "use client";
 
-import { Award } from "lucide-react";
+import { Award, Trophy } from "lucide-react";
 import { GYMS } from "@/data/gyms";
 import { useGymStore } from "@/stores/gym-store";
 import { GymBadge } from "@/components/gym/GymBadge";
@@ -21,15 +21,15 @@ export function ProfileBadgesPanel() {
       iconClassName="text-amber-400"
     >
       {earned.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[10px] text-emerald-400/80 uppercase tracking-wider font-semibold">
+        <div className="space-y-3">
+          <p className="text-xs text-emerald-400/90 uppercase tracking-wider font-semibold">
             Conquistadas
           </p>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
             {earned.map((g) => (
-              <div key={g.id} className="flex flex-col items-center gap-1">
-                <GymBadge gymId={g.id} name={g.badgeName} earned color={g.themeColor} size="sm" />
-                <p className="text-[8px] text-white/50 text-center leading-tight">{g.badgeName}</p>
+              <div key={g.id} className="flex flex-col items-center gap-1.5">
+                <GymBadge gymId={g.id} name={g.badgeName} earned color={g.themeColor} size="md" />
+                <p className="text-[11px] text-white/55 text-center leading-tight">{g.badgeName}</p>
               </div>
             ))}
           </div>
@@ -37,15 +37,15 @@ export function ProfileBadgesPanel() {
       )}
 
       {missing.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">
+        <div className="space-y-3">
+          <p className="text-xs text-white/45 uppercase tracking-wider font-semibold">
             Faltam conquistar
           </p>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
             {missing.map((g) => (
-              <div key={g.id} className="flex flex-col items-center gap-1 opacity-60">
-                <GymBadge gymId={g.id} name={g.badgeName} earned={false} color={g.themeColor} size="sm" />
-                <p className="text-[8px] text-white/30 text-center leading-tight">{g.leaderName}</p>
+              <div key={g.id} className="flex flex-col items-center gap-1.5 opacity-65">
+                <GymBadge gymId={g.id} name={g.badgeName} earned={false} color={g.themeColor} size="md" />
+                <p className="text-[11px] text-white/40 text-center leading-tight">{g.leaderName}</p>
               </div>
             ))}
           </div>
@@ -53,8 +53,9 @@ export function ProfileBadgesPanel() {
       )}
 
       {championDefeated && (
-        <p className="text-center text-xs text-amber-400 font-semibold pt-2 border-t border-white/10">
-          🏆 Campeão da Liga — Hall of Fame
+        <p className="text-center text-sm text-amber-400 font-semibold pt-3 border-t border-white/10 flex items-center justify-center gap-2">
+          <Trophy className="w-4 h-4" />
+          Campeão da Liga · Hall of Fame
         </p>
       )}
     </ProfileSection>

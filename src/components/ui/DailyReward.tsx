@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CalendarDays, Flame } from "lucide-react";
+import { CalendarDays, CheckCircle, Flame } from "lucide-react";
 import { DAILY_LOGIN_COINS } from "@/data/economy-balance";
 import { useEconomyStore } from "@/stores/economy-store";
 import { cn } from "@/lib/utils";
@@ -53,9 +53,14 @@ export function DailyReward() {
       </div>
 
       <p className="text-xs text-white/40 text-center">
-        {claimedToday
-          ? "✅ Recompensa de hoje já coletada! Volte amanhã."
-          : "Faça login amanhã para manter o streak!"}
+        {claimedToday ? (
+          <span className="inline-flex items-center justify-center gap-1">
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+            Recompensa de hoje já coletada! Volte amanhã.
+          </span>
+        ) : (
+          "Faça login amanhã para manter o streak!"
+        )}
       </p>
     </div>
   );

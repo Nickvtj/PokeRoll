@@ -1,7 +1,7 @@
 "use client";
 
 import { ELITE_FOUR, isEliteMemberUnlocked } from "@/data/gyms";
-import { Lock, Swords } from "lucide-react";
+import { Lock, Swords, Trophy, Check } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { BattleArena } from "@/components/battle/BattleArena";
 import { TeamSelector } from "@/components/battle/TeamSelector";
@@ -11,6 +11,7 @@ import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
 import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
 import { useTacticalBattle } from "@/hooks/use-tactical-battle";
+import { useBattleSessionStore } from "@/stores/battle-session-store";
 import type { BattleState } from "@/types/battle";
 import type { EliteId } from "@/types/gym";
 import { cn } from "@/lib/utils";
@@ -104,13 +105,24 @@ export function EliteFourScreen({
     resetLoop();
     setBattleState(null);
     setFighting(false);
+    setActiveElite(null);
+    useBattleSessionStore.getState().setSession(false);
   };
 
   useEffect(() => {
-    const active = fighting || battleState != null;
-    onBattleActiveChange?.(active);
-    return () => onBattleActiveChange?.(false);
-  }, [fighting, battleState, onBattleActiveChange]);
+    const inBattleView = fighting || battleState != null;
+    const canLeave =
+      inBattleView &&
+      battleState != null &&
+      battleState.phase !== "victory" &&
+      battleState.phase !== "defeat";
+    onBattleActiveChange?.(inBattleView);
+    useBattleSessionStore.getState().setSession(canLeave, canLeave ? resetBattle : undefined);
+    return () => {
+      onBattleActiveChange?.(false);
+      useBattleSessionStore.getState().setSession(false);
+    };
+  }, [fighting, battleState, onBattleActiveChange, resetBattle]);
 
   if (fighting || battleState) {
     return (
@@ -128,7 +140,6 @@ export function EliteFourScreen({
         onCancelSelection={cancelSelection}
         onContinue={() => {
           resetBattle();
-          setActiveElite(null);
         }}
         onPlayAgain={() => {
           const elite = activeElite;
@@ -155,7 +166,10 @@ export function EliteFourScreen({
 
       {championDefeated && (
         <div className="glass-card p-4 text-center border border-amber-500/30 bg-amber-500/10">
-          <p className="text-amber-400 font-bold">🏆 Hall of Fame — Campeão Kanto!</p>
+          <p className="text-amber-400 font-bold flex items-center justify-center gap-2">
+            <Trophy className="w-5 h-5" />
+            Hall of Fame · Campeão Kanto!
+          </p>
         </div>
       )}
 
@@ -205,7 +219,10 @@ export function EliteFourScreen({
               </p>
               <p className="text-[10px] text-white/40">{elite.title} · Nv. {elite.recommendedLevel}+</p>
               {cleared && memberUnlocked && (
-                <p className="text-[10px] text-amber-400 mt-1">✓ Derrotado</p>
+                <p className="text-[10px] text-amber-400 mt-1 flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  Derrotado
+                </p>
               )}
             </button>
           );

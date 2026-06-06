@@ -113,7 +113,7 @@ export function PokemonMovesTab({ pokemonId, level }: PokemonMovesTabProps) {
       {equippedCount < 2 && (
         <p className="text-[10px] text-amber-300/70 leading-relaxed">
           {equippedCount === 0
-            ? "Nenhum golpe escolhido — na batalha usaremos os melhores disponíveis automaticamente."
+            ? "Nenhum golpe escolhido. Na batalha usaremos os melhores disponíveis automaticamente."
             : "Escolha mais 1 golpe para completar sua build."}
         </p>
       )}

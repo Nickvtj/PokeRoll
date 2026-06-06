@@ -13,13 +13,20 @@ interface BattleActionPanelProps {
   onPickMove: (index: number) => void;
   onCancel: () => void;
   className?: string;
+  recentLog?: { id: string; message: string }[];
 }
 
-const EFFECTIVENESS_STYLE: Record<string, string> = {
-  super: "text-emerald-300 border-emerald-400/50 bg-emerald-500/15",
-  weak: "text-amber-300/90 border-amber-400/40 bg-amber-500/10",
-  immune: "text-slate-400 border-slate-400/30 bg-slate-500/10",
-  normal: "text-cyan-200/90 border-cyan-400/35 bg-cyan-500/10",
+const EFF_BADGE: Record<string, string> = {
+  super: "text-emerald-100 bg-emerald-500/45 ring-emerald-300/50",
+  weak: "text-amber-100 bg-amber-500/35 ring-amber-300/40",
+  immune: "text-slate-200 bg-slate-500/35 ring-slate-300/30",
+  normal: "text-white/50 bg-white/10 ring-white/15",
+};
+
+const EFF_LABEL: Record<string, string> = {
+  super: "Super efetivo",
+  weak: "Pouco efetivo",
+  immune: "Sem efeito",
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -43,64 +50,60 @@ const TYPE_COLORS: Record<string, string> = {
   normal: "from-slate-500/20 to-slate-700/40 border-slate-400/50",
 };
 
-function MoveButton({
-  preview,
-  onPick,
-}: {
-  preview: MovePreview;
-  onPick: () => void;
-}) {
+function shortEffLabel(preview: MovePreview): string | null {
+  return EFF_LABEL[preview.effectiveness] ?? null;
+}
+
+function MoveButton({ preview, onPick }: { preview: MovePreview; onPick: () => void }) {
   const { move } = preview;
-  const isSuper = preview.effectiveness === "super";
-  const effText = getEffectivenessText(preview);
-  const effClass = EFFECTIVENESS_STYLE[preview.effectiveness] ?? EFFECTIVENESS_STYLE.normal;
   const typeLabel = TYPE_LABELS_PT[move.type] ?? move.type;
   const typeStyle = TYPE_COLORS[move.type] || TYPE_COLORS.normal;
+  const badge = shortEffLabel(preview);
+  const badgeClass = EFF_BADGE[preview.effectiveness] ?? EFF_BADGE.normal;
 
   return (
     <motion.button
       type="button"
-      whileHover={{ scale: 1.02, brightness: 1.1 }}
+      whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
       onClick={onPick}
       className={cn(
         "w-full text-left rounded-xl border p-3 transition-all relative overflow-hidden bg-gradient-to-br",
-        BATTLE_CLASSIC_THEME ? "hover:brightness-125" : "hover:border-white/40",
         typeStyle,
-        isSuper && "ring-2 ring-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+        preview.effectiveness === "super" && "ring-2 ring-emerald-400/45",
+        preview.effectiveness === "weak" && "ring-1 ring-amber-400/35"
       )}
     >
-      {isSuper && (
-        <span className="absolute top-0 right-0 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest bg-white text-black rounded-bl-lg animate-pulse">
-          Super efetivo
+      {badge && (
+        <span
+          className={cn(
+            "absolute top-2 right-2 text-[9px] font-bold px-2 py-1 rounded-md ring-1 uppercase tracking-wide",
+            badgeClass
+          )}
+        >
+          {badge}
         </span>
       )}
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className={cn("text-sm font-bold truncate text-white shadow-sm")}>
-            {move.name}
-          </p>
-          <p className="text-[10px] text-white/70 font-medium capitalize mt-0.5">
-            {typeLabel}
-            {move.category === "damage" ? ` · Poder ${move.power}` : " · Status"}
-          </p>
-        </div>
-        <Swords className={cn("w-4 h-4 shrink-0 mt-0.5 text-white/80")} />
-      </div>
-
-      <div className={cn("mt-2 rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wide bg-black/20 backdrop-blur-sm", effClass)}>
-        {effText}
+      <p className="text-sm font-bold truncate text-white pr-12">{move.name}</p>
+      <p className="text-[10px] text-white/60 mt-0.5">
+        {typeLabel}
+        {move.category === "damage" ? ` · Poder ${move.power}` : " · Status"}
         {preview.estimatedDamage[1] > 0 && (
-          <span className="font-normal normal-case ml-1 opacity-90">
-            · ~{preview.estimatedDamage[0]}–{preview.estimatedDamage[1]} dmg
-          </span>
+          <span className="text-white/40"> · ~{preview.estimatedDamage[0]}–{preview.estimatedDamage[1]}</span>
         )}
-      </div>
+      </p>
     </motion.button>
   );
 }
 
-export function BattleActionPanel({ state, bonuses, onPickMove, onCancel, className }: BattleActionPanelProps) {
+export function BattleActionPanel({
+  state,
+  bonuses,
+  onPickMove,
+  onCancel,
+  className,
+  recentLog = [],
+}: BattleActionPanelProps) {
   const phase = state.tacticalPhase;
   const pending = state.pendingSelection ?? {};
 
@@ -116,7 +119,7 @@ export function BattleActionPanel({ state, bonuses, onPickMove, onCancel, classN
       case "animating":
         return { icon: Swords, text: "Executando...", color: "text-indigo-300" };
       case "enemy-turn":
-        return { icon: Swords, text: "Turno do oponente (1 golpe)", color: "text-red-400" };
+        return { icon: Swords, text: "Turno do oponente", color: "text-red-400" };
       default:
         return null;
     }
@@ -134,7 +137,7 @@ export function BattleActionPanel({ state, bonuses, onPickMove, onCancel, classN
   const movePreviews: MovePreview[] =
     phase === "player-pick-move" && actor && target
       ? (actor.equippedMoves ?? [])
-          .map((move, i) =>
+          .map((move) =>
             previewMove(state, pending.actorSlot!, pending.targetSlot!, move, bonuses)
           )
           .sort((a, b) => {
@@ -150,7 +153,7 @@ export function BattleActionPanel({ state, bonuses, onPickMove, onCancel, classN
   return (
     <div
       className={cn(
-        "mt-3 relative z-20 shrink-0",
+        "mt-3 relative z-20 shrink-0 battle-dialog-box",
         BATTLE_CLASSIC_THEME ? "battle-classic-dialog p-3" : "glass-card p-3",
         className
       )}
@@ -159,31 +162,25 @@ export function BattleActionPanel({ state, bonuses, onPickMove, onCancel, classN
         {phaseHint && (
           <motion.div
             key={phase}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="flex items-center gap-2 mb-2"
           >
             <phaseHint.icon className={cn("w-4 h-4 shrink-0", phaseHint.color)} />
-            <p className={cn("text-xs font-bold", phaseHint.color)}>{phaseHint.text}</p>
+            <p className={cn("text-xs font-bold flex-1", phaseHint.color)}>{phaseHint.text}</p>
             {state.roundNumber != null && (
-              <span className="text-[10px] text-white/35 ml-auto tabular-nums">
-                Rodada {state.roundNumber}
-              </span>
+              <span className="text-[10px] text-white/30 tabular-nums">R{state.roundNumber}</span>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {phase === "player-pick-target" && actor && (
-        <p className="text-[10px] text-cyan-300/70 mb-2">
-          {actor.pokemon.name} selecionado — toque nele de novo para trocar
-        </p>
-      )}
-
       {actor && target && phase === "player-pick-move" && (
-        <p className="text-[10px] text-white/50 mb-2">
-          {actor.pokemon.name} → {target.pokemon.name}
+        <p className="text-[10px] text-white/45 mb-2 font-medium">
+          <span className="text-cyan-300/90">{actor.pokemon.name}</span>
+          <span className="text-white/25 mx-1">vs</span>
+          <span className="text-red-300/90">{target.pokemon.name}</span>
         </p>
       )}
 
@@ -203,17 +200,37 @@ export function BattleActionPanel({ state, bonuses, onPickMove, onCancel, classN
         <button
           type="button"
           onClick={onCancel}
-          className="mt-2 flex items-center gap-1.5 text-[10px] text-white/40 hover:text-white/70 transition-colors"
+          className="mt-2 flex items-center gap-1.5 text-[10px] text-white/35 hover:text-white/60 transition-colors"
         >
           <ArrowLeft className="w-3 h-3" />
-          Voltar
+          {phase === "player-pick-move" ? "Trocar alvo" : "Trocar Pokémon"}
         </button>
       )}
 
       {phase === "player-pick-actor" && (
-        <p className="text-[10px] text-white/40 leading-relaxed">
-          Seu golpe → 1 golpe do oponente → seu golpe. Escolha Pokémon, alvo e ataque.
+        <p className="text-[10px] text-white/40 leading-relaxed italic">
+          Seu golpe, depois 1 do oponente, depois o seu. Escolha Pokémon, alvo e ataque.
         </p>
+      )}
+
+      {recentLog.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-indigo-500/15 space-y-1 max-h-[4.5rem] overflow-y-auto">
+          <AnimatePresence initial={false}>
+            {recentLog.map((entry) => (
+              <motion.p
+                key={entry.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className={cn(
+                  "text-[10px] leading-snug battle-dialog-line",
+                  BATTLE_CLASSIC_THEME ? "battle-classic-dialog-text" : "text-white/50"
+                )}
+              >
+                {entry.message.replace(/→/g, " em ").replace(/\[Dano convencional\]/gi, "")}
+              </motion.p>
+            ))}
+          </AnimatePresence>
+        </div>
       )}
     </div>
   );

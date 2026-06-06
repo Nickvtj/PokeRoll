@@ -87,7 +87,7 @@ export function AlbumGrid() {
               setAlbumFilter({ searchQuery: e.target.value });
               setVisibleCount(ALBUM_PAGE_SIZE);
             }}
-            placeholder="Buscar nos Pokémon que você já tem..."
+            placeholder="Buscar por nome ou número (#151, 025...)"
             className="w-full pl-10 pr-10 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all"
           />
           {albumFilter.searchQuery && (
@@ -101,7 +101,7 @@ export function AlbumGrid() {
         </div>
         {isSearching && (
           <p className="mt-2 text-xs text-white/40">
-            Mostrando {displayedPokemon.length} Pokémon coletado(s) com &quot;{albumFilter.searchQuery}&quot;
+            {displayedPokemon.length} resultado(s) para &quot;{albumFilter.searchQuery}&quot;
           </p>
         )}
       </div>
@@ -233,7 +233,7 @@ export function AlbumGrid() {
       {displayedPokemon.length === 0 && (
         <div className="text-center py-12 text-white/40">
           {isSearching
-            ? "Nenhum Pokémon coletado com esse nome."
+            ? "Nenhum Pokémon encontrado com essa busca."
             : "Nenhum Pokémon encontrado com esses filtros."}
         </div>
       )}

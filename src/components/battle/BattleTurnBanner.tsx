@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Swords, User } from "lucide-react";
+import { ChevronRight, Shield, Swords, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TacticalPhase } from "@/types/battle";
 
@@ -92,7 +92,7 @@ export function BattleTurnBanner({ phase }: { phase?: TacticalPhase }) {
                   {i + 1}. {step.label}
                 </span>
                 {i < STEPS.length - 1 && (
-                  <span className="text-white/20 text-[10px]">→</span>
+                  <ChevronRight className="w-3 h-3 text-white/20 shrink-0" aria-hidden />
                 )}
               </div>
             );

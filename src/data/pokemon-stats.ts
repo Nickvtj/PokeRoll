@@ -28,6 +28,7 @@ const STAT_OVERRIDES: Partial<
   149: { hp: 91, attack: 134, defense: 95, speed: 80 }, // Dragonite
   94: { hp: 60, attack: 65, defense: 60, speed: 110 }, // Gengar
   150: { hp: 106, attack: 110, defense: 90, speed: 130 }, // Mewtwo
+  151: { hp: 100, attack: 100, defense: 100, speed: 100 }, // Mew
   144: { hp: 90, attack: 85, defense: 100, speed: 85 }, // Articuno
   145: { hp: 90, attack: 90, defense: 85, speed: 100 }, // Zapdos
 };

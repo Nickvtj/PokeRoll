@@ -11,7 +11,8 @@ import {
   BattleSleepOverlay,
   BattleStatusBadge,
 } from "@/components/battle/BattleAttackFx";
-import { battleAudio } from "@/lib/battle-audio";
+import { playBattleStrike, playBattleHit } from "@/lib/battle-hit-sounds";
+import type { TypeMatchupHint } from "@/lib/battle-matchup";
 import type { BattleFighter } from "@/types/battle";
 
 export type BattleTurnHighlight = "attack" | "defend" | "idle-dim" | "none";
@@ -34,6 +35,7 @@ interface PokemonBattleCardProps {
   moveType?: string;
   attackPhase?: "strike" | "flash" | "impact";
   statusApplied?: string;
+  typeMatchup?: TypeMatchupHint | null;
 }
 
 function classicHpFillClass(hpPercent: number): string {
@@ -53,6 +55,7 @@ export function PokemonBattleCard({
   moveType,
   attackPhase,
   statusApplied,
+  typeMatchup,
 }: PokemonBattleCardProps) {
   const config = RARITY_CONFIG[fighter.pokemon.rarity];
   const hpPercent = (fighter.currentHp / fighter.maxHp) * 100;
@@ -76,12 +79,22 @@ export function PokemonBattleCard({
   const typeFxClass =
     isFlashing && moveType ? `battle-card-hit-${moveType in HIT_TYPES ? moveType : "default"}` : "";
 
-  // Tocar sons baseados na fase da animação
+  // Sons estilo Game Boy durante animações de ataque
   useEffect(() => {
     if (isStriking) {
-      battleAudio.playAttack(moveType || "normal");
+      void playBattleStrike();
     }
-  }, [isStriking, moveType]);
+  }, [isStriking]);
+
+  useEffect(() => {
+    if (isFlashing && attackPhase === "impact") {
+      void playBattleHit({
+        attackType: moveType || "normal",
+        isCrit: false,
+        effectiveness: "normal",
+      });
+    }
+  }, [isFlashing, attackPhase, moveType]);
 
   return (
     <motion.div
@@ -178,6 +191,21 @@ export function PokemonBattleCard({
       {fighter.status && !isKo && fighter.status.effect !== "sleep" && (
         <div className="absolute top-1 right-1 z-20">
           <BattleStatusBadge effect={fighter.status.effect} />
+        </div>
+      )}
+
+      {typeMatchup && !isKo && typeMatchup.kind !== "normal" && (
+        <div
+          className={cn(
+            "absolute top-1 left-1 z-20 px-1 py-0.5 rounded text-[7px] font-bold uppercase tracking-wide opacity-90",
+            typeMatchup.kind === "super"
+              ? "bg-emerald-500/25 text-emerald-300"
+              : typeMatchup.kind === "weak"
+                ? "bg-amber-500/20 text-amber-300"
+                : "bg-slate-600/30 text-slate-300"
+          )}
+        >
+          {typeMatchup.label}
         </div>
       )}
 

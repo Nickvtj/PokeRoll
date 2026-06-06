@@ -297,7 +297,7 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
         <h3 className="text-xl font-bold">Click Rush</h3>
         <p className="text-white/50 text-sm leading-relaxed">
           Pokébolas aparecem na tela. Clique o máximo que conseguir em{" "}
-          {CLICK_GAME_DURATION_SEC} segundos — combos aumentam sua pontuação! Itens especiais: +
+          {CLICK_GAME_DURATION_SEC} segundos. Combos aumentam sua pontuação! Itens especiais: +
           {CLICK_TIME_BONUS_SEC}s extras, congela o tempo, pontos em dobro e Frenesi Master.
           Recompensa: {CLICK_BASE_COINS_MIN}~{CLICK_BASE_COINS_MAX} moedas conforme seu desempenho.
         </p>

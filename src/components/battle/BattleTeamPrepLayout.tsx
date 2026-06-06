@@ -24,14 +24,15 @@ export function BattleTeamPrepLayout({
   return (
     <div
       className={cn(
-        showSidebar && "battle-prep-with-preview lg:grid lg:grid-cols-[minmax(0,1fr)_240px] lg:gap-4 lg:items-start"
+        showSidebar &&
+          "battle-prep-with-preview lg:grid lg:grid-cols-[minmax(0,1fr)_168px] lg:gap-3 lg:items-stretch flex-1 min-h-0 h-full"
       )}
     >
       <div
         className={cn(
-          "battle-prep-shell min-w-0",
+          "battle-prep-shell min-w-0 flex flex-col min-h-0",
           BATTLE_CLASSIC_THEME && "battle-classic-arena p-3 sm:p-4",
-          showSidebar && "lg:!max-h-[calc(100dvh-14rem)]"
+          showSidebar && "lg:h-full lg:max-h-full lg:overflow-hidden"
         )}
       >
         <TeamSelectionPreview
@@ -54,9 +55,9 @@ export function BattleTeamPrepLayout({
       </div>
 
       {showSidebar && (
-        <div className="hidden lg:flex flex-col gap-3 sticky top-20 self-start w-full min-w-0 max-h-[calc(100dvh-8rem)]">
-          <TeamSelectionPreview variant="sidebar" maxTeam={maxTeam} className="min-h-0 flex-1" />
-          <div className="shrink-0 w-full pt-1">{action}</div>
+        <div className="hidden lg:flex flex-col gap-2 w-full min-w-0 shrink-0 min-h-0 h-full max-h-full">
+          <TeamSelectionPreview variant="sidebar" maxTeam={maxTeam} className="flex-1 min-h-0" />
+          <div className="shrink-0 w-full">{action}</div>
         </div>
       )}
     </div>

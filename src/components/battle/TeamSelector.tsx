@@ -22,6 +22,7 @@ import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
 import { MonotypeSynergyBanner } from "@/components/battle/MonotypeSynergyFx";
 import { getTeamMonotypeSynergy } from "@/lib/team-monotype";
+import { playUiSelect, playUiDeselect, playUiTab } from "@/lib/ui-sounds";
 import { PokemonSelectorItem } from "./PokemonSelectorItem";
 
 interface TeamSelectorProps {
@@ -132,11 +133,13 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
 
     if (countInTeam < owned && currentTeam.length < maxTeam) {
       setTeam([...currentTeam, id]);
+      playUiSelect();
       return;
     }
     if (countInTeam > 0) {
       const idx = currentTeam.lastIndexOf(id);
       setTeam([...currentTeam.slice(0, idx), ...currentTeam.slice(idx + 1)]);
+      playUiDeselect();
     }
   }, [maxTeam, setTeam]);
 
@@ -189,7 +192,7 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
           </h3>
         )}
         <span className="text-[10px] text-amber-400/80">
-          Cap Nv.{getLevelCap()} · {badgeCount}🏅
+          Cap Nv.{getLevelCap()} · {badgeCount} insígnias
         </span>
         <div className="flex gap-2">
           <AnimatedButton variant="ghost" size="sm" onClick={clearTeam} icon={<X className="w-3.5 h-3.5" />}>
@@ -226,7 +229,10 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
         </div>
         <button
           type="button"
-          onClick={() => setFavoritesOnly((v) => !v)}
+          onClick={() => {
+            playUiTab();
+            setFavoritesOnly((v) => !v);
+          }}
           className={cn(
             "px-3 py-1.5 text-xs rounded-xl border transition-all flex items-center gap-1.5",
             BATTLE_CLASSIC_THEME ? "battle-prep-filter" : "glass-card",
@@ -240,7 +246,10 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
         </button>
         <select
           value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
+          onChange={(e) => {
+            playUiTab();
+            setTypeFilter(e.target.value);
+          }}
           className={cn(
             "px-3 py-1.5 text-xs rounded-xl bg-transparent border text-white/70",
             BATTLE_CLASSIC_THEME ? "battle-prep-filter" : "glass-card border-white/10"
@@ -254,7 +263,10 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
         </select>
         <select
           value={rarityFilter}
-          onChange={(e) => setRarityFilter(e.target.value)}
+          onChange={(e) => {
+            playUiTab();
+            setRarityFilter(e.target.value);
+          }}
           className={cn(
             "px-3 py-1.5 text-xs rounded-xl bg-transparent border text-white/70",
             BATTLE_CLASSIC_THEME ? "battle-prep-filter" : "glass-card border-white/10"
@@ -271,7 +283,10 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
         </select>
         <select
           value={levelFilter}
-          onChange={(e) => setLevelFilter(e.target.value as LevelFilterId)}
+          onChange={(e) => {
+            playUiTab();
+            setLevelFilter(e.target.value as LevelFilterId);
+          }}
           className={cn(
             "px-3 py-1.5 text-xs rounded-xl bg-transparent border text-white/70",
             BATTLE_CLASSIC_THEME ? "battle-prep-filter" : "glass-card border-white/10"

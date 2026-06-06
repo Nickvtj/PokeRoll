@@ -21,7 +21,13 @@ export function ProfileSection({
   className,
 }: ProfileSectionProps) {
   return (
-    <section className={cn("glass-card p-5 space-y-4", className)}>
+    <section
+      className={cn(
+        "rounded-2xl bg-slate-900/45 ring-1 ring-inset ring-indigo-500/10 p-5 space-y-4 overflow-hidden",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
+        className
+      )}
+    >
       <div className="space-y-0.5">
         <h3 className="font-bold text-sm flex items-center gap-2">
           {Icon && <Icon className={cn("w-4 h-4", iconClassName ?? "text-indigo-400")} />}

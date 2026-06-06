@@ -165,10 +165,10 @@ export function PokeMemoryGame({ onComplete, onReady }: PokeMemoryGameProps) {
         <div className="mx-auto w-14 h-14 rounded-2xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center">
           <Brain className="w-7 h-7 text-violet-400" />
         </div>
-        <h3 className="text-xl font-bold">Poké-Memory</h3>
+        <h3 className="text-xl font-bold">Poké Memory</h3>
         <p className="text-white/50 text-sm leading-relaxed">
           Encontre os {MEMORY_PAIR_COUNT} pares em {MEMORY_GAME_DURATION_SEC} segundos. Errou? As
-          cartas viram de novo — continue até acabar o tempo. Recompensa: {MEMORY_COINS_PER_PAIR}{" "}
+          cartas viram de novo. Continue até acabar o tempo. Recompensa: {MEMORY_COINS_PER_PAIR}{" "}
           moeda por par, até {MEMORY_PAIR_COUNT * MEMORY_COINS_PER_PAIR} moedas ao completar.
         </p>
         <AnimatedButton variant="primary" size="lg" onClick={start} className="w-full max-w-xs mx-auto">

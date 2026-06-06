@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { Flame, Moon, Skull, Zap, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StatusEffect } from "@/types/battle";
 
@@ -327,17 +328,18 @@ function DefaultParticles({ color }: { color: string }) {
 }
 
 export function BattleStatusBadge({ effect }: { effect: StatusEffect }) {
-  const config: Record<StatusEffect, { emoji: string; label: string; className: string }> = {
-    burn: { emoji: "🔥", label: "Queimado", className: "battle-status-burn" },
-    paralyze: { emoji: "⚡", label: "Paralisado", className: "battle-status-paralyze" },
-    poison: { emoji: "☠️", label: "Envenenado", className: "battle-status-poison" },
-    sleep: { emoji: "💤", label: "Dormindo", className: "battle-status-sleep" },
+  const config: Record<StatusEffect, { Icon: LucideIcon; label: string; className: string }> = {
+    burn: { Icon: Flame, label: "Queimado", className: "battle-status-burn" },
+    paralyze: { Icon: Zap, label: "Paralisado", className: "battle-status-paralyze" },
+    poison: { Icon: Skull, label: "Envenenado", className: "battle-status-poison" },
+    sleep: { Icon: Moon, label: "Dormindo", className: "battle-status-sleep" },
   };
 
   const c = config[effect];
+  const Icon = c.Icon;
   return (
     <span className={cn("battle-status-badge", c.className)}>
-      <span aria-hidden>{c.emoji}</span>
+      <Icon className="w-3 h-3 shrink-0" aria-hidden />
       {c.label}
     </span>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, Circle, Gift } from "lucide-react";
+import { CheckCircle, Circle, Coins, Flame, Gift } from "lucide-react";
 import { DAILY_MISSIONS } from "@/data/economy-balance";
 import { useEconomyStore } from "@/stores/economy-store";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
@@ -32,7 +32,10 @@ export function MissionsPanel() {
               Coletar tudo ({claimableCount})
             </AnimatedButton>
           )}
-          <span className="text-xs text-amber-400">🔥 Streak: {dailyStreak}d</span>
+          <span className="text-xs text-amber-400 flex items-center gap-1">
+            <Flame className="w-3.5 h-3.5" />
+            Streak: {dailyStreak}d
+          </span>
         </div>
       </div>
 
@@ -64,8 +67,9 @@ export function MissionsPanel() {
                   )}
                   <span className="text-sm font-medium">{mission.label}</span>
                 </div>
-                <span className="text-xs text-amber-400 font-bold">
-                  +{mission.reward}🪙
+                <span className="text-xs text-amber-400 font-bold flex items-center gap-0.5">
+                  +{mission.reward}
+                  <Coins className="w-3 h-3" />
                 </span>
               </div>
               <div className="progress-bar h-1.5">

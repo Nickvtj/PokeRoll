@@ -1,33 +1,46 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import {
+  Bug,
+  CircleDot,
+  Droplets,
+  Flame,
+  Ghost,
+  Leaf,
+  Mountain,
+  Sparkles,
+  Star,
+  Sword,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TeamMonotypeSynergy } from "@/lib/team-monotype";
 
-const TYPE_ACCENT: Record<string, { rgb: string; emoji: string }> = {
-  fire: { rgb: "251, 146, 60", emoji: "🔥" },
-  water: { rgb: "56, 189, 248", emoji: "💧" },
-  grass: { rgb: "74, 222, 128", emoji: "🌿" },
-  electric: { rgb: "250, 204, 21", emoji: "⚡" },
-  ice: { rgb: "103, 232, 249", emoji: "❄️" },
-  fighting: { rgb: "248, 113, 113", emoji: "👊" },
-  poison: { rgb: "192, 132, 252", emoji: "☠️" },
-  ground: { rgb: "217, 119, 6", emoji: "🌍" },
-  flying: { rgb: "129, 140, 248", emoji: "🪽" },
-  psychic: { rgb: "244, 114, 182", emoji: "🔮" },
-  bug: { rgb: "163, 230, 53", emoji: "🐛" },
-  rock: { rgb: "168, 162, 158", emoji: "🪨" },
-  ghost: { rgb: "167, 139, 250", emoji: "👻" },
-  dragon: { rgb: "99, 102, 241", emoji: "🐉" },
-  dark: { rgb: "100, 116, 139", emoji: "🌑" },
-  steel: { rgb: "148, 163, 184", emoji: "⚙️" },
-  fairy: { rgb: "244, 114, 182", emoji: "✨" },
-  normal: { rgb: "203, 213, 225", emoji: "⭐" },
+const TYPE_ACCENT: Record<string, { rgb: string; Icon: LucideIcon }> = {
+  fire: { rgb: "251, 146, 60", Icon: Flame },
+  water: { rgb: "56, 189, 248", Icon: Droplets },
+  grass: { rgb: "74, 222, 128", Icon: Leaf },
+  electric: { rgb: "250, 204, 21", Icon: Zap },
+  ice: { rgb: "103, 232, 249", Icon: Sparkles },
+  fighting: { rgb: "248, 113, 113", Icon: Sword },
+  poison: { rgb: "192, 132, 252", Icon: CircleDot },
+  ground: { rgb: "217, 119, 6", Icon: Mountain },
+  flying: { rgb: "129, 140, 248", Icon: Sparkles },
+  psychic: { rgb: "244, 114, 182", Icon: Sparkles },
+  bug: { rgb: "163, 230, 53", Icon: Bug },
+  rock: { rgb: "168, 162, 158", Icon: Mountain },
+  ghost: { rgb: "167, 139, 250", Icon: Ghost },
+  dragon: { rgb: "99, 102, 241", Icon: Star },
+  dark: { rgb: "100, 116, 139", Icon: CircleDot },
+  steel: { rgb: "148, 163, 184", Icon: CircleDot },
+  fairy: { rgb: "244, 114, 182", Icon: Sparkles },
+  normal: { rgb: "203, 213, 225", Icon: Star },
 };
 
 function getTypeAccent(type: string) {
-  return TYPE_ACCENT[type] ?? { rgb: "99, 102, 241", emoji: "✨" };
+  return TYPE_ACCENT[type] ?? { rgb: "99, 102, 241", Icon: Sparkles };
 }
 
 export function MonotypeSynergyAura({
@@ -96,8 +109,8 @@ export function MonotypeSynergyBanner({
             } as React.CSSProperties
           }
         >
-          <span className="text-lg leading-none shrink-0" aria-hidden>
-            {accent.emoji}
+          <span className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0" aria-hidden>
+            <accent.Icon className="w-4 h-4 text-white/90" />
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-white/95 flex items-center gap-1.5">

@@ -299,9 +299,10 @@ export function RevealAnimation({ results, show, onClose }: RevealAnimationProps
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4 }}
-                      className="text-amber-200 text-sm mt-3 font-semibold"
+                      className="text-amber-200 text-sm mt-3 font-semibold flex items-center justify-center gap-1.5"
                     >
-                      ✨ Skin Shiny desbloqueada! Escolha no álbum qual versão usar.
+                      <Sparkles className="w-4 h-4 shrink-0" />
+                      Skin Shiny desbloqueada! Escolha no álbum qual versão usar.
                     </motion.p>
                   )}
                   {isDuplicate && (
@@ -311,7 +312,7 @@ export function RevealAnimation({ results, show, onClose }: RevealAnimationProps
                       transition={{ delay: 0.5 }}
                       className="text-slate-400 text-sm mt-2 italic"
                     >
-                      Duplicata! +XP para fortalecer este Pokémon 🪙
+                      Duplicata! +XP para fortalecer este Pokémon
                     </motion.p>
                   )}
                 </div>
@@ -330,7 +331,10 @@ export function RevealAnimation({ results, show, onClose }: RevealAnimationProps
                     {results.filter((r) => r.isNew).length} novo(s) ·{" "}
                     {results.filter((r) => r.isDuplicate).length} repetido(s)
                     {results.some((r) => r.isNewShinyUnlock) && (
-                      <span className="text-amber-300"> · ✨ Shiny!</span>
+                      <span className="text-amber-300 inline-flex items-center gap-0.5">
+                        <Sparkles className="w-3 h-3" />
+                        Shiny!
+                      </span>
                     )}
                   </p>
                 </div>

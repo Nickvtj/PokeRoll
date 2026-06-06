@@ -6,6 +6,7 @@ import { Timer } from "lucide-react";
 import { LUCKY_EGG_SPRITE, RARE_CANDY_SPRITE } from "@/data/item-sprites";
 import { useEconomyStore } from "@/stores/economy-store";
 import { RareCandyModal } from "@/components/layout/RareCandyModal";
+import { LuckyEggConfirmModal } from "@/components/layout/LuckyEggConfirmModal";
 import { ItemSprite } from "@/components/ui/ItemSprite";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ export function TrainerItemsBar({ className }: TrainerItemsBarProps) {
 
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [candyOpen, setCandyOpen] = useState(false);
+  const [luckyEggConfirmOpen, setLuckyEggConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!isLuckyEggActive || !luckyEggExpiresAt) {
@@ -56,7 +58,7 @@ export function TrainerItemsBar({ className }: TrainerItemsBarProps) {
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               if (isLuckyEggActive) return;
-              activateLuckyEgg();
+              setLuckyEggConfirmOpen(true);
             }}
             disabled={isLuckyEggActive && luckyEggCount <= 0}
             title={
@@ -110,6 +112,12 @@ export function TrainerItemsBar({ className }: TrainerItemsBarProps) {
       </div>
 
       <RareCandyModal open={candyOpen} onClose={() => setCandyOpen(false)} />
+      <LuckyEggConfirmModal
+        open={luckyEggConfirmOpen}
+        count={luckyEggCount}
+        onConfirm={activateLuckyEgg}
+        onClose={() => setLuckyEggConfirmOpen(false)}
+      />
     </>
   );
 }

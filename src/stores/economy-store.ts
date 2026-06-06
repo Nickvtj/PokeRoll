@@ -79,7 +79,7 @@ interface EconomyStore extends EconomyState {
   recordBattleWin: () => void;
   recordBattleLoss: () => void;
   recordClickGame: (coinsEarned: number) => void;
-  updateHighScore: (game: "clickRush" | "perfectCapture" | "memory" | "dancaPikachu", score: number) => boolean;
+  updateHighScore: (game: "clickRush" | "perfectCapture" | "memory", score: number) => boolean;
   convertDuplicate: () => void;
 
   checkDailyLogin: () => number;
@@ -92,6 +92,7 @@ interface EconomyStore extends EconomyState {
   closeRewardPopup: () => void;
   claimWelcomePackage: () => void;
   refreshAchievements: (stats: AchievementStats) => void;
+  dequeueAchievementToast: (id: string) => void;
   setSelectedAvatar: (avatarId: string) => void;
   sync: () => void;
   isLuckyEggActive: () => boolean;
@@ -100,6 +101,7 @@ interface EconomyStore extends EconomyState {
   splitRareCandyOnTeam: () => boolean;
   toggleMoveEquip: (pokemonId: number, moveId: string) => boolean;
   getPokemonMoveLoadout: (pokemonId: number) => string[];
+  achievementToastQueue: { id: string; at: number }[];
 }
 
 function todayStr() {
@@ -117,6 +119,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
     showReward: false,
     rewardPlayAgain: null,
     coinAnimation: null,
+    achievementToastQueue: [],
 
     initializeEconomy: () => {
       const data = loadEconomy();
@@ -576,9 +579,22 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
     const newlyUnlocked = computeNewAchievements(stats, current);
     if (newlyUnlocked.length === 0) return;
 
-    set({ unlockedAchievements: [...current, ...newlyUnlocked] });
+    const queue = get().achievementToastQueue ?? [];
+    set({
+      unlockedAchievements: [...current, ...newlyUnlocked],
+      achievementToastQueue: [
+        ...queue,
+        ...newlyUnlocked.map((id) => ({ id, at: Date.now() })),
+      ],
+    });
     get().sync();
     void syncAchievementsToSupabase(newlyUnlocked);
+  },
+
+  dequeueAchievementToast: (id) => {
+    set({
+      achievementToastQueue: (get().achievementToastQueue ?? []).filter((t) => t.id !== id),
+    });
   },
 
   setSelectedAvatar: (avatarId) => {

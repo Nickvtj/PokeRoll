@@ -1,5 +1,12 @@
 /** Chart de efetividade Pokémon — tipos em minúsculas */
 
+import { getPokedexInfo } from "@/data/pokedex";
+
+/** Super efetivo: dobra o dano (padrão dos jogos originais) */
+export const TYPE_SUPER_EFFECTIVE_MULT = 2.0;
+/** Pouco efetivo: corta o dano pela metade */
+export const TYPE_NOT_VERY_EFFECTIVE_MULT = 0.5;
+
 export const TYPE_STRONG_AGAINST: Record<string, string[]> = {
   fire: ["grass", "ice", "bug", "steel"],
   water: ["fire", "ground", "rock"],
@@ -71,12 +78,32 @@ export function getTypeEffectiveness(
     return { multiplier: 0, label: "imune" };
   }
   if (TYPE_STRONG_AGAINST[atk]?.includes(def)) {
-    return { multiplier: 2.0, label: "super efetivo" };
+    return { multiplier: TYPE_SUPER_EFFECTIVE_MULT, label: "super efetivo" };
   }
   if (TYPE_WEAK_AGAINST[atk]?.includes(def)) {
-    return { multiplier: 0.5, label: "pouco efetivo" };
+    return { multiplier: TYPE_NOT_VERY_EFFECTIVE_MULT, label: "pouco efetivo" };
   }
   return { multiplier: 1, label: null };
+}
+
+/** Efetividade contra um ou mais tipos do defensor (ex.: Ground/Rock) */
+export function getDualTypeEffectiveness(
+  attackType: string,
+  defenderTypes: string[]
+): TypeEffectResult {
+  const types = defenderTypes.length > 0 ? defenderTypes.map(normalizeType) : ["normal"];
+  let mult = 1;
+  for (const def of types) {
+    mult *= getTypeEffectiveness(attackType, def).multiplier;
+  }
+  if (mult === 0) return { multiplier: 0, label: "imune" };
+  if (mult > 1) return { multiplier: mult, label: "super efetivo" };
+  if (mult < 1) return { multiplier: mult, label: "pouco efetivo" };
+  return { multiplier: 1, label: null };
+}
+
+export function getDefenderTypes(pokemonId: number, pokemonName: string): string[] {
+  return getPokedexInfo(pokemonId, pokemonName).types.map((t) => normalizeType(t));
 }
 
 export function getTypesStrongAgainst(defenderType: string): string[] {

@@ -51,7 +51,7 @@ export function SpinLeverButton({
         <div className="spin-lever-bezel">
         <div className="spin-lever-marquee" aria-hidden>
           <PokeballIcon size={12} className="opacity-70" />
-          <span>CAÇA-NÍQUEL</span>
+          <span>CAÇA NÍQUEL</span>
           <PokeballIcon size={12} className="opacity-70" />
         </div>
 

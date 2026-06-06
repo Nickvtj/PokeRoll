@@ -425,42 +425,12 @@ export async function playCapturePerfect(): Promise<void> {
   );
 }
 
-/** Loop de música rítmica para o minigame de dança */
-export async function playDanceBGM(): Promise<{ stop: () => void }> {
-  const ctx = await getAudioContext();
-  if (!ctx) return { stop: () => {} };
-
-  let active = true;
-  const stop = () => { active = false; };
-
-  const playBeat = async () => {
-    if (!active) return;
-    
-    // Bumbo (Low kick)
-    void playTone(60, 0.1, "sine", 0.15);
-    
-    await new Promise(r => setTimeout(r, 250));
-    if (!active) return;
-    
-    // Hi-hat
-    void playTone(800, 0.02, "square", 0.05);
-    
-    await new Promise(r => setTimeout(r, 250));
-    if (!active) return;
-    
-    // Snare (Palminha)
-    void playTone(200, 0.1, "triangle", 0.1);
-    
-    await new Promise(r => setTimeout(r, 250));
-    if (!active) return;
-
-    // Hi-hat
-    void playTone(800, 0.02, "square", 0.05);
-
-    await new Promise(r => setTimeout(r, 250));
-    if (active) void playBeat();
-  };
-
-  void playBeat();
-  return { stop };
+/** Som ao acertar nota — sem BGM, só feedback no hit */
+export function playDanceHitNote(laneIndex: number, perfect: boolean): void {
+  const notes = [392, 494, 587, 740];
+  const freq = notes[laneIndex % notes.length] ?? 587;
+  void playTone(freq, perfect ? 0.12 : 0.09, "triangle", perfect ? 0.065 : 0.05);
+  if (perfect) {
+    void playTone(freq * 1.5, 0.07, "sine", 0.04);
+  }
 }

@@ -251,7 +251,8 @@ export function PokedexModal({
                           : "border-white/10 bg-white/5 text-white/50 hover:border-white/20"
                       )}
                     >
-                      ✨ Shiny
+                      <Sparkles className="w-3 h-3 inline mr-0.5" />
+                      Shiny
                     </button>
                   </div>
                 </div>

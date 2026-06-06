@@ -257,7 +257,7 @@ export function resolveCoinFlip(state: BattleState): BattleState {
     phase: "fighting",
     log: [
       ...state.log,
-      log("🪙 Cara ou coroa...", "info"),
+      log("Cara ou coroa...", "info"),
       log(
         playerStarts ? "Cara! Você começa atacando!" : "Coroa! O oponente começa atacando!",
         "info"
@@ -417,7 +417,7 @@ function calcDamage(
     Math.random() * 4;
   if (isCrit) raw *= 1.45;
   const damage = Math.max(typeMult > 1 ? 2 : 1, Math.round(raw));
-  const maxHit = Math.max(8, Math.round(defender.maxHp * 0.42));
+  const maxHit = Math.max(8, Math.round(defender.maxHp * 1.0));
   return {
     damage: Math.min(damage, maxHit),
     isCrit,
@@ -460,7 +460,7 @@ export function executeBattleTurn(
         ...state,
         phase: "victory",
         reward,
-        log: [...state.log, log("Vitória! 🎉", "info")],
+        log: [...state.log, log("Vitória!", "info")],
       },
       done: true,
     };
@@ -587,7 +587,7 @@ export function executeBattleTurn(
   const typeSuffix = typeLabel ? ` · ${typeLabel}!` : "";
   logEntries.push(
     log(
-      `${striker.pokemon.name} → ${victim.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${typeSuffix})`,
+      `${striker.pokemon.name} em ${victim.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${typeSuffix})`,
       "attack",
       buildHitSound(striker, typeMult, isCrit)
     )
@@ -723,7 +723,7 @@ function applyFighterUpdates(
         ...newState,
         phase: "victory",
         reward,
-        log: [...logEntries, log("Vitória! 🎉", "info")],
+        log: [...logEntries, log("Vitória!", "info")],
       },
       done: true,
     };

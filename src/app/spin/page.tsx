@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Disc3, Volume2, VolumeX } from "lucide-react";
+import { Coins, Disc3, Volume2, VolumeX } from "lucide-react";
 import { SpinMachine } from "@/components/spin/SpinMachine";
 import { SpinLeverButton } from "@/components/spin/SpinLeverButton";
 import { RarityBadge } from "@/components/ui/RarityBadge";
@@ -163,7 +163,10 @@ export default function SpinPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-red-400 text-sm font-semibold text-center"
         >
-          Moedas insuficientes! Jogue batalhas ou minigames para ganhar 🪙
+          <span className="inline-flex items-center justify-center gap-1">
+            Moedas insuficientes! Jogue batalhas ou minigames para ganhar
+            <Coins className="w-4 h-4" />
+          </span>
         </motion.p>
       )}
 

@@ -69,7 +69,7 @@ export default function CapturaGamePage() {
       {
         coins,
         xp: accountXp,
-        message: `${headline} ${names} → +${coins} 🪙${bonusMsg}`,
+        message: `${headline} ${names} · +${coins} moedas${bonusMsg}`,
         isNewRecord,
         onClosePath: "/games",
         closeLabel: "Voltar",

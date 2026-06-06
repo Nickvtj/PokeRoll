@@ -97,8 +97,8 @@ export const PokemonCard = memo(function PokemonCard({
       )}
 
       {hasShiny && (
-        <div className="absolute bottom-2 right-2 z-10 text-[10px] text-amber-300 font-bold">
-          ✨
+        <div className="absolute bottom-2 right-2 z-10">
+          <Sparkles className="w-3.5 h-3.5 text-amber-300" aria-label="Shiny" />
         </div>
       )}
 

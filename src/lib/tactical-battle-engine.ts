@@ -1,6 +1,6 @@
 import { TEAM_MONOTYPE_DAMAGE_BONUS } from "@/data/economy-balance";
 import { getDefaultEquippedMoves, resolveBattleMoves } from "@/data/pokemon-moves";
-import { getTypeEffectiveness, TYPE_LABELS_PT } from "@/data/type-chart";
+import { getDualTypeEffectiveness, getDefenderTypes, TYPE_LABELS_PT } from "@/data/type-chart";
 import {
   calcBattleReward,
   createFighter,
@@ -38,6 +38,15 @@ function effectivenessFromMult(typeMult: number): BattleHitEffectiveness {
   if (typeMult > 1) return "super";
   if (typeMult < 1) return "weak";
   return "normal";
+}
+
+/** Passiva de defesa do Pokémon que está recebendo o golpe (ex.: Gordura Espessa do Snorlax). */
+function getDefenderDefenseMult(defender: BattleFighter): number {
+  const ability = defender.stats.ability;
+  if (ability?.type === "passive" && ability.effect === "defense_boost") {
+    return ability.value;
+  }
+  return 1;
 }
 
 function buildHitSound(move: BattleMove, typeMult: number, isCrit: boolean): BattleHitSound {
@@ -132,7 +141,11 @@ export function previewMove(
     };
   }
 
-  const { typeMult, label: typeLabel } = getTypeEffectiveness(move.type, target.stats.type);
+  const defenderTypes = getDefenderTypes(target.pokemon.id, target.pokemon.name);
+  const { multiplier: typeMult, label: typeLabel } = getDualTypeEffectiveness(
+    move.type,
+    defenderTypes
+  );
   const { min, max } = estimateDamageRange(actor, target, move, typeMult, bonuses);
 
   return {
@@ -155,10 +168,10 @@ function estimateDamageRange(
   if (typeMult === 0 || move.category === "status") return { min: 0, max: 0 };
 
   const damageMult = 1 + bonuses.battleDamage;
-  const defenseMult = 1 + (bonuses.defenseBoost || 0);
+  const defenseMult = getDefenderDefenseMult(defender);
   const powerFactor = move.power / 50;
-  
-  const effectiveDefense = (defender.stats.defense * defenseMult) * 0.85;
+
+  const effectiveDefense = defender.stats.defense * defenseMult * 0.85;
 
   const rawMin =
     ((attacker.stats.attack * damageMult * powerFactor) /
@@ -181,12 +194,12 @@ function calcMoveDamage(
   defender: BattleFighter,
   move: BattleMove,
   damageMult: number,
-  critChance: number,
-  defenseBoost = 0
+  critChance: number
 ): { damage: number; isCrit: boolean; typeLabel: string | null; typeMult: number } {
-  const { multiplier: typeMult, label: typeLabel } = getTypeEffectiveness(
+  const defenderTypes = getDefenderTypes(defender.pokemon.id, defender.pokemon.name);
+  const { multiplier: typeMult, label: typeLabel } = getDualTypeEffectiveness(
     move.type,
-    defender.stats.type
+    defenderTypes
   );
 
   if (typeMult === 0 || move.category === "status") {
@@ -194,10 +207,10 @@ function calcMoveDamage(
   }
 
   const isCrit = Math.random() < critChance;
-  const defenseMult = 1 + defenseBoost;
+  const defenseMult = getDefenderDefenseMult(defender);
   const powerFactor = move.power / 50;
-  
-  const effectiveDefense = (defender.stats.defense * defenseMult) * 0.85;
+
+  const effectiveDefense = defender.stats.defense * defenseMult * 0.85;
 
   let raw =
     ((attacker.stats.attack * damageMult * powerFactor) /
@@ -300,7 +313,7 @@ function checkBattleEnd(state: BattleState): BattleStepResult | null {
         ...state,
         phase: "victory",
         reward: isTraining ? calcBattleReward(state.wave) : null,
-        log: [...state.log, log("Vitória! 🎉", "info")],
+        log: [...state.log, log("Vitória!", "info")],
         tacticalPhase: undefined,
       },
       done: true,
@@ -401,8 +414,7 @@ export function resolveAction(
     target,
     move,
     damageMult,
-    bonuses.critChance,
-    bonuses.defenseBoost
+    bonuses.critChance
   );
 
   let statusApplied: StatusEffect | undefined;
@@ -424,7 +436,7 @@ export function resolveAction(
     const typeSuffix = typeLabel ? ` · ${typeLabel}!` : "";
     logs.push(
       log(
-        `${move.name} → ${target.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${typeSuffix}) [${effText}]`,
+        `${move.name} em ${target.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${typeSuffix}) [${effText}]`,
         "damage",
         buildHitSound(move, typeMult, isCrit)
       )
@@ -524,7 +536,8 @@ function buildSingleEnemyAction(state: BattleState): {
     const move = moves[mi];
     for (const target of livingPlayers) {
       const ts = target.slotIndex ?? 0;
-      const { multiplier } = getTypeEffectiveness(move.type, target.stats.type);
+      const defenderTypes = getDefenderTypes(target.pokemon.id, target.pokemon.name);
+      const { multiplier } = getDualTypeEffectiveness(move.type, defenderTypes);
       let score = multiplier * (move.power || 30);
       if (move.category === "status" && !target.status) score += 25;
       if (move.category === "status" && target.status) score -= 20;
@@ -563,7 +576,7 @@ export function resolveTacticalCoinFlip(state: BattleState): BattleState {
     playerStarts,
     log: [
       ...state.log,
-      log("🪙 Cara ou coroa...", "info"),
+      log("Cara ou coroa...", "info"),
       log(
         playerStarts ? "Cara! Você começa!" : "Coroa! O oponente começa!",
         "info"
@@ -613,6 +626,17 @@ export function deselectActor(state: BattleState): BattleState {
     ...state,
     tacticalPhase: "player-pick-actor",
     pendingSelection: {},
+  };
+}
+
+export function deselectTarget(state: BattleState): BattleState {
+  if (state.tacticalPhase !== "player-pick-move") return state;
+  const pending = state.pendingSelection ?? {};
+  if (pending.actorSlot == null) return state;
+  return {
+    ...state,
+    tacticalPhase: "player-pick-target",
+    pendingSelection: { actorSlot: pending.actorSlot },
   };
 }
 
@@ -839,7 +863,8 @@ export function buildAutoPlayerAction(state: BattleState): {
       
       for (const target of livingEnemies) {
         const targetSlot = target.slotIndex ?? 0;
-        const { multiplier } = getTypeEffectiveness(move.type, target.stats.type);
+        const defenderTypes = getDefenderTypes(target.pokemon.id, target.pokemon.name);
+      const { multiplier } = getDualTypeEffectiveness(move.type, defenderTypes);
         
         let score = multiplier * (move.power || 30);
         if (move.category === "status" && !target.status) score += 40;

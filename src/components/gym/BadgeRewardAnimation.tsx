@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { POKEMON_MAP } from "@/data/pokemon";
+import { Coins } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { GymBadge } from "@/components/gym/GymBadge";
 import type { GymDefinition } from "@/types/gym";
@@ -101,8 +102,9 @@ export function BadgeRewardAnimation({
           <p className="text-sm font-bold text-indigo-300">
             Rank {bonus.rank} · {"★".repeat(bonus.stars)}
           </p>
-          <p className="text-[10px] text-amber-400/80">
-            Colete {15} moedas no card do ginásio 🪙
+          <p className="text-[10px] text-amber-400/80 flex items-center justify-center gap-1">
+            <Coins className="w-3 h-3" />
+            Colete {15} moedas no card do ginásio
           </p>
 
           <AnimatedButton variant="gold" onClick={onClose} className="w-full">

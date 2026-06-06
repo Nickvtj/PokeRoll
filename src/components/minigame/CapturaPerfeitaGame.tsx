@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Target } from "lucide-react";
+import { Coins, Sparkles, Target } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { RarityBadge } from "@/components/ui/RarityBadge";
@@ -235,8 +235,12 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
           <RarityBadge rarity={wild.rarity} size="sm" />
         </div>
         <div className="text-right text-xs text-white/50">
-          <p className="text-emerald-400">+1 🪙 na zona verde</p>
-          <p className="text-amber-400">+2 🪙 no perfeito</p>
+          <p className="text-emerald-400 flex items-center justify-end gap-0.5">
+            +1 <Coins className="w-3 h-3" /> na zona verde
+          </p>
+          <p className="text-amber-400 flex items-center justify-end gap-0.5">
+            +2 <Coins className="w-3 h-3" /> no perfeito
+          </p>
           {perfectHits > 0 && (
             <p className="text-amber-300">{perfectHits} perfeito{perfectHits > 1 ? "s" : ""}</p>
           )}
@@ -313,7 +317,12 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
               lastQuality === "miss" && "text-red-400"
             )}
           >
-            {lastQuality === "perfect" && "Perfeito! +2 moedas ✨"}
+            {lastQuality === "perfect" && (
+              <span className="inline-flex items-center gap-1">
+                Perfeito! +2 moedas
+                <Sparkles className="w-3.5 h-3.5" />
+              </span>
+            )}
             {lastQuality === "good" && "Capturado!"}
             {lastQuality === "miss" && "Escapou..."}
           </motion.p>

@@ -13,6 +13,7 @@ import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
 import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
 import { useTacticalBattle } from "@/hooks/use-tactical-battle";
+import { useBattleSessionStore } from "@/stores/battle-session-store";
 import type { BattleState } from "@/types/battle";
 import type { GymId } from "@/types/gym";
 import type { PerfectRunBonus } from "@/types/gym";
@@ -110,6 +111,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
     resetLoop();
     setBattleState(null);
     setFighting(false);
+    useBattleSessionStore.getState().setSession(false);
   };
 
   const handleContinue = () => {
@@ -133,10 +135,19 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
         : "Continuar";
 
   useEffect(() => {
-    const active = fighting || battleState != null;
-    onBattleActiveChange?.(active);
-    return () => onBattleActiveChange?.(false);
-  }, [fighting, battleState, onBattleActiveChange]);
+    const inBattleView = fighting || battleState != null;
+    const canLeave =
+      inBattleView &&
+      battleState != null &&
+      battleState.phase !== "victory" &&
+      battleState.phase !== "defeat";
+    onBattleActiveChange?.(inBattleView);
+    useBattleSessionStore.getState().setSession(canLeave, canLeave ? resetBattle : undefined);
+    return () => {
+      onBattleActiveChange?.(false);
+      useBattleSessionStore.getState().setSession(false);
+    };
+  }, [fighting, battleState, onBattleActiveChange, resetBattle]);
 
   if (fighting || battleState) {
     return (
@@ -191,6 +202,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
 
   return (
     <>
+      <div className="flex-1 min-h-0 flex flex-col">
       <BattleTeamPrepLayout
         previewLayout="bar-only"
         action={
@@ -207,6 +219,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
         <SavedTeamsPanel />
         <TeamSelector className="flex-1 min-h-0" />
       </BattleTeamPrepLayout>
+      </div>
 
       <BadgeRewardAnimation
         show={!!badgeReward}

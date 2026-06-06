@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { POKEMON_LIST, TOTAL_POKEMON } from "@/data/pokemon";
+import { ALBUM_POKEMON_LIST, POKEMON_LIST, TOTAL_POKEMON } from "@/data/pokemon";
 import { RARITY_ORDER, RARITY_CONFIG } from "@/data/rarity";
 import {
   executeSpin,
@@ -203,8 +203,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     const results: SpinResult[] = [];
     const sequences: Pokemon[][] = [];
 
+    const { hasAllAchievements } = await import("@/data/achievements");
+    const mewUnlocked = hasAllAchievements(economy.unlockedAchievements ?? []);
+
     for (let i = 0; i < spinMultiplier; i++) {
-      const pokemon = executeSpin();
+      const pokemon = executeSpin({ mewUnlocked });
       const isShiny = rollShiny();
       const collectedIds = new Set(Object.keys(collection).map(Number));
       const existing = collection[pokemon.id];
@@ -359,7 +362,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   getFilteredPokemon: () => {
     const { albumFilter } = get();
-    let list = [...POKEMON_LIST];
+    let list = [...ALBUM_POKEMON_LIST];
 
     if (albumFilter.rarity !== "all") {
       list = list.filter((p) => p.rarity === albumFilter.rarity);
@@ -383,10 +386,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     const query = albumFilter.searchQuery.trim().toLowerCase();
     if (!query) return [];
 
-    return POKEMON_LIST.filter(
+    const numeric = query.replace(/^#/, "");
+    if (/^\d+$/.test(numeric)) {
+      const id = parseInt(numeric, 10);
+      return ALBUM_POKEMON_LIST.filter(
+        (p) => p.id === id || String(p.id).padStart(3, "0").includes(numeric)
+      );
+    }
+
+    return ALBUM_POKEMON_LIST.filter(
       (p) =>
-        get().isCollected(p.id) &&
-        p.name.toLowerCase().includes(query)
+        p.name.toLowerCase().includes(query) ||
+        String(p.id).padStart(3, "0").includes(query)
     );
   },
 
