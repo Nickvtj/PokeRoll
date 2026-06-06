@@ -129,6 +129,38 @@ export function fireHighScoreConfetti() {
   fireMinigameRecordConfetti();
 }
 
+/** Vitória no Desafio Elemental */
+export function fireJitsuVictoryConfetti() {
+  const scale = confettiScale();
+  const base = { zIndex: CONFETTI_Z, disableForReducedMotion: true };
+  const colors = ["#fb923c", "#38bdf8", "#4ade80", "#facc15", "#ffffff"];
+
+  confetti({
+    ...base,
+    particleCount: Math.round(18 * scale),
+    angle: 60,
+    spread: 55,
+    origin: { x: 0, y: 0.6 },
+    colors,
+  });
+  confetti({
+    ...base,
+    particleCount: Math.round(18 * scale),
+    angle: 120,
+    spread: 55,
+    origin: { x: 1, y: 0.6 },
+    colors,
+  });
+  confetti({
+    ...base,
+    particleCount: Math.round(12 * scale),
+    spread: 70,
+    origin: { x: 0.5, y: 0.5 },
+    colors,
+    shapes: ["star"],
+  });
+}
+
 /** Celebração leve de novo recorde nos minigames */
 export function fireMinigameRecordConfetti() {
   const scale = confettiScale();

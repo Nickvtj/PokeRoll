@@ -32,7 +32,11 @@ export interface EconomyState {
     clickRush?: number;
     perfectCapture?: number;
     memory?: number;
+    jitsu?: number;
   };
+  /** Progressão do minigame Poké-Jitsu */
+  jitsuXp?: number;
+  jitsuWins?: number;
 }
 
 export interface CoinTransaction {
@@ -50,6 +54,8 @@ export interface RewardPayload {
   onClosePath?: string;
   /** Dispara confete de recorde ao abrir o modal */
   isNewRecord?: boolean;
+  /** Vitória/derrota — estilo do modal de batalha; omitido = recompensa neutra */
+  outcome?: "win" | "loss";
 }
 
 /** Callback efêmero — não persiste no storage */

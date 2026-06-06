@@ -64,6 +64,12 @@ export default function SpinPage() {
     await spin();
   }, [isSpinning, spin, soundEnabled, playSpin, canAffordSpin, spinMultiplier]);
 
+  const handleSpinAgain = useCallback(async () => {
+    if (!canAffordSpin(spinMultiplier)) return;
+    closeReveal();
+    await handleSpin();
+  }, [canAffordSpin, spinMultiplier, closeReveal, handleSpin]);
+
   const handleReelComplete = useCallback(() => {
     finishReelSpin();
   }, [finishReelSpin]);
@@ -259,6 +265,11 @@ export default function SpinPage() {
         results={lastSpinResults}
         show={showReveal}
         onClose={closeReveal}
+        onSpinAgain={handleSpinAgain}
+        canSpinAgain={canAfford}
+        spinCost={spinCost}
+        spinMultiplier={spinMultiplier}
+        willUseFreeSpin={willUseFreeSpin}
       />
     </div>
   );

@@ -42,6 +42,7 @@ import {
 } from "@/lib/economy-supabase";
 import { mergeEconomyState } from "@/lib/economy-merge";
 import { useGymStore } from "@/stores/gym-store";
+import { getBeltForXp, JITSU_BELT_RANK_REWARDS } from "@/data/jitsu-belts";
 import type { EconomyState, RewardPayload, RewardPlayAgainFn } from "@/types/economy";
 import type { PokemonLevelUpResult } from "@/types/battle";
 import {
@@ -79,7 +80,15 @@ interface EconomyStore extends EconomyState {
   recordBattleWin: () => void;
   recordBattleLoss: () => void;
   recordClickGame: (coinsEarned: number) => void;
-  updateHighScore: (game: "clickRush" | "perfectCapture" | "memory", score: number) => boolean;
+  updateHighScore: (
+    game: "clickRush" | "perfectCapture" | "memory" | "jitsu",
+    score: number
+  ) => boolean;
+  recordJitsuMatch: (won: boolean) => {
+    beltPromoted: boolean;
+    newBeltId: string;
+    rankCoinBonus: number;
+  };
   convertDuplicate: () => void;
 
   checkDailyLogin: () => number;
@@ -447,6 +456,29 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
     return false;
   },
 
+  recordJitsuMatch: (won) => {
+    const oldXp = get().jitsuXp ?? 0;
+    const newXp = won ? oldXp + 1 : oldXp;
+    const oldBelt = getBeltForXp(oldXp);
+    const newBelt = getBeltForXp(newXp);
+    const beltPromoted = newBelt.id !== oldBelt.id;
+
+    set((s) => ({
+      jitsuXp: newXp,
+      jitsuWins: (s.jitsuWins ?? 0) + (won ? 1 : 0),
+    }));
+    get().sync();
+
+    const rankCoinBonus =
+      beltPromoted && won ? (JITSU_BELT_RANK_REWARDS[newBelt.id] ?? 0) : 0;
+
+    return {
+      beltPromoted,
+      newBeltId: newBelt.id,
+      rankCoinBonus,
+    };
+  },
+
   convertDuplicate: () => {
     get().addCoins(DUPLICATE_COIN_REWARD);
   },
@@ -736,6 +768,9 @@ function getEconomySnapshot(state: EconomyStore): EconomyState {
     luckyEggCount: state.luckyEggCount ?? 0,
     rareCandyCount: state.rareCandyCount ?? 0,
     pokemonMoveLoadouts: state.pokemonMoveLoadouts ?? {},
+    highScores: state.highScores,
+    jitsuXp: state.jitsuXp ?? 0,
+    jitsuWins: state.jitsuWins ?? 0,
   };
 }
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Sparkles, Stars } from "lucide-react";
+import { Disc3, Sparkles, Stars } from "lucide-react";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { StickerBadge } from "@/components/ui/StickerBadge";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
@@ -17,6 +17,11 @@ interface RevealAnimationProps {
   results: SpinResult[];
   show: boolean;
   onClose: () => void;
+  onSpinAgain?: () => void;
+  canSpinAgain?: boolean;
+  spinCost?: number;
+  spinMultiplier?: number;
+  willUseFreeSpin?: boolean;
 }
 
 function ShinyBadge({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
@@ -133,7 +138,64 @@ function ResultCard({ result, index }: { result: SpinResult; index: number }) {
   );
 }
 
-export function RevealAnimation({ results, show, onClose }: RevealAnimationProps) {
+function RevealActions({
+  onClose,
+  onSpinAgain,
+  canSpinAgain = false,
+  spinCost = 0,
+  spinMultiplier = 1,
+  willUseFreeSpin = false,
+}: {
+  onClose: () => void;
+  onSpinAgain?: () => void;
+  canSpinAgain?: boolean;
+  spinCost?: number;
+  spinMultiplier?: number;
+  willUseFreeSpin?: boolean;
+}) {
+  const spinLabel =
+    spinMultiplier > 1 ? `Girar novamente ${spinMultiplier}x` : "Girar novamente";
+
+  return (
+    <div className={cn("flex flex-col gap-2", canSpinAgain && "sm:flex-row")}>
+      {canSpinAgain && onSpinAgain && (
+        <AnimatedButton
+          variant="gold"
+          onClick={onSpinAgain}
+          icon={<Disc3 className="w-4 h-4" />}
+          className="w-full sm:flex-1"
+        >
+          <span className="flex flex-col items-center leading-tight gap-0.5">
+            <span>{willUseFreeSpin ? "Girar grátis de novo" : spinLabel}</span>
+            {!willUseFreeSpin && (
+              <span className="text-[10px] font-semibold opacity-80">
+                {spinCost} {spinCost === 1 ? "moeda" : "moedas"}
+              </span>
+            )}
+          </span>
+        </AnimatedButton>
+      )}
+      <AnimatedButton
+        variant="secondary"
+        onClick={onClose}
+        className={cn("w-full", canSpinAgain && "sm:flex-1")}
+      >
+        Continuar
+      </AnimatedButton>
+    </div>
+  );
+}
+
+export function RevealAnimation({
+  results,
+  show,
+  onClose,
+  onSpinAgain,
+  canSpinAgain = false,
+  spinCost = 0,
+  spinMultiplier = 1,
+  willUseFreeSpin = false,
+}: RevealAnimationProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -318,9 +380,14 @@ export function RevealAnimation({ results, show, onClose }: RevealAnimationProps
                 </div>
 
                 <div className="relative z-10">
-                  <AnimatedButton variant="secondary" onClick={onClose} className="w-full">
-                    Continuar
-                  </AnimatedButton>
+                  <RevealActions
+                    onClose={onClose}
+                    onSpinAgain={onSpinAgain}
+                    canSpinAgain={canSpinAgain}
+                    spinCost={spinCost}
+                    spinMultiplier={spinMultiplier}
+                    willUseFreeSpin={willUseFreeSpin}
+                  />
                 </div>
               </div>
             ) : (
@@ -349,9 +416,14 @@ export function RevealAnimation({ results, show, onClose }: RevealAnimationProps
                   ))}
                 </div>
 
-                <AnimatedButton variant="secondary" onClick={onClose} className="w-full">
-                  Continuar
-                </AnimatedButton>
+                <RevealActions
+                  onClose={onClose}
+                  onSpinAgain={onSpinAgain}
+                  canSpinAgain={canSpinAgain}
+                  spinCost={spinCost}
+                  spinMultiplier={spinMultiplier}
+                  willUseFreeSpin={willUseFreeSpin}
+                />
               </div>
             )}
           </motion.div>

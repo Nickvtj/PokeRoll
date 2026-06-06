@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Gamepad2, Target, MousePointerClick, Brain, Coins, Play, Sparkles } from "lucide-react";
+import { Gamepad2, Target, MousePointerClick, Brain, Coins, Play, Sparkles, Swords } from "lucide-react";
+import { JitsuBeltIcon } from "@/components/minigame/jitsu/JitsuBeltIcon";
 import {
   CLICK_BASE_COINS_MAX,
   CLICK_BASE_COINS_MIN,
+  JITSU_COINS_WIN_MAX,
+  JITSU_COINS_WIN_MIN,
   MEMORY_COINS_PER_PAIR,
   MEMORY_PAIR_COUNT,
 } from "@/data/economy-balance";
+import { getBeltForXp } from "@/data/jitsu-belts";
 import { useEconomyStore } from "@/stores/economy-store";
 import { cn } from "@/lib/utils";
 import { usePrefetchOnIntent } from "@/lib/use-prefetch-on-intent";
@@ -16,7 +20,7 @@ const GAMES = [
   {
     href: "/games/captura",
     title: "Captura Perfeita",
-    desc: "Acerte o timing na zona verde.",
+    desc: "Acerte o timing na zona verde e capture Pokémon selvagens.",
     reward: "1 moeda / captura",
     icon: Target,
     gradient: "from-emerald-600/20 to-transparent",
@@ -27,7 +31,7 @@ const GAMES = [
   {
     href: "/games/click-rush",
     title: "Click Rush",
-    desc: "Clique nas Pokébolas em 30 segundos.",
+    desc: "Clique nas Pokébolas em 30 segundos e faça o máximo de pontos.",
     reward: `${CLICK_BASE_COINS_MIN} a ${CLICK_BASE_COINS_MAX} moedas`,
     icon: MousePointerClick,
     gradient: "from-cyan-600/20 to-transparent",
@@ -38,7 +42,7 @@ const GAMES = [
   {
     href: "/games/memory",
     title: "Poké Memory",
-    desc: "Encontre todos os pares a tempo.",
+    desc: "Encontre todos os pares a tempo e treine sua memória.",
     icon: Brain,
     reward: `${MEMORY_PAIR_COUNT * MEMORY_COINS_PER_PAIR} moedas`,
     gradient: "from-violet-600/20 to-transparent",
@@ -46,12 +50,24 @@ const GAMES = [
     iconColor: "text-violet-400",
     iconBg: "bg-violet-500/15",
   },
+  {
+    href: "/games/jitsu",
+    title: "Desafio Elemental",
+    desc: "Vença batalhas táticas com Fogo, Água e Planta. Suba de faixa!",
+    icon: Swords,
+    reward: `${JITSU_COINS_WIN_MIN} a ${JITSU_COINS_WIN_MAX} moedas`,
+    gradient: "from-rose-600/20 to-transparent",
+    border: "border-rose-500/25 hover:border-rose-400/45",
+    iconColor: "text-rose-400",
+    iconBg: "bg-rose-500/15",
+    showBelt: true,
+  },
 ] as const;
 
 function GameCardLink({ href, children }: { href: string; children: React.ReactNode }) {
   const intent = usePrefetchOnIntent(href);
   return (
-    <Link href={href} {...intent} className="block group">
+    <Link href={href} {...intent} className="block group h-full">
       {children}
     </Link>
   );
@@ -61,11 +77,14 @@ export default function GamesHubPage() {
   const gamesPlayed = useEconomyStore((s) => s.clickGamesPlayed);
   const gamesToday = useEconomyStore((s) => s.clickGamesToday);
   const highScores = useEconomyStore((s) => s.highScores);
+  const jitsuXp = useEconomyStore((s) => s.jitsuXp ?? 0);
+  const jitsuBelt = getBeltForXp(jitsuXp);
 
   const highScoreMap: Record<string, number | undefined> = {
     "/games/captura": highScores?.perfectCapture,
     "/games/click-rush": highScores?.clickRush,
     "/games/memory": highScores?.memory,
+    "/games/jitsu": highScores?.jitsu,
   };
 
   return (
@@ -88,7 +107,7 @@ export default function GamesHubPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-fr">
         {GAMES.map((game) => {
           const record = highScoreMap[game.href];
           const Icon = game.icon;
@@ -97,14 +116,14 @@ export default function GamesHubPage() {
             <GameCardLink key={game.href} href={game.href}>
               <article
                 className={cn(
-                  "relative rounded-2xl border overflow-hidden bg-gradient-to-br backdrop-blur-sm min-h-[108px]",
+                  "relative rounded-2xl border overflow-hidden bg-gradient-to-br backdrop-blur-sm h-full min-h-[8.75rem]",
                   "transition-all duration-200 group-hover:scale-[1.015] group-active:scale-[0.99]",
                   game.gradient,
                   game.border
                 )}
               >
                 <div className="absolute inset-0 bg-slate-950/45" />
-                <div className="relative z-10 p-5 flex items-center gap-4">
+                <div className="relative z-10 p-5 h-full flex items-center gap-4">
                   <div
                     className={cn(
                       "w-14 h-14 rounded-xl flex items-center justify-center border border-white/10 shrink-0",
@@ -115,9 +134,18 @@ export default function GamesHubPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="text-base font-bold truncate">{game.title}</h2>
-                      {record !== undefined && (
+                      {"showBelt" in game && game.showBelt && (
+                        <span
+                          className="text-[9px] font-black bg-black/40 px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1"
+                          style={{ color: jitsuBelt.color }}
+                        >
+                          <JitsuBeltIcon color={jitsuBelt.color} size="xs" />
+                          {jitsuBelt.label.replace("Faixa ", "")}
+                        </span>
+                      )}
+                      {record !== undefined && record > 0 && (
                         <span className="text-[9px] font-black bg-black/40 px-1.5 py-0.5 rounded text-amber-300 tabular-nums shrink-0">
                           REC {record}
                         </span>

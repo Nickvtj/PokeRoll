@@ -1139,3 +1139,57 @@ body {
   background: rgba(99, 102, 241, 0.4);
   border-radius: 3px;
 }
+
+/* === Cursor Roblox 2013 (PNG 16px, leve inclinação à esquerda) === */
+@media (pointer: fine) {
+  :root {
+    --cursor-poke-default: url("/cursors/roblox-2013.png") 4 1, default;
+    --cursor-poke-pointer: url("/cursors/roblox-2013.png") 4 1, pointer;
+  }
+
+  html,
+  body {
+    cursor: var(--cursor-poke-default);
+  }
+
+  a,
+  button,
+  [role="button"],
+  [role="link"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="option"],
+  label[for],
+  select,
+  summary,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="checkbox"],
+  input[type="radio"],
+  .cursor-pointer {
+    cursor: var(--cursor-poke-pointer);
+  }
+
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="url"],
+  input[type="tel"],
+  textarea,
+  [contenteditable="true"] {
+    cursor: text;
+  }
+
+  :disabled,
+  [aria-disabled="true"],
+  .cursor-not-allowed {
+    cursor: not-allowed;
+  }
+
+  .cursor-default {
+    cursor: var(--cursor-poke-default);
+  }
+}

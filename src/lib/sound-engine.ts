@@ -434,3 +434,83 @@ export function playDanceHitNote(laneIndex: number, perfect: boolean): void {
     void playTone(freq * 1.5, 0.07, "sine", 0.04);
   }
 }
+
+const JITSU_ELEMENT_NOTES = {
+  FOGO: [440, 554, 659],
+  AGUA: [392, 494, 587],
+  PLANTA: [349, 440, 523],
+} as const;
+
+/** Carta deslizando para a arena */
+export async function playJitsuCardPlay(): Promise<void> {
+  await playNoteSequence(
+    [
+      { freq: 220, dur: 0.04, vol: 0.05, type: "triangle" },
+      { freq: 330, dur: 0.05, vol: 0.06, type: "triangle" },
+    ],
+    0.02
+  );
+}
+
+/** Revelação das cartas na arena */
+export async function playJitsuReveal(): Promise<void> {
+  await playTone(380, 0.035, "triangle", 0.055);
+  await playTone(520, 0.045, "sine", 0.05, 0.04);
+}
+
+/** Vitória na rodada — tom ascendente por elemento */
+export async function playJitsuRoundWin(element: keyof typeof JITSU_ELEMENT_NOTES = "FOGO"): Promise<void> {
+  const notes = JITSU_ELEMENT_NOTES[element];
+  await playNoteSequence(
+    notes.map((freq, i) => ({
+      freq,
+      dur: 0.07 + i * 0.01,
+      vol: 0.09 + i * 0.01,
+      type: "triangle" as OscillatorType,
+    })),
+    0.03
+  );
+}
+
+/** Derrota na rodada */
+export async function playJitsuRoundLoss(): Promise<void> {
+  await playNoteSequence(
+    [
+      { freq: 247, dur: 0.09, vol: 0.07, type: "sine" },
+      { freq: 196, dur: 0.12, vol: 0.06, type: "sine" },
+    ],
+    0.04
+  );
+}
+
+/** Empate total — dois tons iguais */
+export async function playJitsuTie(): Promise<void> {
+  await playTone(440, 0.08, "sine", 0.07);
+  await playTone(440, 0.08, "sine", 0.06, 0.12);
+}
+
+/** Troféu conquistado na rodada */
+export async function playJitsuTrophy(): Promise<void> {
+  await playNoteSequence(
+    [
+      { freq: 784, dur: 0.05, vol: 0.08, type: "triangle" },
+      { freq: 988, dur: 0.08, vol: 0.09, type: "triangle" },
+    ],
+    0.02
+  );
+}
+
+/** Timer urgente (últimos segundos) */
+export async function playJitsuTimerTick(): Promise<void> {
+  await playTone(880, 0.025, "sine", 0.04);
+}
+
+/** Vitória na partida */
+export async function playJitsuMatchWin(): Promise<void> {
+  await playBattleWin();
+}
+
+/** Derrota na partida */
+export async function playJitsuMatchLoss(): Promise<void> {
+  await playBattleLoss();
+}
