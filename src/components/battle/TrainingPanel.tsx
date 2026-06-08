@@ -32,6 +32,7 @@ export function TrainingPanel({
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
   const [autoBattle, setAutoBattle] = useState(false);
+  const [battleSpeed, setBattleSpeed] = useState<1 | 2 | 3>(1);
 
   const handleTurnComplete = useCallback(
     (state: BattleState, done: boolean) => {
@@ -92,6 +93,7 @@ export function TrainingPanel({
     }),
     onTurnComplete: handleTurnComplete,
     autoBattle,
+    battleSpeed,
   });
 
   const beginBattle = useCallback(() => {
@@ -152,6 +154,8 @@ export function TrainingPanel({
         }}
         autoBattle={autoBattle}
         onToggleAutoBattle={() => setAutoBattle(!autoBattle)}
+        battleSpeed={battleSpeed}
+        onBattleSpeedChange={setBattleSpeed}
       />
     );
   }

@@ -645,7 +645,7 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
       </div>
 
       {/* Jogador */}
-      <div className="glass-card p-3 border border-cyan-500/15 space-y-2 relative overflow-hidden">
+      <div className="glass-card p-3 border border-cyan-500/15 space-y-2 relative overflow-visible">
         <div className="absolute bottom-0 left-0 w-28 h-28 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
         <div className="flex items-center justify-between gap-2 relative">
           <div className="flex items-center gap-2 text-sm font-bold text-cyan-300/90">
@@ -667,7 +667,7 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
             {playerModNext} poder
           </p>
         )}
-        <div className="flex justify-center gap-2 flex-wrap relative">
+        <div className="flex justify-center gap-2 flex-wrap relative overflow-visible pt-24 -mt-20">
           {playerHand.map((c) => {
             const blocked = isElementBlocked(c.type, playerBlockNext);
             return (

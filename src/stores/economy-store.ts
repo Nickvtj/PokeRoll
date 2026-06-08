@@ -2,6 +2,8 @@ import { create } from "zustand";
 import {
   DAILY_LOGIN_COINS,
   DAILY_MISSIONS,
+  getStreakMissionMultiplier,
+  type DailyMissionReward,
   DUPLICATE_COIN_REWARD,
   SPIN_COST_PER_REEL,
   STARTING_COINS,
@@ -115,6 +117,43 @@ interface EconomyStore extends EconomyState {
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function applyDailyMissionReward(
+  get: () => EconomyState & { addCoins: (amount: number) => void },
+  set: (partial: Partial<EconomyState> | ((s: EconomyState) => Partial<EconomyState>)) => void,
+  reward: DailyMissionReward,
+  streakMult: number
+): { coins: number; message: string; short: string } {
+  switch (reward.kind) {
+    case "coins": {
+      const coins = Math.max(1, Math.round(reward.amount * streakMult));
+      get().addCoins(coins);
+      return {
+        coins,
+        message: `Missão completa · +${coins} moedas`,
+        short: `+${coins} moedas`,
+      };
+    }
+    case "luckyEgg": {
+      const amount = Math.max(1, Math.round(reward.amount * streakMult));
+      set((s) => ({ luckyEggCount: (s.luckyEggCount ?? 0) + amount }));
+      return {
+        coins: 0,
+        message: `Missão completa · +${amount} Lucky Egg`,
+        short: `+${amount} Lucky Egg`,
+      };
+    }
+    case "rareCandy": {
+      const amount = Math.max(1, Math.round(reward.amount * streakMult));
+      set((s) => ({ rareCandyCount: (s.rareCandyCount ?? 0) + amount }));
+      return {
+        coins: 0,
+        message: `Missão completa · +${amount} Rare Candy`,
+        short: `+${amount} Rare Candy`,
+      };
+    }
+  }
 }
 
 function calcLevel(xp: number) {
@@ -551,24 +590,26 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
   claimMission: (missionId) => {
     const mission = DAILY_MISSIONS.find((m) => m.id === missionId);
     if (!mission) return false;
-    const { missionProgress, missionsClaimed } = get();
+    const { missionProgress, missionsClaimed, dailyStreak } = get();
     if (missionsClaimed.includes(missionId)) return false;
     if ((missionProgress[missionId] ?? 0) < mission.target) return false;
+
+    const mult = getStreakMissionMultiplier(dailyStreak);
+    const applied = applyDailyMissionReward(get, set, mission.reward, mult);
 
     set((s) => ({
       missionsClaimed: [...s.missionsClaimed, missionId],
     }));
-    get().addCoins(mission.reward);
     get().showRewardPopup({
-      coins: mission.reward,
-      message: `Missão completa: ${mission.label}`,
+      coins: applied.coins || undefined,
+      message: applied.message,
     });
     get().sync();
     return true;
   },
 
   claimAllMissions: () => {
-    const { missionProgress, missionsClaimed } = get();
+    const { missionProgress, missionsClaimed, dailyStreak } = get();
     const toClaim = DAILY_MISSIONS.filter(
       (m) =>
         !missionsClaimed.includes(m.id) &&
@@ -576,17 +617,26 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
     );
     if (toClaim.length === 0) return 0;
 
-    const totalCoins = toClaim.reduce((sum, m) => sum + m.reward, 0);
+    const mult = getStreakMissionMultiplier(dailyStreak);
+    let totalCoins = 0;
+    const parts: string[] = [];
+
+    for (const m of toClaim) {
+      const applied = applyDailyMissionReward(get, set, m.reward, mult);
+      totalCoins += applied.coins;
+      parts.push(applied.short);
+    }
+
     set((s) => ({
       missionsClaimed: [
         ...s.missionsClaimed,
         ...toClaim.map((m) => m.id),
       ],
     }));
-    get().addCoins(totalCoins);
+
     get().showRewardPopup({
-      coins: totalCoins,
-      message: `${toClaim.length} missão(ões) resgatadas · +${totalCoins} moedas`,
+      coins: totalCoins || undefined,
+      message: `${toClaim.length} missão(ões): ${parts.join(" · ")}`,
     });
     get().sync();
     return totalCoins;

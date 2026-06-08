@@ -4,10 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BATTLE_COIN_FLIP_MS,
   BATTLE_COIN_REVEAL_MS,
+  BATTLE_FACE_OFF_MS,
   BATTLE_FLASH_MS,
   BATTLE_POST_COIN_PAUSE_MS,
   BATTLE_STRIKE_MS,
 } from "@/data/economy-balance";
+import { advanceToCoinFlip } from "@/lib/battle-engine";
 import {
   executeEnemyAction,
   executePlayerAction,
@@ -22,7 +24,7 @@ import {
   selectActor,
   selectMove,
   selectTarget,
-  buildAutoPlayerAction,
+  completeAutoPlayerSelection,
   type ResolvedAction,
 } from "@/lib/tactical-battle-engine";
 import {
@@ -48,9 +50,16 @@ interface UseTacticalBattleOptions {
   getBonuses: () => { battleDamage: number; critChance: number; defenseBoost?: number };
   onTurnComplete: (state: BattleState, done: boolean) => void;
   autoBattle?: boolean;
+  battleSpeed?: 1 | 2 | 3;
 }
 
 const PAUSE_AFTER_BEAT_MS = 450;
+
+const PLAYER_PICK_PHASES = new Set([
+  "player-pick-actor",
+  "player-pick-target",
+  "player-pick-move",
+]);
 
 export function useTacticalBattle({
   fighting,
@@ -59,6 +68,7 @@ export function useTacticalBattle({
   getBonuses,
   onTurnComplete,
   autoBattle = false,
+  battleSpeed = 1,
 }: UseTacticalBattleOptions) {
   const [displayState, setDisplayState] = useState<BattleState | null>(null);
   const [combatHighlight, setCombatHighlight] = useState<BattleCombatHighlight | null>(null);
@@ -69,6 +79,7 @@ export function useTacticalBattle({
   const autoBattleScheduledRef = useRef(false);
   const fightingRef = useRef(fighting);
   const stateRef = useRef(battleState);
+  const faceOffTimerRef = useRef<number | null>(null);
   const coinFlipTimerRef = useRef<number | null>(null);
   const chainTimerRef = useRef<number | null>(null);
   const autoTimerRef = useRef<number | null>(null);
@@ -79,6 +90,13 @@ export function useTacticalBattle({
 
   fightingRef.current = fighting;
   stateRef.current = battleState;
+
+  const clearFaceOffTimer = useCallback(() => {
+    if (faceOffTimerRef.current != null) {
+      window.clearTimeout(faceOffTimerRef.current);
+      faceOffTimerRef.current = null;
+    }
+  }, []);
 
   const clearCoinFlipTimer = useCallback(() => {
     if (coinFlipTimerRef.current != null) {
@@ -175,7 +193,7 @@ export function useTacticalBattle({
         statusApplied,
       });
 
-      playTacticalCombatSounds(next.log, logFrom, move, BATTLE_STRIKE_MS);
+      playTacticalCombatSounds(next.log, logFrom, move, BATTLE_STRIKE_MS / battleSpeed);
 
       scheduleCombatTimeout(() => {
         setDisplayState(next);
@@ -207,9 +225,9 @@ export function useTacticalBattle({
             onComplete();
           }, 180);
         }, BATTLE_FLASH_MS);
-      }, BATTLE_STRIKE_MS);
+      }, BATTLE_STRIKE_MS / battleSpeed);
     },
-    [syncBattleState, scheduleCombatTimeout]
+    [syncBattleState, scheduleCombatTimeout, battleSpeed]
   );
 
   const runEnemyChainRef = useRef<() => void>(() => {});
@@ -286,9 +304,9 @@ export function useTacticalBattle({
       const withEnemy = prepareEnemyTurn(result.state);
       stateRef.current = withEnemy;
       syncBattleState(withEnemy);
-      scheduleEnemyChain(PAUSE_AFTER_BEAT_MS);
+      scheduleEnemyChain(PAUSE_AFTER_BEAT_MS / battleSpeed);
     });
-  }, [getBonuses, playCombatBeat, scheduleEnemyChain, syncBattleState]);
+  }, [getBonuses, playCombatBeat, scheduleEnemyChain, syncBattleState, battleSpeed]);
 
   useEffect(() => {
     if (!fighting || !battleState || battleState.phase !== "fighting") return;
@@ -333,32 +351,42 @@ export function useTacticalBattle({
   ]);
 
   useEffect(() => {
+    const phase = battleState?.tacticalPhase;
     if (
-      autoBattle &&
-      fighting &&
-      battleState?.phase === "fighting" &&
-      battleState.tacticalPhase === "player-pick-actor" &&
-      !animatingRef.current &&
-      !autoBattleScheduledRef.current
+      !autoBattle ||
+      !fighting ||
+      battleState?.phase !== "fighting" ||
+      !phase ||
+      !PLAYER_PICK_PHASES.has(phase) ||
+      animatingRef.current ||
+      autoBattleScheduledRef.current
     ) {
-      const selection = buildAutoPlayerAction(battleState);
-      if (selection) {
-        autoBattleScheduledRef.current = true;
-        autoTimerRef.current = window.setTimeout(() => {
-          autoBattleScheduledRef.current = false;
-          autoTimerRef.current = null;
-          if (!fightingRef.current) return;
-
-          let s = selectActor(stateRef.current!, selection.actorSlot);
-          s = selectTarget(s, selection.targetSlot);
-          s = selectMove(s, selection.moveIndex);
-          
-          stateRef.current = s;
-          setBattleState(s);
-        }, 600);
-      }
+      return;
     }
-  }, [autoBattle, fighting, battleState?.phase, battleState?.tacticalPhase, setBattleState]);
+
+    autoBattleScheduledRef.current = true;
+    const delay = 500 / battleSpeed;
+    autoTimerRef.current = window.setTimeout(() => {
+      autoBattleScheduledRef.current = false;
+      autoTimerRef.current = null;
+      if (!fightingRef.current) return;
+
+      const next = completeAutoPlayerSelection(stateRef.current!);
+      if (!next) return;
+
+      stateRef.current = next;
+      setBattleState(next);
+    }, delay);
+  }, [
+    autoBattle,
+    battleSpeed,
+    fighting,
+    battleState?.phase,
+    battleState?.tacticalPhase,
+    battleState?.pendingSelection?.actorSlot,
+    battleState?.pendingSelection?.targetSlot,
+    setBattleState,
+  ]);
 
   useEffect(() => {
     if (!fighting) {
@@ -367,6 +395,7 @@ export function useTacticalBattle({
       playerActionStartedRef.current = false;
       setCombatHighlight(null);
       setDisplayState(null);
+      clearFaceOffTimer();
       clearCoinFlipTimer();
       clearChainTimer();
       clearAutoTimer();
@@ -416,7 +445,29 @@ export function useTacticalBattle({
     clearCoinFlipTimer,
     clearAutoTimer,
     clearCombatTimers,
+    clearFaceOffTimer,
   ]);
+
+  useEffect(() => {
+    if (!fighting) return undefined;
+
+    if (battleState?.phase !== "faceOff") {
+      return undefined;
+    }
+
+    faceOffTimerRef.current = window.setTimeout(() => {
+      faceOffTimerRef.current = null;
+      const prev = stateRef.current;
+      if (!prev || prev.phase !== "faceOff") return;
+      const next = advanceToCoinFlip(prev);
+      stateRef.current = next;
+      syncBattleState(next);
+    }, BATTLE_FACE_OFF_MS);
+
+    return () => {
+      clearFaceOffTimer();
+    };
+  }, [fighting, battleState?.phase, syncBattleState, clearFaceOffTimer]);
 
   const pickActor = useCallback(
     (slot: number) => {

@@ -22,24 +22,24 @@ interface GymCardProps {
 export function GymCard({ gym, unlocked, hasBadge, onChallenge }: GymCardProps) {
   const [expanded, setExpanded] = useState(false);
   const hallOfFame = useGymStore((s) => s.hallOfFame);
-  const getGymProgress = useGymStore((s) => s.getGymProgress);
+  const progressEntry = useGymStore((s) => s.gymProgress[gym.id]);
+  const coinsClaimed = progressEntry?.coinRewardClaimed ?? false;
+  const bestStars = progressEntry?.bestStars ?? 0;
   const canClaimGymCoins = useGymStore((s) => s.canClaimGymCoins);
   const claimGymCoinReward = useGymStore((s) => s.claimGymCoinReward);
   const addCoins = useEconomyStore((s) => s.addCoins);
   const team = useEconomyStore((s) => s.team);
   const getPokemonLevelsMap = useEconomyStore((s) => s.getPokemonLevelsMap);
 
-  const progress = getGymProgress(gym.id);
   const hofCount = getHallOfFameCount(hallOfFame, gym.id);
   const canClaim = canClaimGymCoins(gym.id);
-  const coinsClaimed = progress.coinRewardClaimed;
   const previousGym = getPreviousGym(gym.id);
   const teamReadiness = getTeamGymReadiness(
     team,
     getPokemonLevelsMap(),
     gym.recommendedLevel
   );
-  const canChallenge = unlocked && teamReadiness.teamComplete;
+  const canChallenge = unlocked;
 
   const handleClaimCoins = () => {
     const amount = claimGymCoinReward(gym.id);
@@ -88,7 +88,7 @@ export function GymCard({ gym, unlocked, hasBadge, onChallenge }: GymCardProps) 
               </p>
             )}
             {unlocked && !teamReadiness.teamComplete && (
-              <p className="text-[10px] text-orange-400/90 mt-1">Monte um time de 3 Pokémon</p>
+              <p className="text-[10px] text-orange-400/90 mt-1">Toque em Desafiar para montar seu time</p>
             )}
             {unlocked && teamReadiness.teamComplete && teamReadiness.underleveled && (
               <p className="text-[10px] text-orange-400/90 mt-1">
@@ -103,8 +103,8 @@ export function GymCard({ gym, unlocked, hasBadge, onChallenge }: GymCardProps) 
           <span className="text-[10px] text-white/50">
             Hall of Fame: {hofCount}/{TOTAL_POKEMON}
           </span>
-          {progress.bestStars > 0 && (
-            <span className="text-[10px] text-amber-400">{"★".repeat(progress.bestStars)}</span>
+          {bestStars > 0 && (
+            <span className="text-[10px] text-amber-400">{"★".repeat(bestStars)}</span>
           )}
         </div>
       </div>
@@ -113,7 +113,7 @@ export function GymCard({ gym, unlocked, hasBadge, onChallenge }: GymCardProps) 
         <button
           type="button"
           disabled={!canChallenge}
-          onClick={() => canChallenge && onChallenge()}
+          onClick={onChallenge}
           className={cn(
             "flex-1 py-2 rounded-xl text-xs font-bold transition-all",
             canChallenge

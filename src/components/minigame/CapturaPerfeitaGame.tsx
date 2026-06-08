@@ -207,8 +207,8 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
         </div>
         <h3 className="text-xl font-bold">Captura Perfeita</h3>
         <p className="text-white/50 text-sm leading-relaxed">
-          Acerte o timing e capture Pokémon em sequência. Centro dourado = perfeito (2
-          moedas). Zona verde = capturado (1 moeda). Errou? A sequência termina.
+          Acerte o timing e capture Pokémon em sequência. Centro dourado ou zona verde =
+          1 moeda cada. Errou? A sequência termina.
         </p>
         <AnimatedButton variant="primary" size="lg" onClick={startGame} className="w-full max-w-xs mx-auto">
           ENCONTRAR POKÉMON!

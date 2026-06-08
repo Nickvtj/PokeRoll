@@ -36,16 +36,20 @@ export const PokemonCard = memo(function PokemonCard({
   const config = RARITY_CONFIG[pokemon.rarity];
   const sizes = sizeConfig[size];
 
+  const showShinyBorder = collected && hasShiny;
+
   const cardClassName = cn(
     "glass-card relative overflow-hidden group",
     sizes.card,
-    collected && `rarity-glow-${pokemon.rarity}`,
+    collected && !showShinyBorder && `rarity-glow-${pokemon.rarity}`,
+    collected && showShinyBorder && "shiny-rainbow-border",
     !collected && "opacity-80",
     onClick && collected && "cursor-pointer",
     animate && collected && "transition-transform duration-300 hover:scale-[1.03] hover:-translate-y-1"
   );
 
-  const cardStyle = collected ? { borderColor: `${config.color}30` } : undefined;
+  const cardStyle =
+    collected && !showShinyBorder ? { borderColor: `${config.color}30` } : undefined;
 
   return (
     <div onClick={onClick} className={cardClassName} style={cardStyle}>
@@ -61,7 +65,7 @@ export const PokemonCard = memo(function PokemonCard({
 
       {collected ? (
         <>
-          <div className={cn("relative flex items-center justify-center mb-2", sizes.imageBox)}>
+          <div className={cn("relative flex items-center justify-center mb-1", sizes.imageBox)}>
             <Image
               src={pokemon.image}
               alt={pokemon.name}
@@ -71,7 +75,7 @@ export const PokemonCard = memo(function PokemonCard({
               className="object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
             />
           </div>
-          <div className="text-center space-y-1.5">
+          <div className="text-center space-y-1 -mt-1">
             <p className={cn("font-semibold truncate", sizes.text)}>{pokemon.name}</p>
             <RarityBadge rarity={pokemon.rarity} size="sm" />
           </div>

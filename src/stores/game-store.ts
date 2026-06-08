@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { ALBUM_POKEMON_LIST, POKEMON_LIST, TOTAL_POKEMON } from "@/data/pokemon";
+import { getPokedexInfo } from "@/data/pokedex";
 import { RARITY_ORDER, RARITY_CONFIG } from "@/data/rarity";
 import {
   executeSpin,
@@ -156,6 +157,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     rarity: "all",
     generation: "all",
     status: "all",
+    pokemonType: "all",
+    shinyOnly: false,
     searchQuery: "",
   },
 
@@ -218,7 +221,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         existing?.hasShiny ?? false
       );
       results.push(result);
-      sequences.push(generateSpinSequence(pokemon));
+      sequences.push(generateSpinSequence(result.pokemon));
       collection = applyCollectionEntry(collection, pokemon.id, isShiny);
 
       if (result.isDuplicate) {
@@ -376,6 +379,18 @@ export const useGameStore = create<GameState>((set, get) => ({
       list = list.filter((p) => get().isCollected(p.id));
     } else if (albumFilter.status === "missing") {
       list = list.filter((p) => !get().isCollected(p.id));
+    }
+
+    if (albumFilter.pokemonType !== "all") {
+      const typeFilter = albumFilter.pokemonType.toLowerCase();
+      list = list.filter((p) => {
+        const types = getPokedexInfo(p.id, p.name).types.map((t) => t.toLowerCase());
+        return types.includes(typeFilter);
+      });
+    }
+
+    if (albumFilter.shinyOnly) {
+      list = list.filter((p) => get().collection[p.id]?.hasShiny);
     }
 
     return list;

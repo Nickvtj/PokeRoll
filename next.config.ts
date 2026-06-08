@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
         hostname: "archives.bulbagarden.net",
         pathname: "/media/upload/**",
       },
+      {
+        protocol: "https",
+        hostname: "play.pokemonshowdown.com",
+        pathname: "/sprites/trainers/**",
+      },
+      {
+        protocol: "https",
+        hostname: "raw.githubusercontent.com",
+        pathname: "/smogon/pokemon-showdown/**",
+      },
     ],
   },
 };

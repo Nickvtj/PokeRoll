@@ -36,6 +36,7 @@ export function EliteFourScreen({
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
   const [autoBattle, setAutoBattle] = useState(false);
+  const [battleSpeed, setBattleSpeed] = useState<1 | 2 | 3>(1);
 
   const leagueUnlocked = isEliteUnlocked();
   const economyBonuses = getEconomyBonuses(team);
@@ -85,6 +86,7 @@ export function EliteFourScreen({
     }),
     onTurnComplete: handleTurnComplete,
     autoBattle,
+    battleSpeed,
   });
 
   const startElite = useCallback(
@@ -149,6 +151,8 @@ export function EliteFourScreen({
         }}
         autoBattle={autoBattle}
         onToggleAutoBattle={() => setAutoBattle(!autoBattle)}
+        battleSpeed={battleSpeed}
+        onBattleSpeedChange={setBattleSpeed}
       />
     );
   }

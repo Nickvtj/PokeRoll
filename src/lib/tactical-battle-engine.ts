@@ -513,6 +513,58 @@ function pickNextEnemyActorSlot(state: BattleState): number | null {
   return slots[0] ?? null;
 }
 
+function scoreTacticalMove(
+  actor: BattleFighter,
+  target: BattleFighter,
+  move: BattleMove,
+  mi: number
+): number {
+  const defenderTypes = getDefenderTypes(target.pokemon.id, target.pokemon.name);
+  const { multiplier } = getDualTypeEffectiveness(move.type, defenderTypes);
+  let score = multiplier * (move.power || 30);
+  if (move.category === "status" && !target.status) score += 25;
+  if (move.category === "status" && target.status) score -= 20;
+  if (move.category === "damage") {
+    const powerFactor = move.power / 50;
+    const damage = Math.round(
+      ((actor.stats.attack * powerFactor) / (actor.stats.attack + target.stats.defense + 14)) *
+        50 *
+        multiplier
+    );
+    if (damage >= target.currentHp) score += 200;
+  }
+  return score;
+}
+
+function pickBestActionForActor(
+  actor: BattleFighter,
+  targets: BattleFighter[],
+  actorSlot: number
+): { targetSlot: number; moveIndex: number } | null {
+  const living = targets.filter((t) => t.currentHp > 0);
+  if (living.length === 0) return null;
+
+  const moves =
+    actor.equippedMoves ?? getDefaultEquippedMoves(actor.pokemon.id, actor.battleLevel ?? 1);
+  let bestScore = -Infinity;
+  let bestTargetSlot = living[0]?.slotIndex ?? 0;
+  let bestMoveIdx = 0;
+
+  for (let mi = 0; mi < moves.length; mi++) {
+    const move = moves[mi];
+    for (const target of living) {
+      const score = scoreTacticalMove(actor, target, move, mi);
+      if (score > bestScore) {
+        bestScore = score;
+        bestMoveIdx = mi;
+        bestTargetSlot = target.slotIndex ?? 0;
+      }
+    }
+  }
+
+  return { targetSlot: bestTargetSlot, moveIndex: bestMoveIdx };
+}
+
 function buildSingleEnemyAction(state: BattleState): {
   actorSlot: number;
   targetSlot: number;
@@ -524,32 +576,9 @@ function buildSingleEnemyAction(state: BattleState): {
   const enemy = findFighter(state.enemyTeam, actorSlot, false);
   if (!enemy || enemy.currentHp <= 0) return null;
 
-  const livingPlayers = getLivingFighters(state.playerTeam);
-  if (livingPlayers.length === 0) return null;
-
-  const moves = enemy.equippedMoves ?? getDefaultEquippedMoves(enemy.pokemon.id, enemy.battleLevel ?? 1);
-  let bestMoveIdx = 0;
-  let bestTargetSlot = livingPlayers[0]?.slotIndex ?? 0;
-  let bestScore = -Infinity;
-
-  for (let mi = 0; mi < moves.length; mi++) {
-    const move = moves[mi];
-    for (const target of livingPlayers) {
-      const ts = target.slotIndex ?? 0;
-      const defenderTypes = getDefenderTypes(target.pokemon.id, target.pokemon.name);
-      const { multiplier } = getDualTypeEffectiveness(move.type, defenderTypes);
-      let score = multiplier * (move.power || 30);
-      if (move.category === "status" && !target.status) score += 25;
-      if (move.category === "status" && target.status) score -= 20;
-      if (score > bestScore) {
-        bestScore = score;
-        bestMoveIdx = mi;
-        bestTargetSlot = ts;
-      }
-    }
-  }
-
-  return { actorSlot, targetSlot: bestTargetSlot, moveIndex: bestMoveIdx };
+  const pick = pickBestActionForActor(enemy, getLivingFighters(state.playerTeam), actorSlot);
+  if (!pick) return null;
+  return { actorSlot, ...pick };
 }
 
 function advanceEnemyCursor(state: BattleState, actedSlot: number): number {
@@ -813,7 +842,7 @@ export function initTacticalBattle(
   const playerStarts = performCoinFlip();
 
   return {
-    phase: "coinFlip",
+    phase: "faceOff",
     playerTeam,
     enemyTeam: enemies,
     turnOrder: [],
@@ -845,11 +874,11 @@ export function buildAutoPlayerAction(state: BattleState): {
   targetSlot: number;
   moveIndex: number;
 } | null {
-  const livingPlayers = getLivingFighters(state.playerTeam).filter(f => f.status?.effect !== "sleep");
+  const livingPlayers = getLivingFighters(state.playerTeam).filter(
+    (f) => f.status?.effect !== "sleep"
+  );
   if (livingPlayers.length === 0) return null;
-
-  const livingEnemies = getLivingFighters(state.enemyTeam);
-  if (livingEnemies.length === 0) return null;
+  if (getLivingFighters(state.enemyTeam).length === 0) return null;
 
   let bestScore = -Infinity;
   let selection: { actorSlot: number; targetSlot: number; moveIndex: number } | null = null;
@@ -857,35 +886,57 @@ export function buildAutoPlayerAction(state: BattleState): {
   for (const actor of livingPlayers) {
     const actorSlot = actor.slotIndex ?? 0;
     const moves = actor.equippedMoves ?? [];
-    
     for (let mi = 0; mi < moves.length; mi++) {
-      const move = moves[mi];
-      
-      for (const target of livingEnemies) {
-        const targetSlot = target.slotIndex ?? 0;
-        const defenderTypes = getDefenderTypes(target.pokemon.id, target.pokemon.name);
-      const { multiplier } = getDualTypeEffectiveness(move.type, defenderTypes);
-        
-        let score = multiplier * (move.power || 30);
-        if (move.category === "status" && !target.status) score += 40;
-        if (move.category === "status" && target.status) score -= 30;
-        
-        // Prioriza nocautear o inimigo
-        if (move.category === "damage") {
-          const powerFactor = move.power / 50;
-          const damage = Math.round(((actor.stats.attack * powerFactor) / (actor.stats.attack + target.stats.defense + 14)) * 50 * multiplier);
-          if (damage >= target.currentHp) score += 200;
-        }
-
+      for (const target of getLivingFighters(state.enemyTeam)) {
+        const score = scoreTacticalMove(actor, target, moves[mi], mi);
         if (score > bestScore) {
           bestScore = score;
-          selection = { actorSlot, targetSlot, moveIndex: mi };
+          selection = {
+            actorSlot,
+            targetSlot: target.slotIndex ?? 0,
+            moveIndex: mi,
+          };
         }
       }
     }
   }
 
   return selection;
+}
+
+export function completeAutoPlayerSelection(state: BattleState): BattleState | null {
+  const phase = state.tacticalPhase;
+  if (phase === "player-pick-actor") {
+    const sel = buildAutoPlayerAction(state);
+    if (!sel) return null;
+    let s = selectActor(state, sel.actorSlot);
+    s = selectTarget(s, sel.targetSlot);
+    return selectMove(s, sel.moveIndex);
+  }
+  if (phase === "player-pick-target" && state.pendingSelection?.actorSlot != null) {
+    const actor = findFighter(state.playerTeam, state.pendingSelection.actorSlot, true);
+    if (!actor) return null;
+    const pick = pickBestActionForActor(actor, getLivingFighters(state.enemyTeam), actor.slotIndex ?? 0);
+    if (!pick) return null;
+    let s = selectTarget(state, pick.targetSlot);
+    return selectMove(s, pick.moveIndex);
+  }
+  if (
+    phase === "player-pick-move" &&
+    state.pendingSelection?.actorSlot != null &&
+    state.pendingSelection?.targetSlot != null
+  ) {
+    const actor = findFighter(state.playerTeam, state.pendingSelection.actorSlot, true);
+    if (!actor) return null;
+    const pick = pickBestActionForActor(
+      actor,
+      [findFighter(state.enemyTeam, state.pendingSelection.targetSlot, false)!].filter(Boolean),
+      actor.slotIndex ?? 0
+    );
+    if (!pick) return null;
+    return selectMove(state, pick.moveIndex);
+  }
+  return null;
 }
 
 export function getEffectivenessText(preview: MovePreview): string {

@@ -73,17 +73,7 @@ export function TrainerItemsBar({ className }: TrainerItemsBarProps) {
                 : "border-white/10 hover:border-amber-400/40 hover:bg-amber-500/10"
             )}
           >
-            <motion.span
-              animate={isLuckyEggActive ? { rotate: 360 } : { rotate: 0 }}
-              transition={
-                isLuckyEggActive
-                  ? { duration: 2, repeat: Infinity, ease: "linear" }
-                  : undefined
-              }
-              className="inline-flex"
-            >
-              <ItemSprite src={LUCKY_EGG_SPRITE} alt="Lucky Egg" size={22} />
-            </motion.span>
+            <ItemSprite src={LUCKY_EGG_SPRITE} alt="Lucky Egg" size={22} />
             {isLuckyEggActive ? (
               <>
                 <Timer className="w-3 h-3 text-amber-300" />

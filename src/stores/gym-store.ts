@@ -153,6 +153,9 @@ export const useGymStore = create<GymStore>((set, get) => ({
       return { gymProgress, badges, hallOfFame };
     });
 
+    if (badgeEarned) {
+      useEconomyStore.getState().incrementMission("gym_win");
+    }
     get().sync();
     return { badgeEarned, newHallEntries };
   },

@@ -295,6 +295,29 @@ export function isEliteMemberUnlocked(
   return !!eliteProgress[prevId]?.cleared;
 }
 
+export function getKantoLeagueLabel(
+  badges: GymId[],
+  championDefeated: boolean,
+  eliteProgress: Partial<Record<EliteId, { cleared?: boolean }>>
+): string {
+  if (championDefeated) return "Mestre Pokémon";
+
+  if (allBadgesEarned(badges)) {
+    for (const eliteId of ELITE_ORDER) {
+      if (!eliteProgress[eliteId]?.cleared) {
+        const elite = ELITE_FOUR.find((e) => e.id === eliteId);
+        if (elite?.isChampion) return "Liga Indigo · Campeão";
+        return elite ? `Liga Elite · ${elite.name}` : "Liga Elite";
+      }
+    }
+    return "Liga Elite";
+  }
+
+  const nextGym = GYMS.find((g) => !badges.includes(g.id));
+  if (!nextGym) return "Liga Kanto";
+  return `Liga ${nextGym.leaderName}`;
+}
+
 export function getHallOfFameCount(
   hallOfFame: { gymId: GymId; pokemonId: number }[],
   gymId: GymId

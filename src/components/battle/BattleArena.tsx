@@ -1,13 +1,22 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useMemo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Swords, Target, Pointer } from "lucide-react";
 import { PokemonBattleCard, type BattleSelectionMode } from "@/components/battle/PokemonBattleCard";
 import { BattleActionPanel } from "@/components/battle/BattleActionPanel";
 import { BattleTurnBanner, battleSectionClass } from "@/components/battle/BattleTurnBanner";
 import { BattleResultModal } from "@/components/battle/BattleResultModal";
 import { BattleCoinFlipOverlay } from "@/components/battle/BattleCoinFlipOverlay";
-import { FloatingAutoBattleToggle } from "@/components/battle/FloatingAutoBattleToggle";
+import { BattleFaceOffOverlay } from "@/components/battle/BattleFaceOffOverlay";
+import { BattleTrainerChip } from "@/components/battle/BattleTrainerChip";
+import { FloatingAutoBattleToggle, type BattleSpeed } from "@/components/battle/FloatingAutoBattleToggle";
+import {
+  getPlayerTrainerPortrait,
+  rollTrainingOpponent,
+} from "@/data/battle-trainers";
+import { useGameStore } from "@/stores/game-store";
+import { useEconomyStore } from "@/stores/economy-store";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
 import type { BattleCombatHighlight } from "@/hooks/use-tactical-battle";
@@ -30,6 +39,8 @@ interface BattleArenaProps {
   onCancelSelection?: () => void;
   autoBattle?: boolean;
   onToggleAutoBattle?: () => void;
+  battleSpeed?: BattleSpeed;
+  onBattleSpeedChange?: (speed: BattleSpeed) => void;
 }
 
 export function BattleArena({
@@ -45,7 +56,18 @@ export function BattleArena({
   onCancelSelection,
   autoBattle = false,
   onToggleAutoBattle,
+  battleSpeed = 1,
+  onBattleSpeedChange,
 }: BattleArenaProps) {
+  const profile = useGameStore((s) => s.profile);
+  const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
+  const playerTrainer = getPlayerTrainerPortrait(profile.username, selectedAvatarId);
+  const opponentTrainer = useMemo(
+    () => state?.trainerDisplay?.opponent ?? rollTrainingOpponent(),
+    [state?.trainerDisplay?.opponent]
+  );
+  const isPreFight = state?.phase === "faceOff" || state?.phase === "coinFlip";
+
   if (!state) {
     return (
       <div className="glass-card p-12 text-center text-white/40">
@@ -133,12 +155,24 @@ export function BattleArena({
     (state.phase === "victory" || state.phase === "defeat") && onContinue;
 
   const arenaContent = (
-    <div className="relative">
+    <div className="relative min-h-[22rem] sm:min-h-[24rem]">
+      <AnimatePresence>
+        {state.phase === "faceOff" && (
+          <BattleFaceOffOverlay
+            key="face-off"
+            player={playerTrainer}
+            opponent={opponentTrainer}
+            accentColor={state.gymMeta?.themeColor}
+            playerFallbackLetter={profile.username.charAt(0)}
+          />
+        )}
+      </AnimatePresence>
+
       {state.phase === "coinFlip" && (
         <BattleCoinFlipOverlay playerStarts={state.playerStarts ?? true} />
       )}
 
-      <div className={state.phase === "coinFlip" ? "opacity-30 pointer-events-none select-none" : ""}>
+      <div className={isPreFight ? "opacity-25 pointer-events-none select-none" : ""}>
       <div className="flex items-center justify-between gap-4 mb-2">
         {state.gymMeta ? (
           <div
@@ -170,10 +204,15 @@ export function BattleArena({
       </div>
 
       {onToggleAutoBattle && (
-        <FloatingAutoBattleToggle active={autoBattle} onToggle={onToggleAutoBattle} />
+        <FloatingAutoBattleToggle
+          active={autoBattle}
+          onToggle={onToggleAutoBattle}
+          speed={battleSpeed}
+          onSpeedChange={onBattleSpeedChange}
+        />
       )}
 
-        {tactical && <BattleTurnBanner phase={phase} />}
+        {tactical && !autoBattle && <BattleTurnBanner phase={phase} />}
 
         <div
           className={cn(
@@ -186,16 +225,25 @@ export function BattleArena({
               BATTLE_CLASSIC_THEME
                 ? "battle-classic-section-label battle-classic-enemy-label"
                 : "text-xs text-red-400 font-bold uppercase tracking-wider mb-2",
-              phase === "player-pick-target" && "animate-pulse"
+              !autoBattle && phase === "player-pick-target" && "animate-pulse"
             )}
           >
-            {phase === "player-pick-target" ? (
+            {!autoBattle && phase === "player-pick-target" ? (
               <span className="flex items-center gap-1"><Target className="w-3 h-3" /> Escolha o alvo</span>
             ) : (
               "Inimigos"
             )}
           </p>
-          <div className="grid grid-cols-3 gap-2 relative z-10">
+          <div className="flex items-start gap-2 sm:gap-3">
+            {state.trainerDisplay && (
+              <BattleTrainerChip
+                side="enemy"
+                name={state.trainerDisplay.opponent.name}
+                spriteUrl={state.trainerDisplay.opponent.spriteUrl}
+                accentColor={state.gymMeta?.themeColor}
+              />
+            )}
+          <div className="grid grid-cols-3 gap-2 relative z-10 flex-1 min-w-0">
             {state.enemyTeam.map((f, i) => {
               const slot = f.slotIndex ?? i;
               const flatIdx = 3 + slot;
@@ -213,6 +261,7 @@ export function BattleArena({
                   side="enemy"
                   selectable={
                     tactical &&
+                    !autoBattle &&
                     f.currentHp > 0 &&
                     (phase === "player-pick-target" ||
                       (phase === "player-pick-move" && pending.targetSlot === slot))
@@ -225,6 +274,7 @@ export function BattleArena({
                 />
               );
             })}
+          </div>
           </div>
         </div>
 
@@ -262,16 +312,17 @@ export function BattleArena({
               BATTLE_CLASSIC_THEME
                 ? "battle-classic-section-label battle-classic-player-label"
                 : "text-xs text-cyan-400 font-bold uppercase tracking-wider mb-2",
-              phase === "player-pick-actor" && "animate-pulse"
+              !autoBattle && phase === "player-pick-actor" && "animate-pulse"
             )}
           >
-            {phase === "player-pick-actor" ? (
+            {!autoBattle && phase === "player-pick-actor" ? (
               <span className="flex items-center gap-1"><Pointer className="w-3 h-3" /> Escolha quem ataca</span>
             ) : (
               "Seu Time"
             )}
           </p>
-          <div className="grid grid-cols-3 gap-2 relative z-10">
+          <div className="flex items-start gap-2 sm:gap-3 flex-row-reverse">
+          <div className="grid grid-cols-3 gap-2 relative z-10 flex-1 min-w-0">
             {state.playerTeam.map((f, i) => {
               const slot = f.slotIndex ?? i;
               const flatIdx = slot;
@@ -288,6 +339,7 @@ export function BattleArena({
                   side="player"
                   selectable={
                     tactical &&
+                    !autoBattle &&
                     f.currentHp > 0 &&
                     ((phase === "player-pick-actor" && f.status?.effect !== "sleep") ||
                       ((phase === "player-pick-target" || phase === "player-pick-move") &&
@@ -306,9 +358,17 @@ export function BattleArena({
               );
             })}
           </div>
+            <BattleTrainerChip
+              side="player"
+              name={playerTrainer.name}
+              spriteUrl={playerTrainer.spriteUrl}
+              fallbackLetter={profile.username.charAt(0)}
+              avatarStyle={playerTrainer.isProfileAvatar}
+            />
+          </div>
         </div>
 
-        {tactical && onPickMove && onCancelSelection && (
+        {tactical && !autoBattle && onPickMove && onCancelSelection && (
           <BattleActionPanel
             state={state}
             bonuses={bonuses}

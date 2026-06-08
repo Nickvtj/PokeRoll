@@ -1,3 +1,4 @@
+import { rollTrainingOpponent } from "@/data/battle-trainers";
 import { POKEMON_LIST } from "@/data/pokemon";
 import { getPokemonBattleStats } from "@/data/pokemon-stats";
 import { getPokedexInfo } from "@/data/pokedex";
@@ -250,6 +251,10 @@ export function performCoinFlip(): boolean {
   return Math.random() < 0.5;
 }
 
+export function advanceToCoinFlip(state: BattleState): BattleState {
+  return { ...state, phase: "coinFlip" };
+}
+
 export function resolveCoinFlip(state: BattleState): BattleState {
   const playerStarts = state.playerStarts ?? true;
   return {
@@ -295,7 +300,7 @@ export function initBattle(
   }
 
   return {
-    phase: "coinFlip",
+    phase: "faceOff",
     playerTeam,
     enemyTeam,
     turnOrder: buildTurnOrder(playerStarts),
@@ -306,6 +311,7 @@ export function initBattle(
     reward: null,
     levelUps: [],
     mode: "training",
+    trainerDisplay: { opponent: rollTrainingOpponent() },
     playerDeaths: 0,
     turnCount: 0,
     playerStarts,

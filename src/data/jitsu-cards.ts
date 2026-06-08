@@ -41,12 +41,13 @@ export function createJitsuCard(pokemonId?: number): JitsuCard {
       : CARD_POOL[Math.floor(Math.random() * CARD_POOL.length)];
   instanceCounter += 1;
 
+  const power = rollPower(pick.pokemon.rarity);
   const base = {
     instanceId: `jitsu-${pick.pokemon.id}-${instanceCounter}-${Date.now()}`,
     pokemonId: pick.pokemon.id,
     name: pick.pokemon.name,
     type: pick.element,
-    power: rollPower(pick.pokemon.rarity),
+    power,
     image: pick.pokemon.image,
   };
 

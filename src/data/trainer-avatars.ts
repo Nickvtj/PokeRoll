@@ -1,3 +1,5 @@
+import { getPokemonSpriteUrl } from "@/data/pokemon-sprites";
+
 /** Avatares desbloqueados a cada 5 níveis da conta (+ Pokémon da coleção) */
 
 export type AvatarKind = "default" | "trainer" | "pokemon";
@@ -111,4 +113,16 @@ export function buildPokemonAvatarId(pokemonId: number): string {
 
 export function buildTrainerAvatarId(trainerId: string): string {
   return trainerId === "default" ? "default" : `trainer:${trainerId}`;
+}
+
+export function getAvatarImageUrl(avatarId: string): string | undefined {
+  const parsed = parseAvatarId(avatarId);
+  if (parsed.kind === "pokemon") {
+    const id = Number(parsed.ref);
+    if (id >= 1 && id <= 151) return getPokemonSpriteUrl(id);
+  }
+  if (parsed.kind === "trainer") {
+    return TRAINER_AVATARS.find((a) => a.id === parsed.ref)?.image;
+  }
+  return undefined;
 }

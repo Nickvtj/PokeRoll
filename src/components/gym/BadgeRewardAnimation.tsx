@@ -46,13 +46,9 @@ export function BadgeRewardAnimation({
             boxShadow: `0 0 80px ${gym.themeColor}40`,
           }}
         >
-          <motion.div
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 2, ease: "easeInOut" }}
-            className="w-full flex justify-center"
-          >
+          <div className="w-full flex justify-center">
             <GymBadge gymId={gym.id} name={gym.badgeName} earned size="lg" color={gym.themeColor} />
-          </motion.div>
+          </div>
 
           <div>
             <h2 className="text-2xl font-black text-amber-400">Insígnia Conquistada!</h2>

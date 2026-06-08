@@ -12,7 +12,7 @@ import {
   type LevelFilterId,
 } from "@/data/pokemon-battle-level";
 import { useGameStore } from "@/stores/game-store";
-import { withDisplayImage } from "@/lib/pokemon-display";
+import { withDisplayImage, shouldShowShiny } from "@/lib/pokemon-display";
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGymStore } from "@/stores/gym-store";
 import { cn } from "@/lib/utils";
@@ -326,6 +326,7 @@ export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
               type={type}
               gymBadges={getHallOfFameBorder(pokemon.id)}
               displayImage={displayPokemon.image}
+              useShiny={shouldShowShiny(collection[pokemon.id])}
               disabled={disabled}
               synergyActive={monotypeSynergy.active}
               synergyType={monotypeSynergy.type}

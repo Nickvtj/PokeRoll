@@ -4,8 +4,9 @@ import { useEffect, useRef } from "react";
 import {
   BATTLE_COIN_FLIP_MS,
   BATTLE_COIN_REVEAL_MS,
+  BATTLE_FACE_OFF_MS,
 } from "@/data/economy-balance";
-import { resolveCoinFlip } from "@/lib/battle-engine";
+import { advanceToCoinFlip, resolveCoinFlip } from "@/lib/battle-engine";
 import {
   playBattleCoinResultReveal,
   playBattleCoinSpinSequence,
@@ -19,6 +20,19 @@ export function useBattleCoinFlip(
   setBattleState: (updater: (prev: BattleState | null) => BattleState | null) => void
 ): void {
   const soundsStartedRef = useRef(false);
+  useEffect(() => {
+    if (battleState?.phase !== "faceOff") {
+      return undefined;
+    }
+
+    const faceOffTimer = window.setTimeout(() => {
+      setBattleState((prev) => (prev?.phase === "faceOff" ? advanceToCoinFlip(prev) : prev));
+    }, BATTLE_FACE_OFF_MS);
+
+    return () => {
+      window.clearTimeout(faceOffTimer);
+    };
+  }, [battleState?.phase, setBattleState]);
 
   useEffect(() => {
     if (battleState?.phase !== "coinFlip") {

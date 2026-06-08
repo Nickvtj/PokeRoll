@@ -19,7 +19,7 @@ const GAMES = [
     href: "/games/captura",
     title: "Captura Perfeita",
     desc: "Acerte o timing na zona verde e capture Pokémon selvagens.",
-    reward: "1 moeda / captura",
+    reward: "1 moeda por acerto (perfeito ou verde)",
     icon: Target,
     gradient: "from-emerald-600/20 to-transparent",
     border: "border-emerald-500/25 hover:border-emerald-400/45",
@@ -145,7 +145,7 @@ export default function GamesHubPage() {
                       )}
                       {record !== undefined && record > 0 && (
                         <span className="text-[9px] font-black bg-black/40 px-1.5 py-0.5 rounded text-amber-300 tabular-nums shrink-0">
-                          REC {record}
+                          REC {game.href === "/games/captura" ? `${record} seq` : record}
                         </span>
                       )}
                     </div>

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Filter, Search, X } from "lucide-react";
+import { ChevronDown, Filter, Search, Sparkles, X } from "lucide-react";
 import { PokemonCard } from "@/components/pokemon/PokemonCard";
 import { PokedexModal } from "@/components/album/PokedexModal";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
@@ -15,9 +15,22 @@ import type { Pokemon, Rarity } from "@/types";
 
 const ALBUM_PAGE_SIZE = 48;
 
+const POKEMON_TYPES = [
+  "normal", "fire", "water", "grass", "electric", "ice", "fighting", "poison",
+  "ground", "flying", "psychic", "bug", "rock", "ghost", "dragon", "dark", "steel", "fairy",
+] as const;
+
+const TYPE_LABELS: Record<string, string> = {
+  normal: "Normal", fire: "Fogo", water: "Água", grass: "Planta", electric: "Elétrico",
+  ice: "Gelo", fighting: "Lutador", poison: "Veneno", ground: "Terra", flying: "Voador",
+  psychic: "Psíquico", bug: "Inseto", rock: "Pedra", ghost: "Fantasma", dragon: "Dragão",
+  dark: "Sombrio", steel: "Aço", fairy: "Fada",
+};
+
 export function AlbumGrid() {
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
   const [visibleCount, setVisibleCount] = useState(ALBUM_PAGE_SIZE);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const collection = useGameStore((s) => s.collection);
   const albumFilter = useGameStore((s) => s.albumFilter);
@@ -39,6 +52,8 @@ export function AlbumGrid() {
     albumFilter.rarity,
     albumFilter.status,
     albumFilter.generation,
+    albumFilter.pokemonType,
+    albumFilter.shinyOnly,
     albumFilter.searchQuery,
   ]);
 
@@ -51,7 +66,7 @@ export function AlbumGrid() {
 
   useEffect(() => {
     setVisibleCount(ALBUM_PAGE_SIZE);
-  }, [albumFilter.rarity, albumFilter.status, albumFilter.generation, albumFilter.searchQuery]);
+  }, [albumFilter.rarity, albumFilter.status, albumFilter.generation, albumFilter.pokemonType, albumFilter.shinyOnly, albumFilter.searchQuery]);
 
   const collected = getUniqueCount();
   const progress = getProgress();
@@ -107,89 +122,112 @@ export function AlbumGrid() {
       </div>
 
       {!isSearching && (
-        <div className="glass-card p-4 space-y-3">
-          <div className="flex items-center gap-2 text-white/70">
-            <Filter className="w-4 h-4" />
-            <span className="text-sm font-medium">Filtros</span>
-          </div>
+        <div className="glass-card overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((v) => !v)}
+            className="w-full flex items-center justify-between gap-3 p-4 hover:bg-white/[0.03] transition-colors"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold text-white/80">
+              <Filter className="w-4 h-4 text-indigo-400" />
+              Filtros do álbum
+            </span>
+            <ChevronDown className={cn("w-4 h-4 text-white/40 transition-transform", filtersOpen && "rotate-180")} />
+          </button>
 
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">Status</p>
-            <div className="flex flex-wrap gap-2">
-              {(
-                [
-                  { value: "all", label: "Todos" },
-                  { value: "found", label: "Encontrados" },
-                  { value: "missing", label: "Faltando" },
-                ] as const
-              ).map(({ value, label }) => (
-                <FilterChip
-                  key={value}
-                  active={albumFilter.status === value}
-                  onClick={() => setAlbumFilter({ status: value })}
-                >
-                  {label}
-                </FilterChip>
-              ))}
-            </div>
-          </div>
+          {filtersOpen && (
+            <div className="px-4 pb-4 space-y-4 border-t border-white/10 pt-4">
+              <FilterSection title="Status">
+                {(
+                  [
+                    { value: "all", label: "Todos" },
+                    { value: "found", label: "Encontrados" },
+                    { value: "missing", label: "Faltando" },
+                  ] as const
+                ).map(({ value, label }) => (
+                  <FilterChip
+                    key={value}
+                    active={albumFilter.status === value}
+                    onClick={() => setAlbumFilter({ status: value })}
+                  >
+                    {label}
+                  </FilterChip>
+                ))}
+              </FilterSection>
 
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">Raridade</p>
-            <div className="flex flex-wrap gap-2">
-              <FilterChip
-                active={albumFilter.rarity === "all"}
-                onClick={() => setAlbumFilter({ rarity: "all" })}
-              >
-                Todas
-              </FilterChip>
-              {RARITY_ORDER.map((r) => (
-                <FilterChip
-                  key={r}
-                  active={albumFilter.rarity === r}
-                  onClick={() => setAlbumFilter({ rarity: r as Rarity })}
-                  color={RARITY_CONFIG[r].color}
-                >
-                  {RARITY_CONFIG[r].label}
+              <FilterSection title="Raridade">
+                <FilterChip active={albumFilter.rarity === "all"} onClick={() => setAlbumFilter({ rarity: "all" })}>
+                  Todas
                 </FilterChip>
-              ))}
-            </div>
-          </div>
+                {RARITY_ORDER.map((r) => (
+                  <FilterChip
+                    key={r}
+                    active={albumFilter.rarity === r}
+                    onClick={() => setAlbumFilter({ rarity: r as Rarity })}
+                    color={RARITY_CONFIG[r].color}
+                  >
+                    {RARITY_CONFIG[r].label}
+                  </FilterChip>
+                ))}
+              </FilterSection>
 
-          <div className="flex items-end justify-between gap-3 flex-wrap">
-            <div className="space-y-2">
-              <p className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">Geração</p>
-              <div className="flex flex-wrap gap-2">
-                <FilterChip
-                  active={albumFilter.generation === "all"}
-                  onClick={() => setAlbumFilter({ generation: "all" })}
-                >
-                  Todas gens
+              <FilterSection title="Tipo">
+                <FilterChip active={albumFilter.pokemonType === "all"} onClick={() => setAlbumFilter({ pokemonType: "all" })}>
+                  Todos
                 </FilterChip>
+                {POKEMON_TYPES.map((t) => (
+                  <FilterChip
+                    key={t}
+                    active={albumFilter.pokemonType === t}
+                    onClick={() => setAlbumFilter({ pokemonType: t })}
+                  >
+                    {TYPE_LABELS[t]}
+                  </FilterChip>
+                ))}
+              </FilterSection>
+
+              <FilterSection title="Extras">
                 <FilterChip
-                  active={albumFilter.generation === 1}
-                  onClick={() => setAlbumFilter({ generation: 1 })}
+                  active={albumFilter.shinyOnly}
+                  onClick={() => setAlbumFilter({ shinyOnly: !albumFilter.shinyOnly })}
                 >
+                  <span className="inline-flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    Só com shiny
+                  </span>
+                </FilterChip>
+                <FilterChip active={albumFilter.generation === 1} onClick={() => setAlbumFilter({ generation: 1 })}>
                   Gen 1
                 </FilterChip>
-              </div>
-            </div>
+                <FilterChip active={albumFilter.generation === "all"} onClick={() => setAlbumFilter({ generation: "all" })}>
+                  Todas gens
+                </FilterChip>
+              </FilterSection>
 
-            {(albumFilter.rarity !== "all" ||
-              albumFilter.status !== "all" ||
-              albumFilter.generation !== "all") && (
-              <button
-                type="button"
-                onClick={() => {
-                  setAlbumFilter({ rarity: "all", status: "all", generation: "all" });
-                  setVisibleCount(ALBUM_PAGE_SIZE);
-                }}
-                className="text-xs text-indigo-400 hover:text-indigo-300 pb-1"
-              >
-                Limpar filtros
-              </button>
-            )}
-          </div>
+              {(albumFilter.rarity !== "all" ||
+                albumFilter.status !== "all" ||
+                albumFilter.generation !== "all" ||
+                albumFilter.pokemonType !== "all" ||
+                albumFilter.shinyOnly) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAlbumFilter({
+                      rarity: "all",
+                      status: "all",
+                      generation: "all",
+                      pokemonType: "all",
+                      shinyOnly: false,
+                    });
+                    setVisibleCount(ALBUM_PAGE_SIZE);
+                  }}
+                  className="text-xs text-indigo-400 hover:text-indigo-300"
+                >
+                  Limpar filtros
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -248,6 +286,15 @@ export function AlbumGrid() {
   );
 }
 
+function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <p className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">{title}</p>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
 function FilterChip({
   children,
   active,
@@ -263,10 +310,10 @@ function FilterChip({
     <button
       onClick={onClick}
       className={cn(
-        "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border",
+        "px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 border",
         active
-          ? "bg-white/15 border-white/30 text-white"
-          : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
+          ? "bg-indigo-500/20 border-indigo-400/40 text-white shadow-sm shadow-indigo-500/10"
+          : "bg-white/[0.04] border-white/10 text-white/50 hover:bg-white/10 hover:border-white/20"
       )}
       style={
         active && color

@@ -18,7 +18,7 @@ export default function AlbumPage() {
           Álbum de Figurinhas
         </h1>
         <p className="text-white/50 text-sm">
-          Colete todos os 150 Pokémon da 1ª geração!
+          Colete todos os 151 Pokémon da 1ª geração!
         </p>
       </div>
 

@@ -2,27 +2,64 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Pencil, Check, X, Star, Coins, Swords, Trophy, Disc3 } from "lucide-react";
-import { RarityBadge } from "@/components/ui/RarityBadge";
+import { Calendar, Pencil, Check, X, Star, Coins, Swords, Trophy, Disc3, Crown } from "lucide-react";
 import { TrainerAvatarDisplay } from "@/components/profile/TrainerAvatarDisplay";
 import { ProfileStatCard } from "@/components/profile/ProfileStatCard";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
+import { useGymStore } from "@/stores/gym-store";
+import { getKantoLeagueLabel } from "@/data/gyms";
 import { XP_PER_LEVEL } from "@/data/economy-balance";
-import { formatNumber } from "@/lib/utils";
+import { POKEMON_MAP } from "@/data/pokemon";
+import { getPokedexInfo } from "@/data/pokedex";
+import { cn, formatNumber } from "@/lib/utils";
+
+const TYPE_LABELS: Record<string, string> = {
+  fire: "Fogo",
+  water: "Água",
+  grass: "Planta",
+  electric: "Elétrico",
+  ice: "Gelo",
+  fighting: "Lutador",
+  poison: "Veneno",
+  ground: "Terra",
+  flying: "Voador",
+  psychic: "Psíquico",
+  bug: "Inseto",
+  rock: "Pedra",
+  ghost: "Fantasma",
+  dragon: "Dragão",
+  dark: "Sombrio",
+  steel: "Aço",
+  fairy: "Fada",
+  normal: "Normal",
+};
+
+function getDominantTeamType(teamIds: number[]): string | null {
+  const counts: Record<string, number> = {};
+  for (const id of teamIds) {
+    const pokemon = POKEMON_MAP[id];
+    if (!pokemon) continue;
+    const primary = getPokedexInfo(pokemon.id, pokemon.name).types[0].toLowerCase();
+    counts[primary] = (counts[primary] ?? 0) + 1;
+  }
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return top ? TYPE_LABELS[top[0]] ?? top[0] : null;
+}
 
 export function ProfileIdentityCard() {
   const profile = useGameStore((s) => s.profile);
   const setUsername = useGameStore((s) => s.setUsername);
-  const getHighestRarity = useGameStore((s) => s.getHighestRarity);
-
   const level = useEconomyStore((s) => s.level);
-  const rank = useEconomyStore((s) => s.rank);
+  const team = useEconomyStore((s) => s.team);
   const xp = useEconomyStore((s) => s.xp);
   const coins = useEconomyStore((s) => s.coins);
   const battleWins = useEconomyStore((s) => s.battleWins);
   const freeSpins = useEconomyStore((s) => s.freeSpins);
   const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
+  const badges = useGymStore((s) => s.badges);
+  const championDefeated = useGymStore((s) => s.championDefeated);
+  const eliteProgress = useGymStore((s) => s.eliteProgress);
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(profile.username);
@@ -31,7 +68,9 @@ export function ProfileIdentityCard() {
     if (!editingName) setNameDraft(profile.username);
   }, [profile.username, editingName]);
 
-  const highestRarity = getHighestRarity();
+  const dominantType = getDominantTeamType(team);
+  const leagueLabel = getKantoLeagueLabel(badges, championDefeated, eliteProgress);
+  const isPokemonMaster = championDefeated;
   const xpInLevel = xp % XP_PER_LEVEL;
   const xpPct = (xpInLevel / XP_PER_LEVEL) * 100;
 
@@ -69,6 +108,23 @@ export function ProfileIdentityCard() {
             </div>
             <div className="px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-200 text-[10px] font-black tracking-wider ring-1 ring-inset ring-indigo-400/20">
               NÍVEL {level}
+            </div>
+            <div
+              className={cn(
+                "px-3 py-1.5 rounded-xl text-[11px] font-black tracking-wide text-center ring-1 ring-inset",
+                isPokemonMaster
+                  ? "shiny-rainbow-badge text-white shadow-[0_0_20px_rgba(251,191,36,0.35)]"
+                  : "bg-gradient-to-r from-violet-600/30 to-indigo-600/30 text-violet-100 ring-violet-400/35"
+              )}
+            >
+              {isPokemonMaster ? (
+                <span className="inline-flex items-center gap-1">
+                  <Crown className="w-3.5 h-3.5" />
+                  {leagueLabel}
+                </span>
+              ) : (
+                leagueLabel
+              )}
             </div>
           </div>
 
@@ -112,10 +168,9 @@ export function ProfileIdentityCard() {
                   <Calendar className="w-3 h-3" />
                   Desde {new Date(profile.createdAt).toLocaleDateString("pt-BR")}
                 </span>
-                <span className="text-purple-300/80 font-semibold">RANK {String(rank).toUpperCase()}</span>
-                {highestRarity && (
+                {dominantType && (
                   <span className="inline-flex items-center gap-1.5">
-                    Melhor drop: <RarityBadge rarity={highestRarity} size="sm" />
+                    Melhor tipo: <span className="text-cyan-300/90 font-semibold">{dominantType}</span>
                   </span>
                 )}
               </div>
@@ -140,7 +195,7 @@ export function ProfileIdentityCard() {
               <ProfileStatCard icon={Coins} label="Moedas" value={formatNumber(coins)} accent="amber" />
               <ProfileStatCard icon={Swords} label="Vitórias" value={formatNumber(battleWins)} accent="red" />
               <ProfileStatCard icon={Disc3} label="Spins" value={formatNumber(freeSpins)} accent="cyan" />
-              <ProfileStatCard icon={Trophy} label="Rank" value={String(rank).toUpperCase()} accent="purple" />
+              <ProfileStatCard icon={Trophy} label="Insígnias" value={formatNumber(badges.length)} accent="purple" />
             </div>
           </div>
         </div>

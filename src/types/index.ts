@@ -53,6 +53,8 @@ export interface AlbumFilter {
   rarity: Rarity | "all";
   generation: number | "all";
   status: "all" | "found" | "missing";
+  pokemonType: string | "all";
+  shinyOnly: boolean;
   searchQuery: string;
 }
 

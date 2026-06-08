@@ -18,7 +18,7 @@ export const DUPLICATE_COINS_BY_RARITY = {
 export const CAPTURE_SHAKE_MS = 700;
 /** Moedas por acerto — perfeito vale o dobro */
 export const CAPTURE_COINS_PER_CATCH = 1;
-export const CAPTURE_PERFECT_COIN_BONUS = 1;
+export const CAPTURE_PERFECT_COIN_BONUS = 0;
 export const CAPTURE_COINS_MIN = CAPTURE_COINS_PER_CATCH;
 export const CAPTURE_COINS_MAX = CAPTURE_COINS_PER_CATCH;
 
@@ -43,8 +43,8 @@ export const JITSU_HAND_SIZE = 5;
 export const JITSU_TURN_TIMER_SEC = 25;
 /** Chance de cada carta comprada/gerada ser especial */
 export const JITSU_SPECIAL_CARD_CHANCE = 0.18;
-export const JITSU_COINS_WIN_MIN = 8;
-export const JITSU_COINS_WIN_MAX = 18;
+export const JITSU_COINS_WIN_MIN = 10;
+export const JITSU_COINS_WIN_MAX = 22;
 export const JITSU_COINS_LOSS = 3;
 export const JITSU_XP_WIN = 12;
 export const JITSU_XP_LOSS = 4;
@@ -68,6 +68,8 @@ export const BATTLE_DURATION_PER_WAVE_MS = 4000;
 export const BATTLE_STRIKE_MS = 280;
 export const BATTLE_FLASH_MS = 620;
 export const BATTLE_TURN_INTERVAL_MS = 2200;
+/** Embate VS — apresentação dos treinadores antes da moeda */
+export const BATTLE_FACE_OFF_MS = 3000;
 /** Moeda — giro, revelação e pausa antes do 1º ataque */
 export const BATTLE_COIN_FLIP_MS = 3200;
 export const BATTLE_COIN_REVEAL_MS = 2600;
@@ -95,18 +97,40 @@ export const DAILY_LOGIN_COINS = [3, 4, 5, 6, 8, 10, 12];
 export const STREAK_BONUS_COINS = 2;
 
 /** Missões diárias */
-export const DAILY_MISSIONS = [
-  { id: "spin_5", label: "Girar 5 vezes", target: 5, reward: 8, type: "spins" as const },
-  { id: "battle_3", label: "Vencer 3 batalhas", target: 3, reward: 12, type: "battles" as const },
-  { id: "click_2", label: "Jogar 2 jogos", target: 2, reward: 5, type: "clicks" as const },
-  { id: "collect_2", label: "Coletar 2 Pokémon novos", target: 2, reward: 10, type: "new_pokemon" as const },
+export type DailyMissionReward =
+  | { kind: "coins"; amount: number }
+  | { kind: "luckyEgg"; amount: number }
+  | { kind: "rareCandy"; amount: number };
+
+export const DAILY_MISSIONS: {
+  id: string;
+  label: string;
+  target: number;
+  reward: DailyMissionReward;
+  type: "spins" | "battles" | "clicks" | "new_pokemon" | "gym_win" | "perfect_capture" | "streak_spin";
+}[] = [
+  { id: "spin_5", label: "Girar 5 vezes", target: 5, reward: { kind: "coins", amount: 8 }, type: "spins" },
+  { id: "battle_3", label: "Vencer 3 batalhas", target: 3, reward: { kind: "coins", amount: 12 }, type: "battles" },
+  { id: "click_2", label: "Jogar 2 jogos", target: 2, reward: { kind: "coins", amount: 5 }, type: "clicks" },
+  { id: "collect_2", label: "Coletar 2 Pokémon novos", target: 2, reward: { kind: "coins", amount: 10 }, type: "new_pokemon" },
+  { id: "gym_badge", label: "Vencer um ginásio (líder)", target: 1, reward: { kind: "luckyEgg", amount: 1 }, type: "gym_win" },
+  { id: "capture_streak_5", label: "Capturar 5 Pokémon em sequência (Captura Perfeita)", target: 1, reward: { kind: "rareCandy", amount: 1 }, type: "perfect_capture" },
+  { id: "spin_15", label: "Girar 15 vezes", target: 15, reward: { kind: "luckyEgg", amount: 1 }, type: "spins" },
 ];
+
+/** Bônus de streak no login: +10% recompensa de missão por dia (máx. +70%) */
+export function getStreakMissionMultiplier(streak: number): number {
+  return 1 + Math.min(7, Math.max(0, streak - 1)) * 0.1;
+}
 
 /** Pokébolas do Click Rush */
 export const CLICK_TIME_BONUS_SEC = 10;
 export const CLICK_TIME_BALL_CHANCE = 0.035;
 export const CLICK_MAX_TIME_SEC = 55;
 export const CLICK_BALL_MIN_DISTANCE_PCT = 14;
+export const CLICK_BALL_LIFETIME_MIN_MS = 3200;
+export const CLICK_BALL_LIFETIME_MAX_MS = 4800;
+export const CLICK_SPECIAL_BALL_LIFETIME_MS = 4200;
 
 export const BALL_TYPES = {
   poke: { label: "Poké", points: 1, color: "#ef4444", chance: 0.55 },

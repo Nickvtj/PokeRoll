@@ -43,11 +43,13 @@ export default function CapturaGamePage() {
     }
 
     recordClickGame(coins);
-    const score = streak * 100 + perfectHits * 50;
+    if (streak >= 5) {
+      useEconomyStore.getState().incrementMission("perfect_capture");
+    }
 
-    const isNewRecord = updateHighScore("perfectCapture", score);
+    const isNewRecord = updateHighScore("perfectCapture", streak);
 
-    void recordMinigameToSupabase(score, coins, perfectHits);
+    void recordMinigameToSupabase(streak, coins, perfectHits);
 
     const names =
       caughtPokemon.length > 0
@@ -81,7 +83,7 @@ export default function CapturaGamePage() {
   return (
     <GamePageShell
       title="Captura Perfeita"
-      subtitle="Capture em sequência · perfeito = 2 moedas, bom = 1 moeda"
+      subtitle="Capture em sequência · 1 moeda por acerto (dourado ou verde)"
       icon={<Target className="w-7 h-7 text-emerald-400 shrink-0" />}
     >
       <CapturaPerfeitaGame

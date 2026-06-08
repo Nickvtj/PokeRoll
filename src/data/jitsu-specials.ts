@@ -4,32 +4,37 @@ const ELEMENTS: JitsuElement[] = ["FOGO", "AGUA", "PLANTA"];
 
 export const JITSU_SPECIAL_META: Record<
   JitsuSpecialEffect,
-  { label: string; short: string; color: string }
+  { label: string; short: string; color: string; description: string }
 > = {
   "invert-power": {
     label: "Mundo Invertido",
     short: "Invertido",
     color: "#a78bfa",
+    description: "No empate de elemento, a carta com MENOR poder vence.",
   },
   "block-element": {
     label: "Interdição",
     short: "Bloqueio",
     color: "#f87171",
+    description: "Bloqueia um elemento do oponente na próxima rodada.",
   },
   "buff-next": {
     label: "Poder +2",
     short: "+2",
     color: "#4ade80",
+    description: "Sua próxima carta ganha +2 de poder.",
   },
   "debuff-next": {
     label: "Poder −2",
     short: "−2",
     color: "#fb923c",
+    description: "A próxima carta do rival perde −2 de poder.",
   },
   "destroy-trophy": {
     label: "Quebra Combo",
     short: "Destruir",
     color: "#f43f5e",
+    description: "Ao vencer a rodada, remove um troféu rival.",
   },
 };
 

@@ -22,6 +22,7 @@ interface PokemonSelectorItemProps {
   type: string;
   gymBadges: string[];
   displayImage: string;
+  useShiny?: boolean;
   disabled: boolean;
   synergyActive: boolean;
   synergyType: string | null;
@@ -41,6 +42,7 @@ export const PokemonSelectorItem = memo(function PokemonSelectorItem({
   type,
   gymBadges,
   displayImage,
+  useShiny = false,
   disabled,
   synergyActive,
   synergyType,
@@ -64,17 +66,19 @@ export const PokemonSelectorItem = memo(function PokemonSelectorItem({
               ? cn(
                   "battle-prep-card",
                   selected && "battle-prep-card-selected battle-classic-card-active",
+                  selected && useShiny && "shiny-rainbow-border",
                   isFavorite && !selected && "border-pink-400/30"
                 )
               : cn(
                   "text-center transition-all cursor-pointer rounded-xl border p-2 bg-white/[0.04]",
                   selected ? "border-2" : "border-white/10 hover:border-white/20",
+                  selected && useShiny && "shiny-rainbow-border",
                   isFavorite && !selected && "border-pink-400/30"
                 ),
             disabled && "opacity-30 cursor-not-allowed"
           )}
           style={
-            selected
+            selected && !useShiny
               ? {
                   borderColor: config.color,
                   backgroundColor: BATTLE_CLASSIC_THEME

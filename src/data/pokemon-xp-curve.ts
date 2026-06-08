@@ -94,9 +94,9 @@ export function getStatMultiplier(level: number): number {
 
 export const POKEMON_BATTLE_XP_WIN = 22;
 export const POKEMON_BATTLE_XP_LOSS = 8;
-export const GYM_BATTLE_XP_WIN = 35;
-export const GYM_BATTLE_XP_LOSS = 12;
-export const ELITE_BATTLE_XP_WIN = 50;
+export const GYM_BATTLE_XP_WIN = 52;
+export const GYM_BATTLE_XP_LOSS = 14;
+export const ELITE_BATTLE_XP_WIN = 68;
 
 export const LEVEL_FILTER_OPTIONS = [
   { id: "all", label: "Todos níveis" },

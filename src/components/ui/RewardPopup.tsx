@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Coins, Star, Gift, RotateCcw, Skull, Trophy } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { useEconomyStore } from "@/stores/economy-store";
-import { fireJitsuVictoryConfetti, fireMinigameRecordConfetti } from "@/lib/confetti";
+import { fireCelebrationConfetti, fireJitsuVictoryConfetti, fireMinigameRecordConfetti } from "@/lib/confetti";
 import { playBattleLoss, playBattleWin, playCoinGain, playReward } from "@/lib/sound-engine";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,10 @@ export function RewardPopup() {
 
   useEffect(() => {
     if (!show || !reward) return;
-    if (reward.isNewRecord) fireMinigameRecordConfetti();
+    if (reward.isNewRecord) {
+      fireCelebrationConfetti();
+      fireMinigameRecordConfetti();
+    }
     else if (won) fireJitsuVictoryConfetti();
 
     if (won) void playBattleWin();

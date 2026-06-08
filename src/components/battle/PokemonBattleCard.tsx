@@ -14,6 +14,8 @@ import {
 import { playBattleStrike, playBattleHit } from "@/lib/battle-hit-sounds";
 import type { TypeMatchupHint } from "@/lib/battle-matchup";
 import type { BattleFighter } from "@/types/battle";
+import { useGameStore } from "@/stores/game-store";
+import { shouldShowShiny } from "@/lib/pokemon-display";
 
 export type BattleTurnHighlight = "attack" | "defend" | "idle-dim" | "none";
 
@@ -57,6 +59,9 @@ export function PokemonBattleCard({
   statusApplied,
   typeMatchup,
 }: PokemonBattleCardProps) {
+  const collection = useGameStore((s) => s.collection);
+  const isShinyActive =
+    side === "player" && shouldShowShiny(collection[fighter.pokemon.id]);
   const config = RARITY_CONFIG[fighter.pokemon.rarity];
   const hpPercent = (fighter.currentHp / fighter.maxHp) * 100;
   const isKo = fighter.currentHp <= 0;
@@ -167,10 +172,11 @@ export function PokemonBattleCard({
         typeFxClass,
         isSleeping && "battle-card-asleep",
         isSelectable && "cursor-pointer battle-card-tap-hint",
-        !isSelectable && "cursor-default"
+        !isSelectable && "cursor-default",
+        isShinyActive && "shiny-rainbow-border"
       )}
       style={
-        BATTLE_CLASSIC_THEME
+        BATTLE_CLASSIC_THEME || isShinyActive
           ? undefined
           : {
               borderColor: `${config.color}40`,

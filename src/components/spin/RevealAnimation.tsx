@@ -43,13 +43,14 @@ function ShinyBadge({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
 
 function ResultCard({ result, index }: { result: SpinResult; index: number }) {
   const config = RARITY_CONFIG[result.rarity];
-  const isDuplicate = result.isDuplicate && !result.isNewShinyUnlock;
-  const isShinyEpic = result.isNewShinyUnlock;
+  const isDuplicate = result.isDuplicate && !result.isShiny;
+  const isShiny = Boolean(result.isShiny);
+  const isShinyUnlock = Boolean(result.isNewShinyUnlock);
 
   return (
     <div className="relative pt-3">
       <div className="absolute top-0 right-0 z-30 flex flex-col items-end gap-1">
-        {isShinyEpic && <ShinyBadge size="sm" />}
+        {isShiny && <ShinyBadge size="sm" />}
         <StickerBadge variant={result.isNew ? "new" : "duplicate"} size="sm" />
       </div>
 
@@ -71,12 +72,12 @@ function ResultCard({ result, index }: { result: SpinResult; index: number }) {
         }}
         className="glass-card p-4 pt-5 text-center space-y-3 relative overflow-hidden"
         style={{
-          borderColor: isShinyEpic
+          borderColor: isShiny
             ? "#fde04780"
             : isDuplicate
               ? "#64748b50"
               : `${config.color}40`,
-          boxShadow: isShinyEpic
+          boxShadow: isShiny
             ? "0 0 40px rgba(251,191,36,0.45), 0 0 20px rgba(168,85,247,0.2)"
             : isDuplicate
               ? "0 0 20px rgba(100,116,139,0.2)"
@@ -85,7 +86,7 @@ function ResultCard({ result, index }: { result: SpinResult; index: number }) {
         }}
       >
         {isDuplicate && <DuplicateSadEffect />}
-        {isShinyEpic && (
+        {isShiny && (
           <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 via-transparent to-violet-500/10 pointer-events-none" />
         )}
 
@@ -97,14 +98,14 @@ function ResultCard({ result, index }: { result: SpinResult; index: number }) {
           {!isDuplicate && (
             <motion.div
               animate={
-                isShinyEpic
+                isShiny
                   ? { scale: [1, 1.15, 1], opacity: [0.35, 0.6, 0.35] }
                   : undefined
               }
               transition={{ duration: 2, repeat: Infinity }}
               className="absolute inset-0 rounded-full blur-xl"
               style={{
-                backgroundColor: isShinyEpic ? "#fbbf24" : config.color,
+                backgroundColor: isShiny ? "#fbbf24" : config.color,
               }}
             />
           )}
@@ -117,7 +118,7 @@ function ResultCard({ result, index }: { result: SpinResult; index: number }) {
             style={isDuplicate ? { filter: "grayscale(40%)" } : undefined}
             unoptimized
           />
-          {(result.rarity === "legendary" || isShinyEpic) && !isDuplicate && (
+          {(result.rarity === "legendary" || isShiny) && !isDuplicate && (
             <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-amber-400 animate-pulse" />
           )}
         </div>
@@ -125,7 +126,7 @@ function ResultCard({ result, index }: { result: SpinResult; index: number }) {
         <div className="relative z-10">
           <h3
             className="font-bold text-lg"
-            style={{ color: isDuplicate ? "#94a3b8" : isShinyEpic ? "#fde047" : config.color }}
+            style={{ color: isDuplicate ? "#94a3b8" : isShiny ? "#fde047" : config.color }}
           >
             {result.pokemon.name}
           </h3>
@@ -214,8 +215,9 @@ export function RevealAnimation({
   const isSingle = results.length === 1;
   const result = results[0];
   const config = RARITY_CONFIG[result.rarity];
-  const isDuplicate = result.isDuplicate && !result.isNewShinyUnlock;
-  const isShinyEpic = result.isNewShinyUnlock;
+  const isDuplicate = result.isDuplicate && !result.isShiny;
+  const isShiny = Boolean(result.isShiny);
+  const isShinyUnlock = Boolean(result.isNewShinyUnlock);
 
   const modal = (
     <AnimatePresence>
@@ -231,7 +233,7 @@ export function RevealAnimation({
           <div
             className="absolute inset-0 backdrop-blur-md"
             style={{
-              background: isShinyEpic
+              background: isShiny
                 ? "rgba(20, 10, 0, 0.88)"
                 : isDuplicate && isSingle
                   ? "rgba(15, 23, 42, 0.9)"
@@ -239,7 +241,7 @@ export function RevealAnimation({
             }}
           />
 
-          {isShinyEpic && isSingle && (
+          {isShiny && isSingle && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: [0, 0.6, 0.3] }}
@@ -269,12 +271,12 @@ export function RevealAnimation({
               <div
                 className="glass-card p-8 text-center space-y-6 relative overflow-hidden"
                 style={{
-                  borderColor: isShinyEpic
+                  borderColor: isShiny
                     ? "#fde04770"
                     : isDuplicate
                       ? "#64748b50"
                       : `${config.color}50`,
-                  boxShadow: isShinyEpic
+                  boxShadow: isShiny
                     ? "0 0 80px rgba(251,191,36,0.5), 0 0 40px rgba(168,85,247,0.25), 0 20px 60px rgba(0,0,0,0.5)"
                     : isDuplicate
                       ? "0 0 30px rgba(100,116,139,0.3)"
@@ -283,12 +285,12 @@ export function RevealAnimation({
                 }}
               >
                 {isDuplicate && <DuplicateSadEffect />}
-                {isShinyEpic && (
+                {isShiny && (
                   <div className="absolute inset-0 bg-gradient-to-br from-amber-400/15 via-yellow-300/5 to-violet-500/15 pointer-events-none animate-shimmer" />
                 )}
 
                 <div className="flex justify-center pt-1 relative z-10 gap-2 flex-wrap">
-                  {isShinyEpic && <ShinyBadge size="lg" />}
+                  {isShiny && <ShinyBadge size="lg" />}
                   <StickerBadge
                     variant={result.isNew ? "new" : "duplicate"}
                     size="lg"
@@ -300,10 +302,10 @@ export function RevealAnimation({
                 </div>
 
                 <motion.div
-                  initial={{ scale: 0, rotate: isShinyEpic ? -20 : 0 }}
+                  initial={{ scale: 0, rotate: isShiny ? -20 : 0 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={
-                    isShinyEpic
+                    isShiny
                       ? { type: "spring", delay: 0.15, damping: 8, stiffness: 180 }
                       : isDuplicate
                         ? { type: "tween", duration: 0.45, ease: "easeOut", delay: 0.2 }
@@ -314,18 +316,18 @@ export function RevealAnimation({
                   {!isDuplicate && (
                     <motion.div
                       animate={
-                        isShinyEpic
+                        isShiny
                           ? { scale: [1, 1.2, 1], rotate: [0, 8, -8, 0] }
                           : { rotate: [0, 5, -5, 0] }
                       }
                       transition={{
-                        duration: isShinyEpic ? 2.5 : 2,
+                        duration: isShiny ? 2.5 : 2,
                         repeat: Infinity,
                       }}
                       className="absolute inset-0 rounded-full blur-2xl"
                       style={{
-                        backgroundColor: isShinyEpic ? "#fbbf24" : config.color,
-                        opacity: isShinyEpic ? 0.45 : 0.3,
+                        backgroundColor: isShiny ? "#fbbf24" : config.color,
+                        opacity: isShiny ? 0.45 : 0.3,
                       }}
                     />
                   )}
@@ -338,7 +340,7 @@ export function RevealAnimation({
                     style={isDuplicate ? { filter: "grayscale(50%) opacity(0.8)" } : undefined}
                     unoptimized
                   />
-                  {(result.rarity === "legendary" || isShinyEpic) && !isDuplicate && (
+                  {(result.rarity === "legendary" || isShiny) && !isDuplicate && (
                     <Sparkles className="absolute -top-2 -right-2 w-8 h-8 text-amber-300 animate-pulse" />
                   )}
                 </motion.div>
@@ -347,7 +349,7 @@ export function RevealAnimation({
                   <h2
                     className="text-3xl font-bold"
                     style={{
-                      color: isDuplicate ? "#94a3b8" : isShinyEpic ? "#fde047" : config.color,
+                      color: isDuplicate ? "#94a3b8" : isShiny ? "#fde047" : config.color,
                     }}
                   >
                     {result.pokemon.name}
@@ -356,7 +358,7 @@ export function RevealAnimation({
                     #{String(result.pokemon.id).padStart(3, "0")} · Gen{" "}
                     {result.pokemon.generation}
                   </p>
-                  {isShinyEpic && (
+                  {isShinyUnlock && (
                     <motion.p
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -366,6 +368,9 @@ export function RevealAnimation({
                       <Sparkles className="w-4 h-4 shrink-0" />
                       Skin Shiny desbloqueada! Escolha no álbum qual versão usar.
                     </motion.p>
+                  )}
+                  {isShiny && !isShinyUnlock && (
+                    <p className="text-amber-200/80 text-xs mt-2 font-semibold">✨ Shiny!</p>
                   )}
                   {isDuplicate && (
                     <motion.p
@@ -397,7 +402,7 @@ export function RevealAnimation({
                   <p className="text-sm text-white/50">
                     {results.filter((r) => r.isNew).length} novo(s) ·{" "}
                     {results.filter((r) => r.isDuplicate).length} repetido(s)
-                    {results.some((r) => r.isNewShinyUnlock) && (
+                    {results.some((r) => r.isShiny) && (
                       <span className="text-amber-300 inline-flex items-center gap-0.5">
                         <Sparkles className="w-3 h-3" />
                         Shiny!

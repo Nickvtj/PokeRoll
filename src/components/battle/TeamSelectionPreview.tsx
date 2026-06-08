@@ -12,6 +12,8 @@ import { getTeamMonotypeSynergy } from "@/lib/team-monotype";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
 import { cn } from "@/lib/utils";
+import { playUiDeselect } from "@/lib/ui-sounds";
+import { shouldShowShiny } from "@/lib/pokemon-display";
 import { MonotypeSynergyAura } from "@/components/battle/MonotypeSynergyFx";
 import type { TeamMonotypeSynergy } from "@/lib/team-monotype";
 
@@ -62,17 +64,25 @@ function TeamChip({
     <MonotypeSynergyAura active={monotypeSynergy.active} type={monotypeSynergy.type} className="shrink-0">
       <button
         type="button"
-        onClick={() => removeFromTeamAtSlot(slotIndex)}
+        onClick={() => {
+          playUiDeselect();
+          removeFromTeamAtSlot(slotIndex);
+        }}
         title={`Remover ${pokemon.name}`}
         className={cn(
           "relative flex flex-col items-center rounded-xl border w-[4.5rem] h-[4.75rem] px-1 py-1.5 transition-all group",
           BATTLE_CLASSIC_THEME ? "bg-indigo-950/55" : "bg-white/[0.04]",
-          "hover:brightness-110 active:scale-95 cursor-pointer"
+          "hover:brightness-110 active:scale-95 cursor-pointer",
+          shouldShowShiny(entry) && "shiny-rainbow-border"
         )}
-        style={{
-          borderColor: config.color,
-          boxShadow: `0 0 10px ${config.glowColor}`,
-        }}
+        style={
+          shouldShowShiny(entry)
+            ? undefined
+            : {
+                borderColor: config.color,
+                boxShadow: `0 0 10px ${config.glowColor}`,
+              }
+        }
       >
         <span className="absolute top-1 left-1 text-[7px] font-black rounded px-0.5 bg-indigo-500/60 text-white leading-none">
           {level}

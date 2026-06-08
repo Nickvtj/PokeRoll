@@ -8,6 +8,9 @@ import {
   CLICK_COMBO_BONUS_TIER_1,
   CLICK_COMBO_BONUS_TIER_2,
   CLICK_SCORE_TIER_THRESHOLDS,
+  CLICK_BALL_LIFETIME_MAX_MS,
+  CLICK_BALL_LIFETIME_MIN_MS,
+  CLICK_SPECIAL_BALL_LIFETIME_MS,
   CLICK_TIME_BALL_CHANCE,
   type BallType,
 } from "@/data/economy-balance";
@@ -78,7 +81,11 @@ export function spawnBall(existing: SpawnedBall[] = []): SpawnedBall {
     x,
     y,
     createdAt: Date.now(),
-    lifetime: kind === "normal" ? 1400 + Math.random() * 900 : 2500,
+    lifetime:
+      kind === "normal"
+        ? CLICK_BALL_LIFETIME_MIN_MS +
+          Math.random() * (CLICK_BALL_LIFETIME_MAX_MS - CLICK_BALL_LIFETIME_MIN_MS)
+        : CLICK_SPECIAL_BALL_LIFETIME_MS,
   };
 }
 

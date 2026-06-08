@@ -3,7 +3,8 @@
 import dynamic from "next/dynamic";
 import { useCallback, useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Coins, Disc3, Volume2, VolumeX } from "lucide-react";
+import { Coins, Disc3, Stars, Volume2, VolumeX } from "lucide-react";
+import { SHINY_CHANCE } from "@/data/pokemon-sprites";
 import { SpinMachine } from "@/components/spin/SpinMachine";
 import { SpinLeverButton } from "@/components/spin/SpinLeverButton";
 import { RarityBadge } from "@/components/ui/RarityBadge";
@@ -250,13 +251,20 @@ export default function SpinPage() {
           <p className="text-xs font-semibold text-white/45 text-center uppercase tracking-wider">
             Chances por raridade
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-4 gap-y-3 sm:gap-x-3 sm:gap-y-2 justify-items-center px-1">
+          <div className="flex flex-wrap justify-center gap-x-3 gap-y-4 sm:gap-x-4 px-1">
             {RARITY_ORDER.map((r) => (
-              <div key={r} className="flex flex-col items-center gap-1.5 w-full max-w-[5.5rem]">
-                <RarityBadge rarity={r} size="sm" subtle />
-                <p className="text-[10px] text-white/35 tabular-nums">{RARITY_CONFIG[r].chance}%</p>
+              <div key={r} className="flex flex-col items-center gap-1.5 w-[4.75rem] sm:w-[5.25rem]">
+                <RarityBadge rarity={r} compact />
+                <p className="text-[10px] text-white/35 tabular-nums text-center">{RARITY_CONFIG[r].chance}%</p>
               </div>
             ))}
+            <div className="flex flex-col items-center gap-1.5 w-[4.75rem] sm:w-[5.25rem]">
+              <span className="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase shiny-rainbow-badge whitespace-nowrap">
+                <Stars className="w-2.5 h-2.5 shrink-0" />
+                Shiny
+              </span>
+              <p className="text-[10px] text-white/35 tabular-nums text-center">{(SHINY_CHANCE * 100).toFixed(1)}%</p>
+            </div>
           </div>
         </div>
       </div>

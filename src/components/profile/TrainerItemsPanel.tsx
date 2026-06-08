@@ -27,7 +27,7 @@ export function TrainerItemsPanel() {
         )}
         {isLuckyEggActive && (
           <span className="inline-flex items-center gap-2 text-amber-400 font-semibold">
-            <ItemSprite src={LUCKY_EGG_SPRITE} alt="Lucky Egg" size={24} spinning />
+            <ItemSprite src={LUCKY_EGG_SPRITE} alt="Lucky Egg" size={24} />
             Lucky Egg ativo (2× XP)
           </span>
         )}

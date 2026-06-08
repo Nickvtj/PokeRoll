@@ -25,6 +25,7 @@ import {
   calcClickGameRewardBreakdown,
   calcClickScore,
   maybeSpawnRareEvent,
+  rollBallType,
   spawnBall,
   type ClickGameRewardBreakdown,
   type RareEvent,
@@ -54,6 +55,8 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
   const [doubleActive, setDoubleActive] = useState(false);
 
   const comboTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const freezeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const freezeUntilRef = useRef(0);
   const scoreRef = useRef(0);
   const maxComboRef = useRef(0);
   const endedRef = useRef(false);
@@ -95,6 +98,21 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
     maxComboRef.current = 0;
     rareSpawnCooldown.current = 0;
     timeBallsSpawned.current = 0;
+    freezeUntilRef.current = 0;
+    if (freezeTimerRef.current) clearTimeout(freezeTimerRef.current);
+  }, []);
+
+  const extendFreeze = useCallback((extraMs: number) => {
+    const now = Date.now();
+    const base = Math.max(now, freezeUntilRef.current);
+    freezeUntilRef.current = base + extraMs;
+    setFreezeActive(true);
+    if (freezeTimerRef.current) clearTimeout(freezeTimerRef.current);
+    freezeTimerRef.current = setTimeout(() => {
+      setFreezeActive(false);
+      freezeUntilRef.current = 0;
+      freezeTimerRef.current = null;
+    }, freezeUntilRef.current - now);
   }, []);
 
   useEffect(() => {
@@ -124,7 +142,7 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
       setBalls((prev) => {
         const now = Date.now();
         let alive = prev.filter((b) => now - b.createdAt < b.lifetime);
-        while (alive.length < 3) {
+        while (alive.length < 5) {
           const next = spawnBall(alive);
           if (next.kind === "time") {
             if (timeBallsSpawned.current >= 2) {
@@ -136,7 +154,7 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
           }
           alive = [...alive, next];
         }
-        if (Math.random() < 0.38) {
+        if (Math.random() < 0.44) {
           const next = spawnBall(alive);
           if (next.kind === "time") {
             if (timeBallsSpawned.current >= 2) {
@@ -146,7 +164,7 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
               timeBallsSpawned.current++;
             }
           }
-          alive = [...alive.slice(-10), next];
+          alive = [...alive.slice(-14), next];
         }
         return alive;
       });
@@ -205,8 +223,7 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
     // Efeito: Congelar Tempo (3 segundos)
     if (ball.kind === "freeze") {
       void playClickFreeze();
-      setFreezeActive(true);
-      setTimeout(() => setFreezeActive(false), 3000);
+      extendFreeze(3000);
       setBalls((prev) => prev.filter((b) => b.id !== ball.id));
       setPopups((prev) => [
         ...prev.slice(-8),
@@ -327,7 +344,7 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
           freezeActive && "ring-4 ring-blue-400 shadow-[inset_0_0_50px_rgba(56,189,248,0.3)]",
           doubleActive && "ring-4 ring-yellow-400 shadow-[inset_0_0_50px_rgba(250,204,21,0.3)]"
         )}
-        style={{ height: 360 }}
+        style={{ height: 520 }}
       >
         {/* Overlay de Gelo */}
         <AnimatePresence>
@@ -370,18 +387,18 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
               onClick={() => handleBallClick(ball)}
               className={cn(
                 "absolute flex items-center justify-center",
-                ball.kind !== "normal" ? "w-14 h-14" : "w-12 h-12"
+                ball.kind !== "normal" ? "w-[5.25rem] h-[5.25rem] z-20" : "w-16 h-16 z-10"
               )}
               style={{ left: `${ball.x}%`, top: `${ball.y}%` }}
             >
               {ball.kind === "time" ? (
-                <SpecialBallVisual icon={<Timer className="w-4 h-4 text-amber-300" />} color="bg-amber-400/30" />
+                <SpecialBallVisual icon={<Timer className="w-5 h-5 text-amber-300" />} color="bg-amber-400/40" ring="ring-amber-400/70" />
               ) : ball.kind === "freeze" ? (
-                <SpecialBallVisual icon={<Snowflake className="w-4 h-4 text-blue-300" />} color="bg-blue-400/30" />
+                <SpecialBallVisual icon={<Snowflake className="w-5 h-5 text-blue-300" />} color="bg-blue-400/40" ring="ring-cyan-400/70" />
               ) : ball.kind === "double" ? (
-                <SpecialBallVisual icon={<Zap className="w-4 h-4 text-yellow-300" />} color="bg-yellow-400/30" />
+                <SpecialBallVisual icon={<Zap className="w-5 h-5 text-yellow-300" />} color="bg-yellow-400/40" ring="ring-yellow-400/70" />
               ) : ball.kind === "frenzy" ? (
-                <SpecialBallVisual icon={<Star className="w-4 h-4 text-purple-300" />} color="bg-purple-400/30" />
+                <SpecialBallVisual icon={<Star className="w-5 h-5 text-purple-300" />} color="bg-purple-400/40" ring="ring-purple-400/80" />
               ) : (
                 <BallVisual type={ball.type} />
               )}
@@ -422,23 +439,36 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
 function BallVisual({ type }: { type: BallType }) {
   switch (type) {
     case "great":
-      return <GreatBallIcon size={44} />;
+      return <GreatBallIcon size={58} />;
     case "ultra":
-      return <UltraBallIcon size={44} />;
+      return <UltraBallIcon size={58} />;
     case "master":
-      return <MasterBallIcon size={44} />;
+      return <MasterBallIcon size={58} />;
     default:
-      return <PokeballIcon size={44} />;
+      return <PokeballIcon size={58} />;
   }
 }
 
-function SpecialBallVisual({ icon, color }: { icon: React.ReactNode; color: string }) {
+function SpecialBallVisual({
+  icon,
+  color,
+  ring,
+}: {
+  icon: React.ReactNode;
+  color: string;
+  ring: string;
+}) {
   return (
     <div className="relative">
-      <div className={cn("absolute inset-0 rounded-full blur-md animate-pulse", color)} />
-      <div className="relative flex flex-col items-center">
-        <PokeballIcon size={48} />
-        <div className="absolute -bottom-1 -right-1 drop-shadow bg-slate-900 rounded-full p-0.5 border border-white/10">
+      <div className={cn("absolute -inset-2 rounded-full blur-lg animate-pulse opacity-80", color)} />
+      <div
+        className={cn(
+          "relative flex flex-col items-center rounded-full p-1 ring-2 ring-offset-2 ring-offset-slate-950",
+          ring
+        )}
+      >
+        <PokeballIcon size={62} />
+        <div className="absolute -bottom-1 -right-1 drop-shadow-lg bg-slate-900 rounded-full p-1 border-2 border-white/20 shadow-lg">
           {icon}
         </div>
       </div>

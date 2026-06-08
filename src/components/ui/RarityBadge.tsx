@@ -10,6 +10,8 @@ interface RarityBadgeProps {
   size?: "sm" | "md" | "lg";
   showChance?: boolean;
   subtle?: boolean;
+  /** Sem glow — ideal para grids compactos (ex.: roleta) */
+  compact?: boolean;
   className?: string;
 }
 
@@ -24,6 +26,7 @@ export function RarityBadge({
   size = "md",
   showChance = false,
   subtle = false,
+  compact = false,
   className,
 }: RarityBadgeProps) {
   const config = RARITY_CONFIG[rarity];
@@ -33,15 +36,16 @@ export function RarityBadge({
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full font-semibold uppercase tracking-wider",
-        sizeClasses[size],
+        "inline-flex items-center justify-center rounded-full font-semibold uppercase tracking-wider whitespace-nowrap",
+        compact ? "gap-1 px-1.5 py-0.5 text-[9px]" : "gap-1.5",
+        !compact && sizeClasses[size],
         className
       )}
       style={{
         color: config.color,
-        backgroundColor: `${config.color}20`,
-        border: `1px solid ${config.color}${subtle ? "30" : "40"}`,
-        boxShadow: subtle ? `0 0 6px ${config.glowColor}` : `0 0 12px ${config.glowColor}`,
+        backgroundColor: `${config.color}${compact ? "18" : "20"}`,
+        border: `1px solid ${config.color}${compact ? "28" : subtle ? "30" : "40"}`,
+        boxShadow: compact ? "none" : subtle ? `0 0 6px ${config.glowColor}` : `0 0 12px ${config.glowColor}`,
       }}
     >
       <span

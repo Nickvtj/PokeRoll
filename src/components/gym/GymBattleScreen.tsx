@@ -36,6 +36,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [fighting, setFighting] = useState(false);
   const [autoBattle, setAutoBattle] = useState(false);
+  const [battleSpeed, setBattleSpeed] = useState<1 | 2 | 3>(1);
   const [badgeReward, setBadgeReward] = useState<{
     bonus: PerfectRunBonus;
     teamIds: number[];
@@ -92,6 +93,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
     }),
     onTurnComplete: handleTurnComplete,
     autoBattle,
+    battleSpeed,
   });
 
   const startStage = useCallback(
@@ -176,6 +178,8 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
           continueLabel={gymContinueLabel}
           autoBattle={autoBattle}
           onToggleAutoBattle={() => setAutoBattle(!autoBattle)}
+          battleSpeed={battleSpeed}
+          onBattleSpeedChange={setBattleSpeed}
         />
         <BadgeRewardAnimation
           show={!!badgeReward}

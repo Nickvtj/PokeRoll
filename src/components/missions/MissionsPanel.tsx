@@ -1,10 +1,30 @@
 "use client";
 
 import { CheckCircle, Circle, Coins, Flame, Gift } from "lucide-react";
-import { DAILY_MISSIONS } from "@/data/economy-balance";
+import { LUCKY_EGG_SPRITE, RARE_CANDY_SPRITE } from "@/data/item-sprites";
+import { ItemSprite } from "@/components/ui/ItemSprite";
+import { DAILY_MISSIONS, getStreakMissionMultiplier } from "@/data/economy-balance";
 import { useEconomyStore } from "@/stores/economy-store";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { cn } from "@/lib/utils";
+
+function rewardLabel(mission: (typeof DAILY_MISSIONS)[number], streak: number) {
+  const mult = getStreakMissionMultiplier(streak);
+  const r = mission.reward;
+  if (r.kind === "coins") return `+${Math.round(r.amount * mult)} moedas`;
+  if (r.kind === "luckyEgg") return `+${Math.max(1, Math.round(r.amount * mult))} Lucky Egg`;
+  return `+${Math.max(1, Math.round(r.amount * mult))} Rare Candy`;
+}
+
+function RewardIcon({ mission }: { mission: (typeof DAILY_MISSIONS)[number] }) {
+  if (mission.reward.kind === "luckyEgg") {
+    return <ItemSprite src={LUCKY_EGG_SPRITE} alt="Lucky Egg" size={16} />;
+  }
+  if (mission.reward.kind === "rareCandy") {
+    return <ItemSprite src={RARE_CANDY_SPRITE} alt="Rare Candy" size={16} />;
+  }
+  return <Coins className="w-3 h-3" />;
+}
 
 export function MissionsPanel() {
   const missionProgress = useEconomyStore((s) => s.missionProgress);
@@ -12,6 +32,7 @@ export function MissionsPanel() {
   const claimMission = useEconomyStore((s) => s.claimMission);
   const claimAllMissions = useEconomyStore((s) => s.claimAllMissions);
   const dailyStreak = useEconomyStore((s) => s.dailyStreak);
+  const streakBonus = Math.round((getStreakMissionMultiplier(dailyStreak) - 1) * 100);
 
   const claimableCount = DAILY_MISSIONS.filter(
     (m) =>
@@ -38,6 +59,12 @@ export function MissionsPanel() {
           </span>
         </div>
       </div>
+
+      {streakBonus > 0 && (
+        <p className="text-[11px] text-emerald-400/90">
+          Bônus de streak: +{streakBonus}% nas recompensas de missão
+        </p>
+      )}
 
       <div className="space-y-2">
         {DAILY_MISSIONS.map((mission) => {
@@ -68,8 +95,8 @@ export function MissionsPanel() {
                   <span className="text-sm font-medium">{mission.label}</span>
                 </div>
                 <span className="text-xs text-amber-400 font-bold flex items-center gap-0.5">
-                  +{mission.reward}
-                  <Coins className="w-3 h-3" />
+                  {rewardLabel(mission, dailyStreak)}
+                  <RewardIcon mission={mission} />
                 </span>
               </div>
               <div className="progress-bar h-1.5">
