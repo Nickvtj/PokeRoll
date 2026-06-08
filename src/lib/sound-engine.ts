@@ -369,6 +369,67 @@ export async function playCardFlip(): Promise<void> {
   await playTone(380, 0.04, "triangle", 0.06);
 }
 
+/** Embate VS — fanfarra de início de batalha estilo Pokémon */
+export async function playBattleFaceOffSequence(): Promise<void> {
+  const ctx = await getAudioContext();
+  if (!ctx) return;
+
+  const t0 = ctx.currentTime + 0.02;
+
+  const fanfare = [
+    { freq: 196, dur: 0.11, vol: 0.055, type: "square" as const, gap: 0 },
+    { freq: 247, dur: 0.11, vol: 0.058, type: "square" as const, gap: 0.09 },
+    { freq: 294, dur: 0.12, vol: 0.062, type: "triangle" as const, gap: 0.18 },
+    { freq: 392, dur: 0.14, vol: 0.068, type: "triangle" as const, gap: 0.3 },
+    { freq: 523, dur: 0.18, vol: 0.072, type: "triangle" as const, gap: 0.46 },
+  ];
+
+  let cursor = t0;
+  for (const note of fanfare) {
+    cursor += note.gap;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = note.type;
+    osc.frequency.setValueAtTime(note.freq, cursor);
+    gain.gain.setValueAtTime(0.001, cursor);
+    gain.gain.linearRampToValueAtTime(note.vol, cursor + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.001, cursor + note.dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(cursor);
+    osc.stop(cursor + note.dur + 0.02);
+  }
+
+  const hit = t0 + 0.62;
+  const bass = ctx.createOscillator();
+  const bassGain = ctx.createGain();
+  bass.type = "square";
+  bass.frequency.setValueAtTime(98, hit);
+  bass.frequency.exponentialRampToValueAtTime(55, hit + 0.22);
+  bassGain.gain.setValueAtTime(0.001, hit);
+  bassGain.gain.linearRampToValueAtTime(0.07, hit + 0.02);
+  bassGain.gain.exponentialRampToValueAtTime(0.001, hit + 0.24);
+  bass.connect(bassGain);
+  bassGain.connect(ctx.destination);
+  bass.start(hit);
+  bass.stop(hit + 0.26);
+
+  const chord = [523, 659, 784];
+  for (const freq of chord) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, hit + 0.04);
+    gain.gain.setValueAtTime(0.001, hit + 0.04);
+    gain.gain.linearRampToValueAtTime(0.045, hit + 0.06);
+    gain.gain.exponentialRampToValueAtTime(0.001, hit + 0.38);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(hit + 0.04);
+    osc.stop(hit + 0.4);
+  }
+}
+
 export async function playMemoryMatch(): Promise<void> {
   await playNoteSequence(
     [

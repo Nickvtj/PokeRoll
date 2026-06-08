@@ -19,12 +19,14 @@ export function BattleSurrenderModal({ open, onStay, onSurrender }: BattleSurren
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={onStay}
         >
           <motion.div
             initial={{ scale: 0.92, y: 12 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.92, y: 12 }}
             className="w-full max-w-sm rounded-2xl bg-slate-900 ring-1 ring-inset ring-red-500/20 p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
@@ -33,7 +35,8 @@ export function BattleSurrenderModal({ open, onStay, onSurrender }: BattleSurren
               <div>
                 <h3 className="font-bold text-base">Desistir da batalha?</h3>
                 <p className="text-xs text-white/50 mt-1 leading-relaxed">
-                  Você perderá o progresso desta luta. Fique na batalha ou confirme para sair.
+                  Você perderá o progresso desta luta e voltará à seleção de Pokémon. Para ir a
+                  outra página, desista primeiro e navegue depois.
                 </p>
               </div>
             </div>

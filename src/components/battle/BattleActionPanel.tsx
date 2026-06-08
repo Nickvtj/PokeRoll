@@ -5,7 +5,8 @@ import { ArrowLeft, Crosshair, Sparkles, Swords, Target } from "lucide-react";
 import { previewMove, getEffectivenessText, TYPE_LABELS_PT } from "@/lib/tactical-battle-engine";
 import { cn } from "@/lib/utils";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
-import type { BattleState, MovePreview } from "@/types/battle";
+import { BattleLogLine } from "@/components/battle/BattleLogLine";
+import type { BattleLogEntry, BattleState, MovePreview } from "@/types/battle";
 
 interface BattleActionPanelProps {
   state: BattleState;
@@ -13,7 +14,7 @@ interface BattleActionPanelProps {
   onPickMove: (index: number) => void;
   onCancel: () => void;
   className?: string;
-  recentLog?: { id: string; message: string }[];
+  recentLog?: BattleLogEntry[];
 }
 
 const EFF_BADGE: Record<string, string> = {
@@ -226,7 +227,7 @@ export function BattleActionPanel({
                   BATTLE_CLASSIC_THEME ? "battle-classic-dialog-text" : "text-white/50"
                 )}
               >
-                {entry.message.replace(/→/g, " em ").replace(/\[Dano convencional\]/gi, "")}
+                <BattleLogLine entry={entry} />
               </motion.p>
             ))}
           </AnimatePresence>
