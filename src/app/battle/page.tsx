@@ -4,11 +4,15 @@ import dynamic from "next/dynamic";
 import { useState, useCallback } from "react";
 import { Swords } from "lucide-react";
 import { BattleTabs, type BattleTabId } from "@/components/battle/BattleTabs";
-import { TrainingPanel } from "@/components/battle/TrainingPanel";
 import { PanelSkeleton } from "@/components/ui/RouteLoading";
 import { useGymStore } from "@/stores/gym-store";
 import { useBattleSessionStore } from "@/stores/battle-session-store";
 import { cn } from "@/lib/utils";
+
+const TrainingPanel = dynamic(
+  () => import("@/components/battle/TrainingPanel").then((m) => ({ default: m.TrainingPanel })),
+  { loading: () => <PanelSkeleton label="Carregando treino..." /> }
+);
 
 const GymMap = dynamic(
   () => import("@/components/gym/GymMap").then((m) => ({ default: m.GymMap })),

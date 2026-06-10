@@ -1,14 +1,28 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Coins } from "lucide-react";
 import { EGG_SPRITES } from "@/data/egg-styles";
 import { EggBackBar } from "@/components/cases/EggBackBar";
 import { EggHub } from "@/components/cases/EggHub";
-import { EggPreviewView } from "@/components/cases/EggPreviewView";
-import { EggOpeningView } from "@/components/cases/EggOpeningView";
-import { EggResultView } from "@/components/cases/EggResultView";
+import { PanelSkeleton } from "@/components/ui/RouteLoading";
+
+const EggPreviewView = dynamic(
+  () => import("@/components/cases/EggPreviewView").then((m) => ({ default: m.EggPreviewView })),
+  { loading: () => <PanelSkeleton label="Carregando ovo..." /> }
+);
+
+const EggOpeningView = dynamic(
+  () => import("@/components/cases/EggOpeningView").then((m) => ({ default: m.EggOpeningView })),
+  { loading: () => <PanelSkeleton label="Preparando chocagem..." /> }
+);
+
+const EggResultView = dynamic(
+  () => import("@/components/cases/EggResultView").then((m) => ({ default: m.EggResultView })),
+  { loading: () => <PanelSkeleton label="Revelando resultado..." /> }
+);
 import { getCapsuleById, getCapsulePoolPokemon } from "@/data/capsules";
 import {
   generateCapsuleStrip,
@@ -16,6 +30,7 @@ import {
   rollCapsule,
 } from "@/lib/capsule-algorithm";
 import { getCapsuleSellPrice } from "@/lib/capsule-sell";
+import { scheduleIdle } from "@/lib/route-prefetch";
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGameStore } from "@/stores/game-store";
 import { useConfetti } from "@/hooks/use-confetti";
@@ -46,6 +61,14 @@ export default function CasesPage() {
   const { playNewPokemonWin, playDuplicate, playLegendary, playShinyEpic } = useSoundEffects();
 
   const activeEgg = activeEggId ? getCapsuleById(activeEggId) : null;
+
+  useEffect(() => {
+    scheduleIdle(() => {
+      void import("@/components/cases/EggPreviewView");
+      void import("@/components/cases/EggOpeningView");
+      void import("@/components/cases/EggResultView");
+    }, 2000);
+  }, []);
 
   const resetToHub = useCallback(() => {
     setPhase("hub");

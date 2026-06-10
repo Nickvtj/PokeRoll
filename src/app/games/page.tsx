@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Gamepad2, Target, MousePointerClick, Brain, Coins, Play, Sparkles, Swords } from "lucide-react";
 import { JitsuBeltIcon } from "@/components/minigame/jitsu/JitsuBeltIcon";
 import {
@@ -12,6 +14,7 @@ import {
 import { getBeltForXp, getJitsuCoinRange } from "@/data/jitsu-belts";
 import { useEconomyStore } from "@/stores/economy-store";
 import { cn } from "@/lib/utils";
+import { MINIGAME_ROUTES, preloadMinigameChunks, prefetchRoutes } from "@/lib/route-prefetch";
 import { usePrefetchOnIntent } from "@/lib/use-prefetch-on-intent";
 
 const GAMES = [
@@ -72,11 +75,17 @@ function GameCardLink({ href, children }: { href: string; children: React.ReactN
 }
 
 export default function GamesHubPage() {
+  const router = useRouter();
   const gamesPlayed = useEconomyStore((s) => s.clickGamesPlayed);
   const gamesToday = useEconomyStore((s) => s.clickGamesToday);
   const highScores = useEconomyStore((s) => s.highScores);
   const jitsuXp = useEconomyStore((s) => s.jitsuXp ?? 0);
   const jitsuBelt = getBeltForXp(jitsuXp);
+
+  useEffect(() => {
+    prefetchRoutes(router, MINIGAME_ROUTES);
+    preloadMinigameChunks();
+  }, [router]);
 
   const highScoreMap: Record<string, number | undefined> = {
     "/games/captura": highScores?.perfectCapture,

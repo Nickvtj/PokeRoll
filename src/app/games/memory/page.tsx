@@ -1,11 +1,9 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { Brain } from "lucide-react";
-import type { MemoryGameResult } from "@/components/minigame/PokeMemoryGame";
+import { PokeMemoryGame, type MemoryGameResult } from "@/components/minigame/PokeMemoryGame";
 import { GamePageShell } from "@/components/minigame/GamePageShell";
-import { MinigameGameSkeleton } from "@/components/ui/RouteLoading";
 import {
   MEMORY_COINS_PER_PAIR,
   MEMORY_GAME_DURATION_SEC,
@@ -14,14 +12,6 @@ import {
 import { calcMemoryReward } from "@/lib/memory-minigame-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordMinigameToSupabase } from "@/lib/economy-supabase";
-
-const PokeMemoryGame = dynamic(
-  () =>
-    import("@/components/minigame/PokeMemoryGame").then((m) => ({
-      default: m.PokeMemoryGame,
-    })),
-  { loading: () => <MinigameGameSkeleton /> }
-);
 
 export default function MemoryGamePage() {
   const addCoins = useEconomyStore((s) => s.addCoins);

@@ -1,22 +1,15 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { Target } from "lucide-react";
-import type { CaptureGameResult } from "@/components/minigame/CapturaPerfeitaGame";
+import {
+  CapturaPerfeitaGame,
+  type CaptureGameResult,
+} from "@/components/minigame/CapturaPerfeitaGame";
 import { GamePageShell } from "@/components/minigame/GamePageShell";
-import { MinigameGameSkeleton } from "@/components/ui/RouteLoading";
 import { useEconomyStore } from "@/stores/economy-store";
 import { recordMinigameToSupabase } from "@/lib/economy-supabase";
 import { POKEMON_MAP } from "@/data/pokemon";
-
-const CapturaPerfeitaGame = dynamic(
-  () =>
-    import("@/components/minigame/CapturaPerfeitaGame").then((m) => ({
-      default: m.CapturaPerfeitaGame,
-    })),
-  { loading: () => <MinigameGameSkeleton /> }
-);
 
 export default function CapturaGamePage() {
   const addCoins = useEconomyStore((s) => s.addCoins);

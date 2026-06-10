@@ -9,6 +9,7 @@ import { useEconomyStore } from "@/stores/economy-store";
 import { useGymStore } from "@/stores/gym-store";
 import { useGameStore } from "@/stores/game-store";
 import { useEffect } from "react";
+import { prefetchAppRoutes } from "@/lib/route-prefetch";
 import { preloadPrioritySpritesDeferred } from "@/lib/sprite-preload";
 
 const WelcomeModal = dynamic(
@@ -42,8 +43,6 @@ const BattleSurrenderGuard = dynamic(
   { ssr: false }
 );
 
-const PREFETCH_AFTER_INIT = ["/profile", "/games", "/battle"] as const;
-
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isLoading } = useGameInit();
@@ -67,24 +66,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       preloadPrioritySpritesDeferred(team, collectedIds);
     };
 
-    const prefetchRoutes = () => {
-      for (const href of PREFETCH_AFTER_INIT) {
-        router.prefetch(href);
-      }
+    const warmRoutes = () => {
+      prefetchAppRoutes(router);
+      runPreload();
     };
 
     if ("requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(() => {
-        prefetchRoutes();
-        runPreload();
-      }, { timeout: 3000 });
+      const idleId = window.requestIdleCallback(warmRoutes, { timeout: 2000 });
       return () => window.cancelIdleCallback(idleId);
     }
 
-    const t = window.setTimeout(() => {
-      prefetchRoutes();
-      runPreload();
-    }, 1500);
+    const t = window.setTimeout(warmRoutes, 800);
     return () => window.clearTimeout(t);
   }, [isLoading, router]);
 

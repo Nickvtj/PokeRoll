@@ -1,24 +1,17 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRef } from "react";
 import { ArrowLeft, Swords } from "lucide-react";
 import { JitsuBeltIcon } from "@/components/minigame/jitsu/JitsuBeltIcon";
-import type { PokeJitsuGameResult } from "@/components/minigame/PokeJitsuGame";
-import { MinigameGameSkeleton } from "@/components/ui/RouteLoading";
+import {
+  PokeJitsuGame,
+  type PokeJitsuGameResult,
+} from "@/components/minigame/PokeJitsuGame";
 import { getBeltForXp, getBeltProgress, getBeltWinBonus, getJitsuCoinRange } from "@/data/jitsu-belts";
 import { calcJitsuRewards } from "@/lib/jitsu-engine";
 import { recordMinigameToSupabase } from "@/lib/economy-supabase";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
-
-const PokeJitsuGame = dynamic(
-  () =>
-    import("@/components/minigame/PokeJitsuGame").then((m) => ({
-      default: m.PokeJitsuGame,
-    })),
-  { loading: () => <MinigameGameSkeleton /> }
-);
 
 export default function JitsuGamePage() {
   const addCoins = useEconomyStore((s) => s.addCoins);
