@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 
 interface ItemSpriteProps {
@@ -25,7 +26,7 @@ export function ItemSprite({
       alt={alt}
       width={size}
       height={size}
-      unoptimized
+      unoptimized={!isLocalAsset(src)}
       className={cn(
         "object-contain drop-shadow-sm shrink-0",
         spinning && "animate-spin",

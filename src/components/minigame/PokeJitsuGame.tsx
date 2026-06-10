@@ -189,6 +189,9 @@ const SENSEI_PORTRAIT = {
   spriteUrl: trainerSpriteUrl("blackbelt"),
 };
 
+const JITSU_TRAINER_AVATAR =
+  "w-[5.25rem] !pt-0 [&>div:first-child]:w-[4.5rem] [&>div:first-child]:h-[4.5rem] [&_p]:text-[10px]";
+
 export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
   const jitsuXp = useEconomyStore((s) => s.jitsuXp ?? 0);
   const profile = useGameStore((s) => s.profile);
@@ -511,19 +514,26 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
     <LayoutGroup id="jitsu-match">
     <div className="relative space-y-3 max-w-3xl mx-auto">
       {/* Oponente */}
-      <div className="glass-card px-4 py-3 border border-rose-500/15 relative overflow-hidden">
+      <div
+        className={cn(
+          "glass-card px-4 py-3 border border-rose-500/15 relative overflow-visible",
+          phase === "reveal" || phase === "resolve" ? "z-0" : "z-10"
+        )}
+      >
         <div className="flex items-center gap-3 sm:gap-4">
-          <BattleTrainerChip
-            side="enemy"
-            name={SENSEI_PORTRAIT.name}
-            spriteUrl={SENSEI_PORTRAIT.spriteUrl}
-            className="self-center shrink-0 !pt-0"
-          />
-          <div className="flex-1 min-w-0 space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-bold text-rose-300/70 uppercase tracking-wider">
-                Mão do Sensei
-              </span>
+          <div className="flex flex-col items-center gap-2 shrink-0">
+            <span className="text-[11px] font-bold text-rose-300/80 uppercase tracking-wider text-center leading-tight">
+              Mão do oponente
+            </span>
+            <BattleTrainerChip
+              side="enemy"
+              name={SENSEI_PORTRAIT.name}
+              spriteUrl={SENSEI_PORTRAIT.spriteUrl}
+              className={JITSU_TRAINER_AVATAR}
+            />
+          </div>
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex justify-end">
               <TrophyRow
                 trophies={botTrophies}
                 hint={{ needsType: null, needsSameType: null }}
@@ -543,7 +553,8 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
       <div
         style={arenaStyle}
         className={cn(
-          "relative rounded-2xl border overflow-hidden transition-colors duration-500",
+          "relative rounded-2xl border overflow-visible transition-colors duration-500",
+          phase === "reveal" || phase === "resolve" ? "z-50" : "z-20",
           "bg-gradient-to-b from-slate-900/90 via-emerald-950/25 to-amber-950/20",
           winnerFlash === "player" && "border-emerald-400/40",
           winnerFlash === "bot" && "border-rose-400/40",
@@ -675,21 +686,28 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
       </div>
 
       {/* Jogador */}
-      <div className="glass-card px-4 py-3 border border-cyan-500/15 relative overflow-visible">
+      <div
+        className={cn(
+          "glass-card px-4 py-3 border border-cyan-500/15 relative overflow-visible",
+          phase === "reveal" || phase === "resolve" ? "z-0" : "z-10"
+        )}
+      >
         <div className="flex items-center gap-3 sm:gap-4">
-          <BattleTrainerChip
-            side="player"
-            name={playerTrainer.name}
-            spriteUrl={playerTrainer.spriteUrl}
-            fallbackLetter={profile.username.charAt(0)}
-            avatarStyle={playerTrainer.isProfileAvatar}
-            className="self-center shrink-0 !pt-0"
-          />
-          <div className="flex-1 min-w-0 space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-bold text-cyan-300/80 uppercase tracking-wider">
-                Sua mão
-              </span>
+          <div className="flex flex-col items-center gap-2 shrink-0">
+            <span className="text-[11px] font-bold text-cyan-300/85 uppercase tracking-wider text-center leading-tight">
+              Sua mão
+            </span>
+            <BattleTrainerChip
+              side="player"
+              name={playerTrainer.name}
+              spriteUrl={playerTrainer.spriteUrl}
+              fallbackLetter={profile.username.charAt(0)}
+              avatarStyle={playerTrainer.isProfileAvatar}
+              className={JITSU_TRAINER_AVATAR}
+            />
+          </div>
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex justify-end">
               <TrophyRow trophies={playerTrophies} hint={playerHint} side="player" />
             </div>
 
@@ -707,7 +725,7 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
               </p>
             )}
 
-            <div className="flex justify-center gap-2 flex-wrap relative overflow-visible py-3">
+            <div className="flex justify-center gap-2 flex-wrap relative overflow-visible py-3 z-10">
               {playerHand.map((c) => {
                 const blocked = isElementBlocked(c.type, playerBlockNext);
                 return (

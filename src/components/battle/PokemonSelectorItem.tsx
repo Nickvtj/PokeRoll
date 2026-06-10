@@ -2,6 +2,7 @@ import { memo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Check, Heart } from "lucide-react";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import { RARITY_CONFIG } from "@/data/rarity";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
@@ -136,7 +137,7 @@ export const PokemonSelectorItem = memo(function PokemonSelectorItem({
             width={48}
             height={48}
             className="object-contain mx-auto mt-2"
-            unoptimized
+            unoptimized={!isLocalAsset(displayImage)}
           />
           <p
             className="text-[10px] font-semibold truncate mt-1"

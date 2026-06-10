@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Coins, Info } from "lucide-react";
-import { EggIcon } from "@/components/ui/EggIcon";
+import Image from "next/image";
+import { Coins } from "lucide-react";
+import { EGG_SPRITES } from "@/data/egg-styles";
 import { EggBackBar } from "@/components/cases/EggBackBar";
 import { EggHub } from "@/components/cases/EggHub";
 import { EggPreviewView } from "@/components/cases/EggPreviewView";
@@ -15,7 +16,6 @@ import {
   rollCapsule,
 } from "@/lib/capsule-algorithm";
 import { getCapsuleSellPrice } from "@/lib/capsule-sell";
-import { CAPSULE_SELL_PRICES } from "@/types/capsule";
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGameStore } from "@/stores/game-store";
 import { useConfetti } from "@/hooks/use-confetti";
@@ -28,6 +28,8 @@ export default function CasesPage() {
   const coins = useEconomyStore((s) => s.coins);
   const spendCoins = useEconomyStore((s) => s.spendCoins);
   const addCoins = useEconomyStore((s) => s.addCoins);
+  const recordEggHatch = useEconomyStore((s) => s.recordEggHatch);
+  const recordEggSellCoins = useEconomyStore((s) => s.recordEggSellCoins);
   const collection = useGameStore((s) => s.collection);
   const commitCapsuleCatch = useGameStore((s) => s.commitCapsuleCatch);
 
@@ -77,6 +79,7 @@ export default function CasesPage() {
       return;
     }
     if (!spendCoins(egg.cost)) return;
+    recordEggHatch();
 
     const roll = rollCapsule(activeEggId);
     const collectedIds = new Set(Object.keys(collection).map(Number));
@@ -94,7 +97,7 @@ export default function CasesPage() {
     setResult(resolved);
     setStrip(reel);
     setPhase("opening");
-  }, [activeEggId, phase, coins, spendCoins, collection]);
+  }, [activeEggId, phase, coins, spendCoins, collection, recordEggHatch]);
 
   const handleOpeningComplete = useCallback(() => {
     setPhase("result");
@@ -155,9 +158,11 @@ export default function CasesPage() {
   const handleSell = useCallback(() => {
     const r = resultRef.current;
     if (!r) return;
-    addCoins(getCapsuleSellPrice(r.pokemon.rarity, r.isShiny));
+    const sellPrice = getCapsuleSellPrice(r.pokemon.rarity, r.isShiny);
+    addCoins(sellPrice);
+    recordEggSellCoins(sellPrice);
     resetToHub();
-  }, [addCoins, resetToHub]);
+  }, [addCoins, recordEggSellCoins, resetToHub]);
 
   const handleKeepDuplicate = useCallback(() => {
     const r = resultRef.current;
@@ -174,13 +179,19 @@ export default function CasesPage() {
         <EggBackBar onBack={goBack} />
       ) : (
         <header className="space-y-2">
-          <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2">
-            <EggIcon className="w-8 h-8 text-amber-300" />
+          <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2.5">
+            <Image
+              src={EGG_SPRITES["10km"]}
+              alt=""
+              width={36}
+              height={36}
+              className="object-contain drop-shadow-[0_4px_10px_rgba(167,139,250,0.35)]"
+            />
             Ovos Pokémon
           </h1>
           <p className="text-sm text-white/50 max-w-2xl leading-relaxed">
             Escolha um ovo, veja quem pode nascer e choque quando estiver pronto. Duplicatas
-            podem ser vendidas — shiny vale{" "}
+            podem ser vendidas; shiny vale{" "}
             <span className="text-amber-300/90">5×</span> no preço.
           </p>
         </header>
@@ -188,18 +199,10 @@ export default function CasesPage() {
 
       {phase === "hub" && (
         <>
-          <div className="glass-card p-4 border border-amber-500/15 flex flex-wrap items-center gap-4 text-xs text-white/45">
-            <span className="inline-flex items-center gap-1.5 text-amber-200/90 font-semibold">
-              <Coins className="w-4 h-4" />
-              {coins} moedas
-            </span>
-            <span className="w-px h-4 bg-white/10 hidden sm:block" />
-            <span className="inline-flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 text-indigo-400" />
-              Venda: C {CAPSULE_SELL_PRICES.common} · I {CAPSULE_SELL_PRICES.uncommon} · R{" "}
-              {CAPSULE_SELL_PRICES.rare} · E {CAPSULE_SELL_PRICES.epic} · L{" "}
-              {CAPSULE_SELL_PRICES.legendary}
-            </span>
+          <div className="glass-card px-4 py-3 border border-amber-500/15 inline-flex items-center gap-2 text-sm">
+            <Coins className="w-4 h-4 text-amber-400" />
+            <span className="text-amber-200/90 font-bold tabular-nums">{coins}</span>
+            <span className="text-white/40">moedas</span>
           </div>
 
           {noCoinsMsg && (

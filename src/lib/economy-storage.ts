@@ -34,6 +34,8 @@ export function getDefaultEconomy(): EconomyState {
     luckyEggExpiresAt: null,
     luckyEggCount: 0,
     rareCandyCount: 0,
+    eggsHatched: 0,
+    eggSellCoins: 0,
   };
 }
 

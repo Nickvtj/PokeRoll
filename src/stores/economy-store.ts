@@ -82,6 +82,8 @@ interface EconomyStore extends EconomyState {
   recordBattleWin: () => void;
   recordBattleLoss: () => void;
   recordClickGame: (coinsEarned: number) => void;
+  recordEggHatch: () => void;
+  recordEggSellCoins: (amount: number) => void;
   updateHighScore: (
     game: "clickRush" | "perfectCapture" | "memory" | "jitsu",
     score: number
@@ -476,6 +478,17 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
       lastClickGameDate: today,
     }));
     get().incrementMission("clicks");
+    get().sync();
+  },
+
+  recordEggHatch: () => {
+    set((s) => ({ eggsHatched: (s.eggsHatched ?? 0) + 1 }));
+    get().sync();
+  },
+
+  recordEggSellCoins: (amount) => {
+    if (amount <= 0) return;
+    set((s) => ({ eggSellCoins: (s.eggSellCoins ?? 0) + amount }));
     get().sync();
   },
 

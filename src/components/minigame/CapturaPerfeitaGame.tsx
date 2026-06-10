@@ -23,6 +23,7 @@ import {
 } from "@/lib/sound-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import type { Pokemon } from "@/types";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 
 export interface CaptureGameResult {
@@ -257,7 +258,7 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
               width={32}
               height={32}
               className="object-contain opacity-80"
-              unoptimized
+              unoptimized={!isLocalAsset(p.image)}
             />
           ))}
         </div>

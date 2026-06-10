@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect } from "react";
 import Image from "next/image";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
 import { RARITY_CONFIG } from "@/data/rarity";
@@ -229,7 +230,7 @@ export function PokemonBattleCard({
             "object-contain drop-shadow-lg relative z-[2]",
             isSleeping && "opacity-60 saturate-50"
           )}
-          unoptimized
+          unoptimized={!isLocalAsset(fighter.pokemon.image)}
         />
       </div>
 

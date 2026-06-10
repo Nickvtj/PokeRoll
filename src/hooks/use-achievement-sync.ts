@@ -16,6 +16,8 @@ export function useAchievementSync(enabled: boolean) {
   const battleWins = useEconomyStore((s) => s.battleWins);
   const clickGamesPlayed = useEconomyStore((s) => s.clickGamesPlayed);
   const dailyStreak = useEconomyStore((s) => s.dailyStreak);
+  const eggsHatched = useEconomyStore((s) => s.eggsHatched ?? 0);
+  const eggSellCoins = useEconomyStore((s) => s.eggSellCoins ?? 0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -32,6 +34,8 @@ export function useAchievementSync(enabled: boolean) {
         level,
         dailyStreak,
         coins,
+        eggsHatched,
+        eggSellCoins,
       };
       refreshAchievements(stats);
     }, ACHIEVEMENT_DEBOUNCE_MS);
@@ -49,6 +53,8 @@ export function useAchievementSync(enabled: boolean) {
     level,
     dailyStreak,
     coins,
+    eggsHatched,
+    eggSellCoins,
   ]);
 }
 

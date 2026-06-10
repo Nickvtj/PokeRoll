@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
 import { EggVisual } from "@/components/cases/EggVisual";
 import { EggStripCard } from "@/components/cases/EggStripCard";
 import { CAPSULE_WINNER_INDEX } from "@/lib/capsule-algorithm";
@@ -12,10 +11,22 @@ const CARD_WIDTH = 128;
 const CARD_GAP = 10;
 const SLOT_WIDTH = CARD_WIDTH + CARD_GAP;
 const PADDING_LEFT = 24;
-const DURATION_MS = 10000;
+const DURATION_MS = 6500;
+const WINDOW_BUFFER = 8;
 
 function easeOutQuint(t: number): number {
   return 1 - Math.pow(1 - t, 5);
+}
+
+function computeWindow(
+  cardIndex: number,
+  containerWidth: number,
+  stripLength: number
+): { start: number; end: number } {
+  const visibleSlots = Math.ceil(containerWidth / SLOT_WIDTH) + 2;
+  const start = Math.max(0, cardIndex - WINDOW_BUFFER);
+  const end = Math.min(stripLength, cardIndex + visibleSlots + WINDOW_BUFFER);
+  return { start, end: Math.max(end, start + 1) };
 }
 
 interface EggOpeningViewProps {
@@ -40,10 +51,12 @@ export function EggOpeningView({
   const lastCardRef = useRef(-1);
   const lastTickRef = useRef(0);
   const onCompleteRef = useRef(onComplete);
+  const windowRef = useRef({ start: 0, end: 24 });
 
   onCompleteRef.current = onComplete;
 
   const [ready, setReady] = useState(false);
+  const [windowRange, setWindowRange] = useState({ start: 0, end: 24 });
 
   const cancelAnim = useCallback(() => {
     if (rafRef.current !== null) {
@@ -52,10 +65,27 @@ export function EggOpeningView({
     }
   }, []);
 
+  const syncWindow = useCallback(
+    (cardIndex: number, containerWidth: number) => {
+      const next = computeWindow(cardIndex, containerWidth, strip.length);
+      if (
+        next.start !== windowRef.current.start ||
+        next.end !== windowRef.current.end
+      ) {
+        windowRef.current = next;
+        setWindowRange(next);
+      }
+    },
+    [strip.length]
+  );
+
   useEffect(() => {
     completedRef.current = false;
     lastCardRef.current = -1;
     lastTickRef.current = 0;
+    const initial = { start: 0, end: Math.min(strip.length, 24) };
+    windowRef.current = initial;
+    setWindowRange(initial);
     setReady(false);
 
     const startTimer = window.setTimeout(() => setReady(true), 80);
@@ -81,6 +111,7 @@ export function EggOpeningView({
     const startX = center - startCenter;
 
     stripEl.style.transform = `translateX(${startX}px)`;
+    syncWindow(0, containerWidth);
 
     let startTime: number | null = null;
 
@@ -88,8 +119,9 @@ export function EggOpeningView({
       if (completedRef.current) return;
       completedRef.current = true;
       stripEl.style.transform = `translateX(${targetX}px)`;
+      syncWindow(CAPSULE_WINNER_INDEX, containerWidth);
       void playCapsuleReveal(winnerRarity, winnerIsShiny);
-      window.setTimeout(() => onCompleteRef.current(), 500);
+      window.setTimeout(() => onCompleteRef.current(), 120);
     };
 
     const tick = (time: number) => {
@@ -104,8 +136,10 @@ export function EggOpeningView({
       const scrolled = startX - x;
       const cardIndex = Math.floor(Math.max(0, scrolled) / SLOT_WIDTH);
 
-      if (cardIndex !== lastCardRef.current && cardIndex > 0) {
+      if (cardIndex !== lastCardRef.current) {
         lastCardRef.current = cardIndex;
+        syncWindow(cardIndex, containerWidth);
+
         const now = Date.now();
         if (now - lastTickRef.current > 45 + progress * progress * 220) {
           lastTickRef.current = now;
@@ -123,14 +157,15 @@ export function EggOpeningView({
 
     rafRef.current = requestAnimationFrame(tick);
     return cancelAnim;
-  }, [ready, winnerRarity, winnerIsShiny, cancelAnim]);
+  }, [ready, winnerRarity, winnerIsShiny, cancelAnim, syncWindow]);
+
+  const { start, end } = windowRange;
+  const leftSpacer = start * SLOT_WIDTH;
+  const rightSpacer = (strip.length - end) * SLOT_WIDTH;
+  const visibleStrip = strip.slice(start, end);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-5"
-    >
+    <div className="space-y-5 page-enter">
       <div className="glass-card p-4 border border-white/10 flex flex-col items-center gap-2">
         <EggVisual egg={egg} size="sm" cracking />
         <p className="text-[10px] text-white/40 uppercase tracking-widest">Chocando</p>
@@ -150,17 +185,28 @@ export function EggOpeningView({
         <div
           ref={stripRef}
           className="flex items-center will-change-transform"
-          style={{ gap: CARD_GAP, paddingLeft: PADDING_LEFT, paddingRight: PADDING_LEFT }}
+          style={{ paddingLeft: PADDING_LEFT, paddingRight: PADDING_LEFT }}
         >
-          {strip.map((item, i) => (
-            <EggStripCard key={`${item.pokemon.id}-${i}`} item={item} />
-          ))}
+          {leftSpacer > 0 && (
+            <div aria-hidden className="shrink-0" style={{ width: leftSpacer }} />
+          )}
+          <div className="flex items-center shrink-0" style={{ gap: CARD_GAP }}>
+            {visibleStrip.map((item, i) => (
+              <EggStripCard
+                key={`${item.pokemon.id}-${start + i}`}
+                item={item}
+              />
+            ))}
+          </div>
+          {rightSpacer > 0 && (
+            <div aria-hidden className="shrink-0" style={{ width: rightSpacer }} />
+          )}
         </div>
       </div>
 
       <p className="text-center text-[10px] text-white/30 animate-pulse">
         O ovo está prestes a abrir...
       </p>
-    </motion.div>
+    </div>
   );
 }

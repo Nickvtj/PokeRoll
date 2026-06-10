@@ -11,6 +11,7 @@ import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { DuplicateSadEffect } from "@/components/spin/DuplicateSadEffect";
 import { RARITY_CONFIG } from "@/data/rarity";
 import type { SpinResult } from "@/types";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 
 interface RevealAnimationProps {
@@ -116,7 +117,7 @@ function ResultCard({ result, index }: { result: SpinResult; index: number }) {
             height={96}
             className="relative z-10 object-contain drop-shadow-xl mx-auto"
             style={isDuplicate ? { filter: "grayscale(40%)" } : undefined}
-            unoptimized
+            unoptimized={!isLocalAsset(result.pokemon.image)}
           />
           {(result.rarity === "legendary" || isShiny) && !isDuplicate && (
             <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-amber-400 animate-pulse" />
@@ -338,7 +339,7 @@ export function RevealAnimation({
                     height={192}
                     className="relative z-10 object-contain drop-shadow-2xl"
                     style={isDuplicate ? { filter: "grayscale(50%) opacity(0.8)" } : undefined}
-                    unoptimized
+                    unoptimized={!isLocalAsset(result.pokemon.image)}
                   />
                   {(result.rarity === "legendary" || isShiny) && !isDuplicate && (
                     <Sparkles className="absolute -top-2 -right-2 w-8 h-8 text-amber-300 animate-pulse" />

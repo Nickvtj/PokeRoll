@@ -17,6 +17,7 @@ import { useGameStore } from "@/stores/game-store";
 import { useGymStore } from "@/stores/gym-store";
 import { PokemonGymBadges } from "@/components/gym/GymBadge";
 import { PokemonMovesTab } from "@/components/album/PokemonMovesTab";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import type { CollectedPokemon, Pokemon } from "@/types";
 
@@ -194,7 +195,7 @@ export function PokedexModal({
                       width={80}
                       height={80}
                       className="relative z-10 object-contain drop-shadow-2xl"
-                      unoptimized
+                      unoptimized={!isLocalAsset(displayImage)}
                     />
                     {pokemon.rarity === "legendary" && (
                       <Sparkles className="absolute -top-1 -right-1 w-3.5 h-3.5 text-amber-400 animate-pulse" />

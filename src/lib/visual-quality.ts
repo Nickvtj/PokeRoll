@@ -10,13 +10,17 @@ export function detectVisualQuality(): VisualQuality {
   }
 
   const isMobile = window.matchMedia("(max-width: 768px)").matches;
-  const isTablet = window.matchMedia("(max-width: 1024px)").matches;
+  if (isMobile) return "low";
+
   const nav = navigator as Navigator & { deviceMemory?: number };
   const cores = navigator.hardwareConcurrency ?? 4;
   const memory = nav.deviceMemory;
 
-  if (isMobile) return "low";
+  if (cores <= 4 || (memory !== undefined && memory < 4)) {
+    return "low";
+  }
 
+  const isTablet = window.matchMedia("(max-width: 1024px)").matches;
   if (isTablet) return "medium";
 
   const isHighEnd = cores >= 8 && (memory === undefined || memory >= 8);

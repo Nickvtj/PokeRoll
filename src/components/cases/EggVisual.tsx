@@ -45,7 +45,6 @@ export function EggVisual({
           width={s.img}
           height={s.img}
           className="object-contain w-full h-full"
-          unoptimized
           priority={size === "lg"}
         />
       </motion.div>

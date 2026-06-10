@@ -37,6 +37,10 @@ export interface EconomyState {
   /** Progressão do minigame Poké-Jitsu */
   jitsuXp?: number;
   jitsuWins?: number;
+  /** Ovos chocados na tela de ovos */
+  eggsHatched?: number;
+  /** Moedas ganhas vendendo duplicatas de ovos */
+  eggSellCoins?: number;
 }
 
 export interface CoinTransaction {

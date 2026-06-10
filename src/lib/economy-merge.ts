@@ -101,5 +101,7 @@ export function mergeEconomyState(
         : remote.luckyEggExpiresAt ?? null,
     luckyEggCount: maxNum(local.luckyEggCount ?? 0, remote.luckyEggCount ?? 0),
     rareCandyCount: maxNum(local.rareCandyCount ?? 0, remote.rareCandyCount ?? 0),
+    eggsHatched: maxNum(local.eggsHatched ?? 0, remote.eggsHatched ?? 0),
+    eggSellCoins: maxNum(local.eggSellCoins ?? 0, remote.eggSellCoins ?? 0),
   };
 }

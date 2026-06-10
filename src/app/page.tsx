@@ -8,6 +8,7 @@ import { EggIcon } from "@/components/ui/EggIcon";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { useGameStore } from "@/stores/game-store";
 import { POKEMON_LIST } from "@/data/pokemon";
+import { isLocalAsset } from "@/lib/image-utils";
 
 const featuredPokemon = [
   POKEMON_LIST.find((p) => p.id === 25)!,
@@ -73,7 +74,7 @@ export default function HomePage() {
             width={120}
             height={120}
             className="object-contain"
-            unoptimized
+            unoptimized={!isLocalAsset(pokemon.image)}
           />
         </motion.div>
       ))}

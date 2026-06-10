@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Image from "next/image";
 import { POKEMON_MAP, TOTAL_POKEMON } from "@/data/pokemon";
 import { useGymStore } from "@/stores/gym-store";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import type { GymId } from "@/types/gym";
 
@@ -58,7 +59,7 @@ export function PokemonHallOfFame({ gymId, themeColor }: PokemonHallOfFameProps)
                 width={36}
                 height={36}
                 className="object-contain w-full h-full"
-                unoptimized
+                unoptimized={!isLocalAsset(p.image)}
               />
             </div>
           );

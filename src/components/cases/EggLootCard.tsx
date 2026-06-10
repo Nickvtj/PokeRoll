@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { RARITY_CONFIG } from "@/data/rarity";
+import { isLocalAsset } from "@/lib/image-utils";
 import type { Pokemon } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -64,7 +65,7 @@ export function EggLootCard({ pokemon, variant = "normal" }: EggLootCardProps) {
               width={96}
               height={96}
               className="relative z-10 object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-300"
-              unoptimized
+              unoptimized={!isLocalAsset(pokemon.image)}
             />
           )
         )}

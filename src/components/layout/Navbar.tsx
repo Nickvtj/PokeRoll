@@ -72,7 +72,13 @@ function ProfileButton({ className }: { className?: string }) {
 
 export function Navbar() {
   const pathname = usePathname();
-  const uniqueCount = useGameStore((s) => Object.keys(s.collection).length);
+  const uniqueCount = useGameStore((s) => {
+    let count = 0;
+    for (const entry of Object.values(s.collection)) {
+      if (entry.count >= 1) count++;
+    }
+    return count;
+  });
 
   return (
     <>

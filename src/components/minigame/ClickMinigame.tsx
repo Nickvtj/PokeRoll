@@ -33,6 +33,7 @@ import {
 } from "@/lib/minigame-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { playClickCombo, playClickPop, playClickRare, playClickFreeze, playClickDouble, playClickFrenzy, playClickBonusActive } from "@/lib/sound-engine";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 
 const CLICK_STARTING_LIVES = 2;
@@ -450,7 +451,13 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
                 className="absolute flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 animate-pulse hover:scale-105 transition-transform"
                 style={{ left: `${event.x}%`, top: `${event.y}%` }}
               >
-                <Image src={pokemon.image} alt="" width={32} height={32} unoptimized />
+                <Image
+                  src={pokemon.image}
+                  alt=""
+                  width={32}
+                  height={32}
+                  unoptimized={!isLocalAsset(pokemon.image)}
+                />
                 <span className="text-[10px] text-amber-400 font-bold">RARO!</span>
               </button>
             );

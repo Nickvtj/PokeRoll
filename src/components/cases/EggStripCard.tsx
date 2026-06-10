@@ -1,8 +1,10 @@
 "use client";
 
+import { memo } from "react";
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { RARITY_CONFIG } from "@/data/rarity";
+import { isLocalAsset } from "@/lib/image-utils";
 import { getSpinResultImage } from "@/lib/pokemon-display";
 import type { CapsuleStripItem } from "@/types/capsule";
 import { cn } from "@/lib/utils";
@@ -11,7 +13,7 @@ interface EggStripCardProps {
   item: CapsuleStripItem;
 }
 
-export function EggStripCard({ item }: EggStripCardProps) {
+export const EggStripCard = memo(function EggStripCard({ item }: EggStripCardProps) {
   const meta = RARITY_CONFIG[item.pokemon.rarity];
   const isGold = item.isGoldSlot;
   const imageSrc = item.isShiny
@@ -53,7 +55,7 @@ export function EggStripCard({ item }: EggStripCardProps) {
             item.isShiny && "drop-shadow-[0_0_12px_rgba(251,191,36,0.45)]",
             isGold && !item.isShiny && "opacity-75 saturate-125"
           )}
-          unoptimized
+          unoptimized={!isLocalAsset(imageSrc)}
         />
         <p
           className={cn(
@@ -71,4 +73,4 @@ export function EggStripCard({ item }: EggStripCardProps) {
       />
     </div>
   );
-}
+});

@@ -10,6 +10,7 @@ import {
 } from "@/data/achievements";
 import { MEW_ID, MEW_POKEMON } from "@/data/pokemon";
 import { getPokemonSpriteUrl } from "@/data/pokemon-sprites";
+import { isLocalAsset } from "@/lib/image-utils";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { ProfileStatCard } from "@/components/profile/ProfileStatCard";
 import { useGameStore } from "@/stores/game-store";
@@ -166,6 +167,8 @@ export function AchievementsPanel() {
   const clickGamesPlayed = useEconomyStore((s) => s.clickGamesPlayed);
   const dailyStreak = useEconomyStore((s) => s.dailyStreak);
   const coins = useEconomyStore((s) => s.coins);
+  const eggsHatched = useEconomyStore((s) => s.eggsHatched ?? 0);
+  const eggSellCoins = useEconomyStore((s) => s.eggSellCoins ?? 0);
   const profile = useGameStore((s) => s.profile);
   const collection = useGameStore((s) => s.collection);
 
@@ -182,6 +185,8 @@ export function AchievementsPanel() {
     level,
     dailyStreak,
     coins,
+    eggsHatched,
+    eggSellCoins,
   };
 
   return (
@@ -201,7 +206,7 @@ export function AchievementsPanel() {
                 width={64}
                 height={64}
                 className="object-contain"
-                unoptimized
+                unoptimized={!isLocalAsset(getPokemonSpriteUrl(MEW_ID))}
               />
             ) : (
               <>
@@ -211,31 +216,26 @@ export function AchievementsPanel() {
                   width={64}
                   height={64}
                   className="object-contain opacity-15 blur-[1px]"
-                  unoptimized
+                  unoptimized={!isLocalAsset(getPokemonSpriteUrl(MEW_ID))}
                 />
                 <Lock className="absolute w-6 h-6 text-white/30" />
               </>
             )}
           </div>
-          <div className="flex-1 min-w-0 space-y-3">
-            <div>
-              <p className="font-bold text-sm text-white">{MEW_POKEMON.name}</p>
-              <p className="text-[11px] text-white/40 mt-0.5 leading-relaxed">
-                Desbloqueado ao completar 100% das conquistas - com chance de shiny na roleta.
-              </p>
-            </div>
+          <div className="flex-1 min-w-0 space-y-2">
+            <p className="font-bold text-sm text-white">{MEW_POKEMON.name}</p>
             <div className="flex items-end justify-between gap-2">
               <div>
-                <p className="text-2xl font-black text-pink-400 tabular-nums">{progressPct}%</p>
-                <p className="text-[10px] text-white/40 uppercase font-bold tracking-wider">
+                <p className="text-lg font-black text-pink-400 tabular-nums">{progressPct}%</p>
+                <p className="text-[9px] text-white/40 uppercase font-bold tracking-wider">
                   Progresso
                 </p>
               </div>
-              <p className="text-xs text-white/45">
+              <p className="text-[11px] text-white/45">
                 {unlocked.size}/{ACHIEVEMENTS.length}
               </p>
             </div>
-            <div className="progress-bar">
+            <div className="progress-bar h-1">
               <div
                 className="progress-fill bg-gradient-to-r from-pink-400 to-purple-400 transition-[width] duration-700"
                 style={{ width: `${progressPct}%` }}

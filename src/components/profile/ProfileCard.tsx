@@ -8,7 +8,9 @@ import {
   Swords,
   BarChart3,
   Stars,
+  Coins,
 } from "lucide-react";
+import { EggIcon } from "@/components/ui/EggIcon";
 import { TOTAL_POKEMON } from "@/data/pokemon";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
@@ -26,6 +28,8 @@ export function ProfileCard() {
 
   const level = useEconomyStore((s) => s.level);
   const battleWins = useEconomyStore((s) => s.battleWins);
+  const eggsHatched = useEconomyStore((s) => s.eggsHatched ?? 0);
+  const eggSellCoins = useEconomyStore((s) => s.eggSellCoins ?? 0);
 
   const unique = getUniqueCount();
   const duplicates = getDuplicateCount();
@@ -77,7 +81,7 @@ export function ProfileCard() {
 
         <ProfileSection
           title="Estatísticas"
-          description="Roleta, duplicatas e batalhas."
+          description="Roleta, ovos, duplicatas e batalhas."
           icon={BarChart3}
           iconClassName="text-emerald-400"
         >
@@ -88,6 +92,8 @@ export function ProfileCard() {
             <ProfileStatCard icon={Swords} label="Vitórias" value={String(battleWins)} accent="red" layout="horizontal" />
             <ProfileStatCard icon={Trophy} label="Nível" value={String(level)} accent="purple" layout="horizontal" />
             <ProfileStatCard icon={Stars} label="Shinies" value={String(shinyCount)} accent="amber" layout="horizontal" />
+            <ProfileStatCard icon={EggIcon} label="Ovos chocados" value={String(eggsHatched)} accent="emerald" layout="horizontal" />
+            <ProfileStatCard icon={Coins} label="Moedas com ovos" value={String(eggSellCoins)} accent="amber" layout="horizontal" />
           </div>
         </ProfileSection>
       </div>

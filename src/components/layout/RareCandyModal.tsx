@@ -10,6 +10,7 @@ import { RARE_CANDY_SPRITE } from "@/data/item-sprites";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
 import { ItemSprite } from "@/components/ui/ItemSprite";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import { playUiClick, playUiConfirm } from "@/lib/ui-sounds";
 
@@ -175,7 +176,7 @@ export function RareCandyModal({ open, onClose }: RareCandyModalProps) {
                             fill
                             sizes="48px"
                             className="object-contain drop-shadow-md"
-                            unoptimized
+                            unoptimized={!isLocalAsset(pokemon.image)}
                           />
                         </div>
                         <p className="text-[10px] font-semibold truncate">{pokemon.name}</p>

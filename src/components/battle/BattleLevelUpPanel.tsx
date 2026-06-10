@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { playLevelUp, playXpBarFill } from "@/lib/sound-engine";
 import type { PokemonLevelUpResult } from "@/types/battle";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 
 export const BAR_DURATION = 1;
@@ -99,7 +100,7 @@ export function BattleLevelUpPanel({ levelUps }: BattleLevelUpPanelProps) {
               width={40}
               height={40}
               className="object-contain shrink-0"
-              unoptimized
+              unoptimized={!isLocalAsset(entry.image)}
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">

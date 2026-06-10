@@ -11,6 +11,7 @@ import { DuplicateSadEffect } from "@/components/spin/DuplicateSadEffect";
 import { EggCelebration } from "@/components/cases/EggCelebration";
 import { RARITY_CONFIG } from "@/data/rarity";
 import { getCapsuleSellPrice } from "@/lib/capsule-sell";
+import { isLocalAsset } from "@/lib/image-utils";
 import type { CapsuleRollResult } from "@/types/capsule";
 import { cn } from "@/lib/utils";
 
@@ -125,7 +126,7 @@ export function EggResultView({
               "relative z-10 object-contain drop-shadow-2xl",
               showDuplicateActions && "grayscale-[30%]"
             )}
-            unoptimized
+            unoptimized={!isLocalAsset(pokemon.image)}
           />
         </motion.div>
 

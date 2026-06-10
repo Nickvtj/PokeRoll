@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { POKEMON_MAP } from "@/data/pokemon";
 import { Coins } from "lucide-react";
+import { isLocalAsset } from "@/lib/image-utils";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { GymBadge } from "@/components/gym/GymBadge";
 import type { GymDefinition } from "@/types/gym";
@@ -76,7 +77,7 @@ export function BadgeRewardAnimation({
                       width={48}
                       height={48}
                       className="object-contain mx-auto"
-                      unoptimized
+                      unoptimized={!isLocalAsset(p.image)}
                     />
                     <p className="text-[9px] font-bold truncate">{p.name}</p>
                     <div className="flex justify-center">

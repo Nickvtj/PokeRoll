@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Ban, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import { JITSU_ELEMENT_META } from "@/data/jitsu-cards";
 import { JitsuElementIcon } from "@/components/minigame/jitsu/JitsuElementIcon";
@@ -47,7 +48,7 @@ function JitsuSpecialTooltip({
   anchorRect: DOMRect;
 }) {
   const centerX = anchorRect.left + anchorRect.width / 2;
-  const anchorBottom = anchorRect.bottom;
+  const anchorTop = anchorRect.top;
 
   return createPortal(
     <div
@@ -55,21 +56,25 @@ function JitsuSpecialTooltip({
       className="fixed z-[10050] pointer-events-none flex flex-col items-center opacity-100 transition-opacity duration-150"
       style={{
         left: centerX,
-        top: anchorBottom + TOOLTIP_GAP_PX,
-        transform: "translateX(-50%)",
+        top: anchorTop,
+        transform: `translate(-50%, calc(-100% - ${TOOLTIP_GAP_PX}px))`,
       }}
     >
       <div
-        className="w-2.5 h-2.5 -mb-[5px] rotate-45 bg-slate-950 border-l border-t border-amber-400/55"
-        aria-hidden
-      />
-      <div className="w-44 rounded-lg border border-amber-400/55 bg-slate-950/98 px-2.5 py-2 text-left shadow-[0_8px_28px_rgba(0,0,0,0.55)]">
+        className="w-44 rounded-lg border border-amber-400/60 px-2.5 py-2 text-left shadow-[0_10px_32px_rgba(0,0,0,0.75)]"
+        style={{ backgroundColor: "#020617" }}
+      >
         <p className="text-[11px] font-bold text-amber-200 flex items-center gap-1">
           <JitsuSpecialIcon effect={card.special!} className="text-amber-300 w-3.5 h-3.5 shrink-0" />
           {specialMeta.label}
         </p>
-        <p className="text-[10px] text-white/65 leading-snug mt-1">{specialMeta.description}</p>
+        <p className="text-[10px] text-white/75 leading-snug mt-1">{specialMeta.description}</p>
       </div>
+      <div
+        className="w-2.5 h-2.5 -mt-[5px] rotate-45 border-r border-b border-amber-400/60"
+        style={{ backgroundColor: "#020617" }}
+        aria-hidden
+      />
     </div>,
     document.body
   );
@@ -117,19 +122,11 @@ export function JitsuCard({
   useEffect(() => {
     if (!showTip) return;
 
-    let frame = 0;
-    const track = () => {
-      measureAnchor();
-      frame = requestAnimationFrame(track);
-    };
-    frame = requestAnimationFrame(track);
-
     const onScrollOrResize = () => measureAnchor();
     window.addEventListener("scroll", onScrollOrResize, true);
     window.addEventListener("resize", onScrollOrResize);
 
     return () => {
-      cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScrollOrResize, true);
       window.removeEventListener("resize", onScrollOrResize);
     };
@@ -228,7 +225,7 @@ export function JitsuCard({
                 width={s.img}
                 height={s.img}
                 className="object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-                unoptimized
+                unoptimized={!isLocalAsset(card.image)}
               />
               <p className={cn("text-[9px] font-bold truncate w-full text-center mt-1", meta.text)}>
                 {card.name}
@@ -250,7 +247,8 @@ export function JitsuCard({
       <motion.div
         layoutId={layoutId}
         transition={{ layout: LAYOUT_TRANSITION }}
-        className="shrink-0"
+        className="shrink-0 relative z-[200]"
+        style={{ zIndex: 200 }}
       >
         {inner}
       </motion.div>

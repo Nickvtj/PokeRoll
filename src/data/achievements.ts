@@ -23,7 +23,8 @@ export type AchievementCategory =
   | "battle"
   | "minigame"
   | "progress"
-  | "economy";
+  | "economy"
+  | "eggs";
 
 export interface AchievementProgress {
   current: number;
@@ -159,6 +160,23 @@ export const ACHIEVEMENT_CATEGORY_STYLES: Record<
       borderColor: "rgba(250,204,21,0.38)",
     },
   },
+  eggs: {
+    ring: "ring-orange-400/40",
+    icon: "text-orange-300",
+    label: "text-orange-300/90",
+    gradient: "from-orange-950/95 via-slate-900/98 to-slate-900/95",
+    pendingGradient: "from-orange-600/28 via-orange-950/48 to-slate-900/90",
+    cardPending: {
+      background:
+        "linear-gradient(145deg, rgba(249,115,22,0.1) 0%, rgba(15,23,42,0.97) 38%, rgba(15,23,42,0.99) 100%)",
+      borderColor: "rgba(148,163,184,0.18)",
+    },
+    cardDone: {
+      background:
+        "linear-gradient(145deg, rgba(249,115,22,0.18) 0%, rgba(124,45,18,0.28) 35%, rgba(15,23,42,0.99) 100%)",
+      borderColor: "rgba(251,146,60,0.38)",
+    },
+  },
 };
 
 export type AchievementIconKey =
@@ -206,6 +224,8 @@ export interface AchievementStats {
   level: number;
   dailyStreak: number;
   coins: number;
+  eggsHatched: number;
+  eggSellCoins: number;
 }
 
 export const ACHIEVEMENTS: Achievement[] = [
@@ -334,6 +354,51 @@ export const ACHIEVEMENTS: Achievement[] = [
     category: "economy",
     check: (s) => s.coins >= 1000,
     progress: (s) => ({ current: s.coins, target: 1000 }),
+  },
+  {
+    id: "egg_10",
+    label: "Incubador",
+    description: "Choque 10 ovos",
+    iconKey: "sparkles",
+    category: "eggs",
+    check: (s) => s.eggsHatched >= 10,
+    progress: (s) => ({ current: s.eggsHatched, target: 10 }),
+  },
+  {
+    id: "egg_50",
+    label: "Chocador",
+    description: "Choque 50 ovos",
+    iconKey: "star",
+    category: "eggs",
+    check: (s) => s.eggsHatched >= 50,
+    progress: (s) => ({ current: s.eggsHatched, target: 50 }),
+  },
+  {
+    id: "egg_100",
+    label: "Mestre dos Ovos",
+    description: "Choque 100 ovos",
+    iconKey: "gem",
+    category: "eggs",
+    check: (s) => s.eggsHatched >= 100,
+    progress: (s) => ({ current: s.eggsHatched, target: 100 }),
+  },
+  {
+    id: "egg_sell_100",
+    label: "Mercador de Ovos",
+    description: "Ganhe 100 moedas vendendo duplicatas de ovos",
+    iconKey: "coins",
+    category: "eggs",
+    check: (s) => s.eggSellCoins >= 100,
+    progress: (s) => ({ current: s.eggSellCoins, target: 100 }),
+  },
+  {
+    id: "egg_sell_500",
+    label: "Tycoon dos Ovos",
+    description: "Ganhe 500 moedas vendendo duplicatas de ovos",
+    iconKey: "medal",
+    category: "eggs",
+    check: (s) => s.eggSellCoins >= 500,
+    progress: (s) => ({ current: s.eggSellCoins, target: 500 }),
   },
 ];
 

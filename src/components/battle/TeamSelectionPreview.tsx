@@ -11,6 +11,7 @@ import { withDisplayImage } from "@/lib/pokemon-display";
 import { getTeamMonotypeSynergy } from "@/lib/team-monotype";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
+import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import { playUiDeselect } from "@/lib/ui-sounds";
 import { shouldShowShiny } from "@/lib/pokemon-display";
@@ -96,7 +97,7 @@ function TeamChip({
           width={36}
           height={36}
           className="object-contain drop-shadow-md mt-1"
-          unoptimized
+          unoptimized={!isLocalAsset(display.image)}
         />
         <p className="text-[9px] font-bold truncate w-full text-center leading-tight mt-0.5" style={{ color: config.color }}>
           {pokemon.name}
