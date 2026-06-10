@@ -63,6 +63,8 @@ interface GameState {
   getSearchableCollected: () => Pokemon[];
   getShinyCount: () => number;
   toggleUseShiny: (pokemonId: number) => void;
+  /** Adiciona Pokémon obtido em cápsula ao álbum */
+  commitCapsuleCatch: (pokemonId: number, isShiny: boolean) => void;
 }
 
 function applyCollectionEntry(
@@ -430,6 +432,26 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ collection });
     persistLocalCollection(collection);
     void syncCollectionUseShiny(pokemonId, !entry.useShiny);
+  },
+
+  commitCapsuleCatch: (pokemonId, isShiny) => {
+    const prev = get().collection;
+    const wasNew = !prev[pokemonId];
+    const collection = applyCollectionEntry(prev, pokemonId, isShiny);
+    const profile = get().profile;
+    set({ collection });
+    persistLocalCollection(collection);
+    queueSpinPersistence({
+      collection,
+      profile,
+      spins: [{ pokemonId, isDuplicate: !wasNew }],
+    });
+
+    if (wasNew) {
+      void import("@/stores/economy-store").then(({ useEconomyStore }) => {
+        useEconomyStore.getState().incrementMission("new_pokemon");
+      });
+    }
   },
 }));
 

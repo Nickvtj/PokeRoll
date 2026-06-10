@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { JITSU_ELEMENT_META } from "@/data/jitsu-cards";
 import { JitsuElementIcon } from "@/components/minigame/jitsu/JitsuElementIcon";
 import { JitsuSpecialIcon } from "@/components/minigame/jitsu/JitsuSpecialIcon";
+import { CardBackFace } from "@/components/ui/CardBackFace";
 import { JITSU_SPECIAL_META } from "@/data/jitsu-specials";
 import type { JitsuCard as JitsuCardType } from "@/types/jitsu";
 
@@ -46,7 +47,7 @@ function JitsuSpecialTooltip({
   anchorRect: DOMRect;
 }) {
   const centerX = anchorRect.left + anchorRect.width / 2;
-  const anchorTop = anchorRect.top;
+  const anchorBottom = anchorRect.bottom;
 
   return createPortal(
     <div
@@ -54,10 +55,14 @@ function JitsuSpecialTooltip({
       className="fixed z-[10050] pointer-events-none flex flex-col items-center opacity-100 transition-opacity duration-150"
       style={{
         left: centerX,
-        top: anchorTop,
-        transform: `translate(-50%, calc(-100% - ${TOOLTIP_GAP_PX}px))`,
+        top: anchorBottom + TOOLTIP_GAP_PX,
+        transform: "translateX(-50%)",
       }}
     >
+      <div
+        className="w-2.5 h-2.5 -mb-[5px] rotate-45 bg-slate-950 border-l border-t border-amber-400/55"
+        aria-hidden
+      />
       <div className="w-44 rounded-lg border border-amber-400/55 bg-slate-950/98 px-2.5 py-2 text-left shadow-[0_8px_28px_rgba(0,0,0,0.55)]">
         <p className="text-[11px] font-bold text-amber-200 flex items-center gap-1">
           <JitsuSpecialIcon effect={card.special!} className="text-amber-300 w-3.5 h-3.5 shrink-0" />
@@ -65,10 +70,6 @@ function JitsuSpecialTooltip({
         </p>
         <p className="text-[10px] text-white/65 leading-snug mt-1">{specialMeta.description}</p>
       </div>
-      <div
-        className="w-2.5 h-2.5 -mt-[5px] rotate-45 bg-slate-950 border-r border-b border-amber-400/55"
-        aria-hidden
-      />
     </div>,
     document.body
   );
@@ -175,8 +176,7 @@ export function JitsuCard({
         whileTap={!isDisabled ? { scale: 0.96, y: -2 } : undefined}
         className={cn(
           "relative w-full h-full rounded-xl border-2 overflow-hidden transition-[filter] duration-300",
-          faceDown &&
-            "bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950 border-indigo-400/35 cursor-default shadow-[inset_0_0_20px_rgba(99,102,241,0.15)]",
+          faceDown && "border-white/15 cursor-default",
           !faceDown &&
             meta &&
             cn(
@@ -194,12 +194,7 @@ export function JitsuCard({
         )}
       >
         {faceDown ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
-            <div className="w-9 h-9 rounded-full border-2 border-indigo-400/50 bg-indigo-500/25 flex items-center justify-center">
-              <span className="text-indigo-300/80 text-xs font-black">?</span>
-            </div>
-            <div className="w-12 h-0.5 rounded-full bg-indigo-500/30" />
-          </div>
+          <CardBackFace iconSize={size === "sm" ? 28 : size === "lg" ? 44 : 34} />
         ) : card && meta ? (
           <>
             <div className="absolute inset-0 opacity-30 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-white/5" />

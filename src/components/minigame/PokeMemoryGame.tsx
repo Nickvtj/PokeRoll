@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Brain } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
-import { PokeballIcon } from "@/components/ui/PokeballIcon";
+import { CardBackFace } from "@/components/ui/CardBackFace";
 import {
   MEMORY_GAME_DURATION_SEC,
   MEMORY_PAIR_COUNT,
@@ -278,15 +278,7 @@ function MemoryCardTile({
             : { duration: 0.2 },
         }}
       >
-        {/* Verso — Pokébola */}
-        <div
-          className={cn(
-            "absolute inset-0 rounded-xl border flex items-center justify-center [backface-visibility:hidden]",
-            "bg-gradient-to-br from-indigo-950/80 to-purple-950/60 border-white/15 shadow-inner"
-          )}
-        >
-          <PokeballIcon size={38} className="opacity-55" />
-        </div>
+        <CardBackFace className="[backface-visibility:hidden]" />
 
         {/* Frente — Pokémon */}
         <div

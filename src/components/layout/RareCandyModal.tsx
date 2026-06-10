@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { X, Search, Sparkles } from "lucide-react";
@@ -42,8 +42,16 @@ export function RareCandyModal({ open, onClose }: RareCandyModalProps) {
     [collection, searchQuery, getPokemonProgress]
   );
   const levelCap = getLevelCap();
+  const prevCountRef = useRef(rareCandyCount);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (open && prevCountRef.current > 0 && rareCandyCount <= 0) {
+      onClose();
+    }
+    prevCountRef.current = rareCandyCount;
+  }, [open, rareCandyCount, onClose]);
 
   useEffect(() => {
     if (!open) setSearchQuery("");

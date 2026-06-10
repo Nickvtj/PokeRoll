@@ -224,6 +224,98 @@ export async function playBattleCoinResultReveal(playerStarts: boolean): Promise
   }
 }
 
+/** Roleta da cápsula — ticks que desaceleram até parar */
+export async function playCapsuleRollSequence(durationSec = 8.5): Promise<void> {
+  const ctx = await getAudioContext();
+  if (!ctx) return;
+
+  const baseTime = ctx.currentTime + 0.06;
+  let elapsed = 0;
+  let tickIndex = 0;
+
+  while (elapsed < durationSec * 0.96) {
+    const progress = elapsed / durationSec;
+    const interval = 0.04 + progress * progress * 0.38;
+    const start = baseTime + elapsed;
+    const vol = 0.028 + (1 - progress) * 0.022;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const freq = 420 - progress * 180 + (tickIndex % 3) * 35;
+
+    osc.type = "square";
+    osc.frequency.setValueAtTime(freq, start);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(80, freq * 0.6), start + 0.025);
+
+    gain.gain.setValueAtTime(0.001, start);
+    gain.gain.linearRampToValueAtTime(vol, start + 0.003);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.032);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.038);
+
+    elapsed += interval;
+    tickIndex++;
+  }
+}
+
+/** Parada da roleta + revelação do prêmio */
+export async function playCapsuleReveal(
+  rarity: string,
+  isShiny: boolean
+): Promise<void> {
+  const ctx = await getAudioContext();
+  if (!ctx) return;
+
+  const land = ctx.currentTime + 0.02;
+
+  const thud = ctx.createOscillator();
+  const thudGain = ctx.createGain();
+  thud.type = "sine";
+  thud.frequency.setValueAtTime(isShiny ? 280 : 240, land);
+  thud.frequency.exponentialRampToValueAtTime(90, land + 0.14);
+  thudGain.gain.setValueAtTime(0.001, land);
+  thudGain.gain.linearRampToValueAtTime(0.065, land + 0.015);
+  thudGain.gain.exponentialRampToValueAtTime(0.001, land + 0.16);
+  thud.connect(thudGain);
+  thudGain.connect(ctx.destination);
+  thud.start(land);
+  thud.stop(land + 0.18);
+
+  const rarityFreq: Record<string, number> = {
+    common: 440,
+    uncommon: 523,
+    rare: 587,
+    epic: 698,
+    legendary: 880,
+  };
+  const baseFreq = isShiny ? 988 : (rarityFreq[rarity] ?? 440);
+  const ringStart = land + 0.1;
+
+  const notes = isShiny
+    ? [baseFreq, 1175, 1319]
+    : rarity === "legendary" || rarity === "epic"
+      ? [baseFreq, baseFreq * 1.25]
+      : [baseFreq];
+
+  for (const [i, freq] of notes.entries()) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const t = ringStart + i * 0.11;
+    osc.type = isShiny ? "sine" : "triangle";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.001, t);
+    gain.gain.linearRampToValueAtTime(isShiny ? 0.05 : 0.042, t + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + (isShiny ? 0.45 : 0.32));
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.5);
+  }
+}
+
 export async function playXpGain(): Promise<void> {
   await playNoteSequence(
     [

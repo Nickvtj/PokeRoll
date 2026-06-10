@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { MousePointerClick, Timer, Snowflake, Zap, Star } from "lucide-react";
+import { Bomb, Heart, MousePointerClick, Timer, Snowflake, Zap, Star } from "lucide-react";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import {
   GreatBallIcon,
@@ -35,6 +35,8 @@ import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { playClickCombo, playClickPop, playClickRare, playClickFreeze, playClickDouble, playClickFrenzy, playClickBonusActive } from "@/lib/sound-engine";
 import { cn } from "@/lib/utils";
 
+const CLICK_STARTING_LIVES = 2;
+
 interface ClickMinigameProps {
   onComplete: (score: number, reward: ClickGameRewardBreakdown, maxCombo: number) => void;
   onReady?: (restart: () => void) => void;
@@ -53,6 +55,7 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
   // Novos estados de bônus
   const [freezeActive, setFreezeActive] = useState(false);
   const [doubleActive, setDoubleActive] = useState(false);
+  const [lives, setLives] = useState(CLICK_STARTING_LIVES);
 
   const comboTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const freezeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,6 +102,7 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
     rareSpawnCooldown.current = 0;
     timeBallsSpawned.current = 0;
     freezeUntilRef.current = 0;
+    setLives(CLICK_STARTING_LIVES);
     if (freezeTimerRef.current) clearTimeout(freezeTimerRef.current);
   }, []);
 
@@ -207,6 +211,24 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
   };
 
   const handleBallClick = (ball: SpawnedBall) => {
+    if (ball.kind === "bomb") {
+      void playClickRare();
+      setBalls((prev) => prev.filter((b) => b.id !== ball.id));
+      setPopups((prev) => [
+        ...prev.slice(-8),
+        { id: `pop-${Date.now()}`, x: ball.x, y: ball.y, text: "BOOM! -1 vida" },
+      ]);
+      setLives((current) => {
+        const next = current - 1;
+        if (next <= 0) {
+          window.setTimeout(() => finishGame(), 450);
+        }
+        return Math.max(0, next);
+      });
+      setCombo(0);
+      return;
+    }
+
     // Efeito: Bônus de Tempo
     if (ball.kind === "time") {
       void playClickRare();
@@ -314,9 +336,10 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
         <h3 className="text-xl font-bold">Click Rush</h3>
         <p className="text-white/50 text-sm leading-relaxed">
           Pokébolas aparecem na tela. Clique o máximo que conseguir em{" "}
-          {CLICK_GAME_DURATION_SEC} segundos. Combos aumentam sua pontuação! Itens especiais: +
-          {CLICK_TIME_BONUS_SEC}s extras, congela o tempo, pontos em dobro e Frenesi Master.
-          Recompensa: {CLICK_BASE_COINS_MIN}~{CLICK_BASE_COINS_MAX} moedas conforme seu desempenho.
+          {CLICK_GAME_DURATION_SEC} segundos — você tem {CLICK_STARTING_LIVES} vidas. Evite a
+          Pokébola bomba! Combos aumentam sua pontuação. Itens especiais: +{CLICK_TIME_BONUS_SEC}s,
+          congela o tempo, pontos em dobro e Frenesi Master. Recompensa: {CLICK_BASE_COINS_MIN}~
+          {CLICK_BASE_COINS_MAX} moedas conforme seu desempenho.
         </p>
         <AnimatedButton variant="primary" size="lg" onClick={start} className="w-full max-w-xs mx-auto">
           COMEÇAR!
@@ -327,12 +350,23 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between glass-card px-4 py-2">
+      <div className="flex items-center justify-between glass-card px-4 py-2 gap-2">
         <div className="text-sm">
           <span className="text-white/50">Tempo: </span>
           <span className={cn("font-bold", timeLeft <= 5 ? "text-red-400" : "text-white")}>
             {timeLeft}s
           </span>
+        </div>
+        <div className="flex items-center gap-0.5" title="Vidas">
+          {Array.from({ length: CLICK_STARTING_LIVES }).map((_, i) => (
+            <Heart
+              key={i}
+              className={cn(
+                "w-4 h-4",
+                i < lives ? "text-rose-400 fill-rose-400/70" : "text-white/15"
+              )}
+            />
+          ))}
         </div>
         <ComboCounter combo={combo} maxCombo={maxCombo} />
         <div className="text-sm font-bold text-amber-400">{score} pts</div>
@@ -399,6 +433,8 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
                 <SpecialBallVisual icon={<Zap className="w-5 h-5 text-yellow-300" />} color="bg-yellow-400/40" ring="ring-yellow-400/70" />
               ) : ball.kind === "frenzy" ? (
                 <SpecialBallVisual icon={<Star className="w-5 h-5 text-purple-300" />} color="bg-purple-400/40" ring="ring-purple-400/80" />
+              ) : ball.kind === "bomb" ? (
+                <SpecialBallVisual icon={<Bomb className="w-5 h-5 text-red-300" />} color="bg-red-500/45" ring="ring-red-500/80" />
               ) : (
                 <BallVisual type={ball.type} />
               )}

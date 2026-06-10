@@ -28,7 +28,7 @@ const MissionsPanel = dynamic(
 );
 
 const AchievementsPanel = dynamic(
-  () => import("@/components/missions/AchievementsPanel").then((m) => m.AchievementsPanel),
+  () => import("@/components/missions/MissionsPanel").then((m) => m.AchievementsPanel),
   { loading: () => <PanelSkeleton /> }
 );
 

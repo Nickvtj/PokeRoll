@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import { Ban, Bot, Clock, Flame, Leaf, Swords, TrendingUp, Trophy, User, Waves } from "lucide-react";
+import { Ban, Clock, Flame, Leaf, Swords, TrendingUp, Trophy, Waves } from "lucide-react";
+import { BattleTrainerChip } from "@/components/battle/BattleTrainerChip";
+import { PokeballIcon } from "@/components/ui/PokeballIcon";
+import { getPlayerTrainerPortrait, trainerSpriteUrl } from "@/data/battle-trainers";
+import { useGameStore } from "@/stores/game-store";
 import { JitsuElementIcon } from "@/components/minigame/jitsu/JitsuElementIcon";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { JitsuArenaCard } from "@/components/minigame/jitsu/JitsuArenaCard";
@@ -180,8 +184,16 @@ const ELEMENT_TRIANGLE = [
   { type: "PLANTA" as const, icon: Leaf, beats: "AGUA" },
 ];
 
+const SENSEI_PORTRAIT = {
+  name: "Sensei Bot",
+  spriteUrl: trainerSpriteUrl("blackbelt"),
+};
+
 export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
   const jitsuXp = useEconomyStore((s) => s.jitsuXp ?? 0);
+  const profile = useGameStore((s) => s.profile);
+  const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
+  const playerTrainer = getPlayerTrainerPortrait(profile.username, selectedAvatarId);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [playerHand, setPlayerHand] = useState<JitsuCardType[]>([]);
@@ -499,200 +511,231 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
     <LayoutGroup id="jitsu-match">
     <div className="relative space-y-3 max-w-3xl mx-auto">
       {/* Oponente */}
-      <div className="glass-card p-3 border border-rose-500/15 space-y-2 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-2xl pointer-events-none" />
-        <div className="flex items-center justify-between gap-2 relative">
-          <div className="flex items-center gap-2 text-sm font-bold text-white/75">
-            <Bot className="w-4 h-4 text-rose-400" />
-            Sensei Bot
+      <div className="glass-card px-4 py-3 border border-rose-500/15 relative overflow-hidden">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <BattleTrainerChip
+            side="enemy"
+            name={SENSEI_PORTRAIT.name}
+            spriteUrl={SENSEI_PORTRAIT.spriteUrl}
+            className="self-center shrink-0 !pt-0"
+          />
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-bold text-rose-300/70 uppercase tracking-wider">
+                Mão do Sensei
+              </span>
+              <TrophyRow
+                trophies={botTrophies}
+                hint={{ needsType: null, needsSameType: null }}
+                side="bot"
+              />
+            </div>
+            <div className="flex justify-center gap-1.5">
+              {botHand.map((c) => (
+                <JitsuCard key={c.instanceId} card={c} faceDown size="md" disabled />
+              ))}
+            </div>
           </div>
-          <TrophyRow trophies={botTrophies} hint={{ needsType: null, needsSameType: null }} side="bot" />
         </div>
-        <div className="flex justify-center gap-1 opacity-60">
-          {botHand.map((c) => (
-            <JitsuCard key={c.instanceId} card={c} faceDown size="sm" disabled />
-          ))}
-        </div>
-      </div>
-
-      {/* Placar central */}
-      <div className="flex items-center justify-between gap-3 px-1">
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-cyan-300/90">
-          <User className="w-3.5 h-3.5" /> Você
-        </span>
-        <div className="flex items-center gap-2">
-          {phase === "playing" ? (
-            <TimerRing timer={timer} max={JITSU_TIMER_SEC} urgent={timerUrgent} />
-          ) : (
-            <span className="flex items-center gap-1 text-xs text-white/35 font-mono">
-              <Clock className="w-3.5 h-3.5" /> —
-            </span>
-          )}
-          <span className="text-[10px] text-white/30 font-mono tabular-nums">
-            R{roundsPlayed}
-          </span>
-        </div>
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-300/80">
-          Bot <Bot className="w-3.5 h-3.5" />
-        </span>
       </div>
 
       {/* Arena */}
       <div
         style={arenaStyle}
         className={cn(
-          "glass-card p-4 border min-h-[12.5rem] flex flex-col items-center justify-center gap-3 relative overflow-hidden transition-colors duration-500 bg-gradient-to-br from-indigo-950/40 via-slate-900/60 to-violet-950/30",
+          "relative rounded-2xl border overflow-hidden transition-colors duration-500",
+          "bg-gradient-to-b from-slate-900/90 via-emerald-950/25 to-amber-950/20",
           winnerFlash === "player" && "border-emerald-400/40",
           winnerFlash === "bot" && "border-rose-400/40",
           winnerFlash === "tie" && "border-amber-400/35",
-          !winnerFlash && "border-indigo-500/25"
+          !winnerFlash && "border-emerald-600/20"
         )}
       >
-        <JitsuArenaFx
-          playerType={playerPlayed?.type}
-          botType={botPlayed?.type}
-          winner={winnerFlash}
-          phase={phase === "reveal" || phase === "resolve" ? phase : null}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 90% 55% at 50% 100%, rgba(34,197,94,0.14), transparent 70%), radial-gradient(ellipse 70% 40% at 50% 85%, rgba(120,53,15,0.12), transparent 65%)",
+          }}
         />
+        <div className="absolute inset-x-4 bottom-3 h-16 rounded-[100%] border border-emerald-500/15 bg-emerald-600/8 pointer-events-none" />
 
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={roundMsg}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            className="text-sm font-semibold text-white/70 h-5 relative z-10"
-          >
-            {roundMsg}
-          </motion.p>
-        </AnimatePresence>
-
-        <div className="flex items-center justify-center gap-3 sm:gap-6 relative z-10 min-h-[8.5rem]">
-          <div
-            className={cn(
-              "rounded-xl border p-2 min-w-[5.5rem] min-h-[7.5rem] flex items-center justify-center transition-colors duration-300",
-              winnerFlash === "player"
-                ? "border-emerald-400/50 bg-emerald-500/10"
-                : "border-dashed border-white/15 bg-black/20"
+        <div className="relative px-4 pt-3 pb-4 space-y-2.5">
+          <div className="flex items-center justify-center gap-2">
+            {phase === "playing" ? (
+              <TimerRing timer={timer} max={JITSU_TIMER_SEC} urgent={timerUrgent} />
+            ) : (
+              <span className="flex items-center gap-1 text-xs text-white/35 font-mono">
+                <Clock className="w-3.5 h-3.5" /> —
+              </span>
             )}
-          >
-            {playerPlayed ? (
-              <motion.div
-                animate={
-                  winnerFlash === "bot" && phase === "resolve"
-                    ? { x: [0, -5, 5, -3, 0] }
-                    : { x: 0 }
-                }
-                transition={{ duration: 0.38, ease: "easeInOut" }}
-              >
-                <JitsuCard
-                  card={playerPlayed}
-                  layoutId={layoutIdFor(playerPlayed)}
-                  size="md"
-                  disabled
-                  dimmed={winnerFlash === "bot" && phase === "resolve"}
-                  pulsing={winnerFlash === "player" && phase === "resolve"}
+            <span className="text-[10px] text-white/30 font-mono tabular-nums">R{roundsPlayed}</span>
+            <div className="flex items-center gap-1 text-[10px] font-black text-white/40 uppercase">
+              <PokeballIcon size={12} />
+              Arena
+            </div>
+          </div>
+
+          <JitsuArenaFx
+            playerType={playerPlayed?.type}
+            botType={botPlayed?.type}
+            winner={winnerFlash}
+            phase={phase === "reveal" || phase === "resolve" ? phase : null}
+          />
+
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={roundMsg}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="text-xs font-semibold text-white/65 h-4 text-center relative z-10"
+            >
+              {roundMsg}
+            </motion.p>
+          </AnimatePresence>
+
+          <div className="flex items-end justify-center gap-3 sm:gap-6 relative z-10 min-h-[8rem] py-1">
+            <div
+              className={cn(
+                "rounded-lg border px-2 py-1.5 min-w-[5.5rem] min-h-[7.5rem] flex items-center justify-center transition-colors duration-300",
+                winnerFlash === "player"
+                  ? "border-emerald-400/45 bg-emerald-500/10"
+                  : "border-white/12 bg-black/15"
+              )}
+            >
+              {playerPlayed ? (
+                <motion.div
+                  animate={
+                    winnerFlash === "bot" && phase === "resolve"
+                      ? { x: [0, -5, 5, -3, 0] }
+                      : { x: 0 }
+                  }
+                  transition={{ duration: 0.38, ease: "easeInOut" }}
+                >
+                  <JitsuCard
+                    card={playerPlayed}
+                    layoutId={layoutIdFor(playerPlayed)}
+                    size="md"
+                    disabled
+                    dimmed={winnerFlash === "bot" && phase === "resolve"}
+                    pulsing={winnerFlash === "player" && phase === "resolve"}
+                  />
+                </motion.div>
+              ) : (
+                <span className="text-[10px] text-white/20 uppercase tracking-wider">Você</span>
+              )}
+            </div>
+
+            <motion.div
+              animate={
+                phase === "reveal"
+                  ? { scale: [1, 1.12, 1], opacity: [0.6, 1, 0.6] }
+                  : phase === "resolve"
+                    ? { rotate: [0, -8, 8, 0], scale: [1, 1.1, 1] }
+                    : { scale: 1, opacity: 1, rotate: 0 }
+              }
+              transition={{ duration: phase === "reveal" ? 0.85 : 0.45, ease: "easeInOut" }}
+              className="pb-6"
+            >
+              <Swords className="w-6 h-6 text-emerald-300/50 shrink-0" />
+            </motion.div>
+
+            <div
+              className={cn(
+                "rounded-lg border px-2 py-1.5 min-w-[5.5rem] min-h-[7.5rem] flex items-center justify-center transition-colors duration-300",
+                winnerFlash === "bot"
+                  ? "border-rose-400/45 bg-rose-500/10"
+                  : "border-white/12 bg-black/15"
+              )}
+            >
+              {botPlayed ? (
+                <JitsuArenaCard
+                  card={botPlayed}
+                  side="bot"
+                  winnerFlash={winnerFlash}
+                  isResolving={phase === "resolve"}
                 />
-              </motion.div>
-            ) : (
-              <span className="text-[10px] text-white/25 uppercase tracking-wider">Sua carta</span>
-            )}
+              ) : (
+                <span className="text-[9px] text-white/20 uppercase tracking-wider">Sensei</span>
+              )}
+            </div>
           </div>
 
-          <motion.div
-            animate={
-              phase === "reveal"
-                ? { scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }
-                : phase === "resolve"
-                  ? { rotate: [0, -10, 10, 0], scale: [1, 1.15, 1] }
-                  : { scale: 1, opacity: 1, rotate: 0 }
-            }
-            transition={{ duration: phase === "reveal" ? 0.85 : 0.45, ease: "easeInOut" }}
-          >
-            <Swords className="w-7 h-7 text-indigo-300/60 shrink-0 drop-shadow-[0_0_8px_rgba(129,140,248,0.4)]" />
-          </motion.div>
-
-          <div
-            className={cn(
-              "rounded-xl border p-2 min-w-[5.5rem] min-h-[7.5rem] flex items-center justify-center transition-colors duration-300",
-              winnerFlash === "bot"
-                ? "border-rose-400/50 bg-rose-500/10"
-                : "border-dashed border-white/15 bg-black/20"
-            )}
-          >
-            {botPlayed ? (
-              <JitsuArenaCard
-                card={botPlayed}
-                side="bot"
-                winnerFlash={winnerFlash}
-                isResolving={phase === "resolve"}
-              />
-            ) : (
-              <span className="text-[10px] text-white/25 uppercase tracking-wider">Sensei</span>
-            )}
-          </div>
+          {winnerFlash === "tie" && (
+            <motion.p
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-amber-300 text-xs font-bold text-center relative z-10"
+            >
+              Empate total!
+            </motion.p>
+          )}
         </div>
-
-        {winnerFlash === "tie" && (
-          <motion.p
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-amber-300 text-sm font-bold relative z-10"
-          >
-            Empate total!
-          </motion.p>
-        )}
       </div>
 
       {/* Jogador */}
-      <div className="glass-card p-3 border border-cyan-500/15 space-y-2 relative overflow-visible">
-        <div className="absolute bottom-0 left-0 w-28 h-28 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
-        <div className="flex items-center justify-between gap-2 relative">
-          <div className="flex items-center gap-2 text-sm font-bold text-cyan-300/90">
-            <Trophy className="w-4 h-4" />
-            Suas vitórias
+      <div className="glass-card px-4 py-3 border border-cyan-500/15 relative overflow-visible">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <BattleTrainerChip
+            side="player"
+            name={playerTrainer.name}
+            spriteUrl={playerTrainer.spriteUrl}
+            fallbackLetter={profile.username.charAt(0)}
+            avatarStyle={playerTrainer.isProfileAvatar}
+            className="self-center shrink-0 !pt-0"
+          />
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-bold text-cyan-300/80 uppercase tracking-wider">
+                Sua mão
+              </span>
+              <TrophyRow trophies={playerTrophies} hint={playerHint} side="player" />
+            </div>
+
+            {playerBlockNext && phase === "playing" && (
+              <p className="text-center text-[10px] text-red-300/90 font-semibold flex items-center justify-center gap-1">
+                <Ban className="w-3 h-3" />
+                {JITSU_ELEMENT_META[playerBlockNext].label} bloqueado nesta rodada
+              </p>
+            )}
+            {playerModNext !== 0 && phase === "playing" && (
+              <p className="text-center text-[10px] text-emerald-300/90 font-semibold flex items-center justify-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                Próxima carta: {playerModNext > 0 ? "+" : ""}
+                {playerModNext} poder
+              </p>
+            )}
+
+            <div className="flex justify-center gap-2 flex-wrap relative overflow-visible py-3">
+              {playerHand.map((c) => {
+                const blocked = isElementBlocked(c.type, playerBlockNext);
+                return (
+                  <JitsuCard
+                    key={c.instanceId}
+                    card={c}
+                    layoutId={layoutIdFor(c)}
+                    size="md"
+                    disabled={phase !== "playing" || blocked}
+                    blocked={blocked && phase === "playing"}
+                    selected={phase === "playing" && !timerUrgent && !blocked}
+                    onClick={() => playCard(c)}
+                  />
+                );
+              })}
+            </div>
+
+            {timerUrgent && (
+              <motion.p
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 0.8, repeat: Infinity }}
+                className="text-center text-[10px] text-red-400 font-semibold uppercase tracking-wider"
+              >
+                Tempo acabando!
+              </motion.p>
+            )}
           </div>
-          <TrophyRow trophies={playerTrophies} hint={playerHint} side="player" />
         </div>
-        {playerBlockNext && phase === "playing" && (
-          <p className="text-center text-[10px] text-red-300/90 font-semibold flex items-center justify-center gap-1">
-            <Ban className="w-3 h-3" />
-            {JITSU_ELEMENT_META[playerBlockNext].label} bloqueado nesta rodada
-          </p>
-        )}
-        {playerModNext !== 0 && phase === "playing" && (
-          <p className="text-center text-[10px] text-emerald-300/90 font-semibold flex items-center justify-center gap-1">
-            <TrendingUp className="w-3 h-3" />
-            Próxima carta: {playerModNext > 0 ? "+" : ""}
-            {playerModNext} poder
-          </p>
-        )}
-        <div className="flex justify-center gap-2 flex-wrap relative overflow-visible pt-24 -mt-20">
-          {playerHand.map((c) => {
-            const blocked = isElementBlocked(c.type, playerBlockNext);
-            return (
-              <JitsuCard
-                key={c.instanceId}
-                card={c}
-                layoutId={layoutIdFor(c)}
-                size="md"
-                disabled={phase !== "playing" || blocked}
-                blocked={blocked && phase === "playing"}
-                selected={phase === "playing" && !timerUrgent && !blocked}
-                onClick={() => playCard(c)}
-              />
-            );
-          })}
-        </div>
-        {timerUrgent && (
-          <motion.p
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 0.8, repeat: Infinity }}
-            className="text-center text-[10px] text-red-400 font-semibold uppercase tracking-wider"
-          >
-            Tempo acabando!
-          </motion.p>
-        )}
       </div>
 
     </div>

@@ -16,7 +16,7 @@ import {
 } from "@/data/economy-balance";
 import { applyMinigameCoinBonus } from "@/lib/minigame-rewards";
 
-export type SpawnedBallKind = "normal" | "time" | "freeze" | "double" | "frenzy";
+export type SpawnedBallKind = "normal" | "time" | "freeze" | "double" | "frenzy" | "bomb";
 
 export interface SpawnedBall {
   id: string;
@@ -66,11 +66,12 @@ export function spawnBall(existing: SpawnedBall[] = []): SpawnedBall {
   const roll = Math.random();
   let kind: SpawnedBallKind = "normal";
 
-  // Lógica de chances para itens especiais (Balanceado: Tempo ultra raro)
-  if (roll < 0.005) kind = "time";      // 0.5% (era 2%)
-  else if (roll < 0.04) kind = "freeze"; // 3.5%
-  else if (roll < 0.08) kind = "double"; // 4%
-  else if (roll < 0.095) kind = "frenzy"; // 1.5%
+  // Bombas mais frequentes; demais especiais mais raros
+  if (roll < 0.004) kind = "time";
+  else if (roll < 0.034) kind = "bomb";
+  else if (roll < 0.054) kind = "freeze";
+  else if (roll < 0.074) kind = "double";
+  else if (roll < 0.082) kind = "frenzy";
 
   const { x, y } = pickSpawnPosition(existing);
 

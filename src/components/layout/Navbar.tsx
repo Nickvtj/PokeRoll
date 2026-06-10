@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Disc3, BookOpen, Swords, Gamepad2, ChevronRight } from "lucide-react";
+import { EggIcon } from "@/components/ui/EggIcon";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { CoinCounter } from "@/components/ui/CoinCounter";
 import { TrainerItemsBar } from "@/components/layout/TrainerItemsBar";
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/battle", label: "Batalha", icon: Swords },
   { href: "/games", label: "Jogos", icon: Gamepad2 },
   { href: "/spin", label: "Roleta", icon: Disc3 },
+  { href: "/cases", label: "Ovos", icon: EggIcon },
   { href: "/album", label: "Álbum", icon: BookOpen },
 ] as const;
 
@@ -121,7 +123,7 @@ export function Navbar() {
       </header>
 
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass glass-blur border-t border-white/10">
-        <div className="grid grid-cols-5 items-center py-1 px-0.5">
+        <div className="grid grid-cols-6 items-center py-1 px-0.5">
           {navItems.map(({ href, label, icon: Icon }) => {
             const active =
               href === "/"

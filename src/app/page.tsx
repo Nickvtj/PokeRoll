@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Play, Swords, Gamepad2, Disc3 } from "lucide-react";
+import { EggIcon } from "@/components/ui/EggIcon";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { useGameStore } from "@/stores/game-store";
 import { POKEMON_LIST } from "@/data/pokemon";
@@ -38,6 +39,14 @@ const gameModes = [
     desc: "Gire e complete seu álbum",
     color: "from-indigo-500/20 to-purple-500/20 border-indigo-500/30",
     iconColor: "text-indigo-400",
+  },
+  {
+    href: "/cases",
+    icon: EggIcon,
+    title: "Ovos",
+    desc: "Choque ovos temáticos e complete o álbum",
+    color: "from-amber-500/20 to-orange-500/20 border-amber-500/30",
+    iconColor: "text-amber-400",
   },
 ];
 
@@ -93,7 +102,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-3xl mx-auto">
           {gameModes.map(({ href, icon: Icon, title, desc, color, iconColor }) => (
             <Link key={href} href={href}>
               <motion.div
