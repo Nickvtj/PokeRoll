@@ -196,6 +196,13 @@ export function SpinMachine({
 
   const config = RARITY_CONFIG[pokemon.rarity];
   const imgSize = layout.imgSize;
+  const isShinyResult = Boolean(showResult && result?.isShiny);
+  const frameColor = isShinyResult ? "#fbbf24" : `${config.color}60`;
+  const frameGlow = isShinyResult
+    ? "0 0 28px rgba(251,191,36,0.55)"
+    : localSpinning
+      ? `0 0 40px ${config.glowColor}, inset 0 0 30px rgba(0,0,0,0.5)`
+      : `0 0 20px ${config.glowColor}`;
 
   return (
     <div className={cn("relative mx-auto", layout.shell)}>
@@ -207,7 +214,7 @@ export function SpinMachine({
           <div className={cn("relative mx-auto w-full", layout.frameMax)}>
             {showResult && (
               <div className="absolute -top-2 -right-2 z-30 flex flex-col items-end gap-1">
-                {result.isNewShinyUnlock && (
+                {result.isShiny && (
                   <span className="px-1.5 py-0.5 rounded-md bg-amber-500/30 border border-amber-400/40 text-[8px] font-black text-amber-200 uppercase flex items-center gap-0.5">
                     <Sparkles className="w-2.5 h-2.5" />
                     Shiny
@@ -220,13 +227,12 @@ export function SpinMachine({
             <div
               ref={frameRef}
               className={cn(
-                "relative mx-auto w-full rounded-2xl overflow-hidden border-2 transition-colors duration-300 aspect-square"
+                "relative mx-auto w-full rounded-2xl overflow-hidden border-2 transition-colors duration-300 aspect-square",
+                isShinyResult && "shiny-rainbow-border"
               )}
               style={{
-                borderColor: `${config.color}60`,
-                boxShadow: localSpinning
-                  ? `0 0 40px ${config.glowColor}, inset 0 0 30px rgba(0,0,0,0.5)`
-                  : `0 0 20px ${config.glowColor}`,
+                borderColor: frameColor,
+                boxShadow: frameGlow,
               }}
             >
               <div
@@ -250,7 +256,10 @@ export function SpinMachine({
                   alt={pokemon.name}
                   width={imgSize}
                   height={imgSize}
-                  className="object-contain drop-shadow-2xl"
+                  className={cn(
+                    "object-contain drop-shadow-2xl",
+                    isShinyResult && "drop-shadow-[0_0_16px_rgba(251,191,36,0.55)]"
+                  )}
                   decoding="async"
                 />
                 {!localSpinning && (

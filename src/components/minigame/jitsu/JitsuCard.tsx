@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Ban, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, type PanInfo } from "framer-motion";
 import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import { JITSU_ELEMENT_META } from "@/data/jitsu-cards";
@@ -25,8 +25,13 @@ interface JitsuCardProps {
   size?: "sm" | "md" | "lg";
   layoutId?: string;
   onClick?: () => void;
+  draggable?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: (point: { x: number; y: number }) => void;
   className?: string;
 }
+
+const DRAG_CLICK_THRESHOLD = 6;
 
 const SIZE = {
   sm: { w: "w-[4.5rem]", h: "h-[6.25rem]", img: 40, power: "text-lg" },
@@ -91,6 +96,9 @@ export function JitsuCard({
   size = "md",
   layoutId,
   onClick,
+  draggable = false,
+  onDragStart,
+  onDragEnd,
   className,
 }: JitsuCardProps) {
   const s = SIZE[size];
@@ -98,9 +106,12 @@ export function JitsuCard({
   const specialMeta = card?.special ? JITSU_SPECIAL_META[card.special] : null;
   const isSpecial = Boolean(card?.special && specialMeta);
   const isDisabled = disabled || faceDown || blocked;
+  const canDrag = draggable && !isDisabled;
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const draggedRef = useRef(false);
   const [showTip, setShowTip] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const measureAnchor = useCallback(() => {
     const el = buttonRef.current;
@@ -132,6 +143,38 @@ export function JitsuCard({
     };
   }, [showTip, measureAnchor]);
 
+  const handleClick = useCallback(() => {
+    if (draggedRef.current) {
+      draggedRef.current = false;
+      return;
+    }
+    onClick?.();
+  }, [onClick]);
+
+  const handleDragStart = useCallback(() => {
+    draggedRef.current = false;
+    closeTip();
+    setIsDragging(true);
+    onDragStart?.();
+  }, [closeTip, onDragStart]);
+
+  const handleDrag = useCallback((_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (
+      Math.abs(info.offset.x) > DRAG_CLICK_THRESHOLD ||
+      Math.abs(info.offset.y) > DRAG_CLICK_THRESHOLD
+    ) {
+      draggedRef.current = true;
+    }
+  }, []);
+
+  const handleDragEnd = useCallback(
+    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      setIsDragging(false);
+      onDragEnd?.({ x: info.point.x, y: info.point.y });
+    },
+    [onDragEnd]
+  );
+
   const inner = (
     <div
       className={cn(
@@ -141,8 +184,8 @@ export function JitsuCard({
         showTip && "z-[200]",
         isSpecial && "overflow-visible"
       )}
-      onMouseEnter={openTip}
-      onMouseLeave={closeTip}
+      onMouseEnter={canDrag ? undefined : openTip}
+      onMouseLeave={canDrag ? undefined : closeTip}
     >
       {showTip && specialMeta && card && anchorRect && typeof window !== "undefined" && (
         <JitsuSpecialTooltip card={card} specialMeta={specialMeta} anchorRect={anchorRect} />
@@ -152,9 +195,17 @@ export function JitsuCard({
         ref={buttonRef}
         type="button"
         disabled={isDisabled}
-        onClick={onClick}
+        drag={canDrag}
+        dragSnapToOrigin
+        dragElastic={0.12}
+        dragMomentum={false}
+        onClick={handleClick}
+        onDragStart={handleDragStart}
+        onDrag={handleDrag}
+        onDragEnd={handleDragEnd}
         onFocus={openTip}
         onBlur={closeTip}
+        whileDrag={{ scale: 1.06, zIndex: 400, cursor: "grabbing" }}
         animate={
           pulsing
             ? {
@@ -169,10 +220,12 @@ export function JitsuCard({
         transition={
           pulsing ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25 }
         }
-        whileHover={!isDisabled ? { y: -14, scale: 1.04 } : undefined}
-        whileTap={!isDisabled ? { scale: 0.96, y: -2 } : undefined}
+        whileHover={
+          !isDisabled && !canDrag ? { y: -14, scale: 1.04 } : !isDisabled && canDrag ? { scale: 1.03 } : undefined
+        }
+        whileTap={!isDisabled && !isDragging ? { scale: 0.96, y: canDrag ? 0 : -2 } : undefined}
         className={cn(
-          "relative w-full h-full rounded-xl border-2 overflow-hidden transition-[filter] duration-300",
+          "relative w-full h-full rounded-xl border-2 overflow-hidden transition-[filter] duration-300 touch-none",
           faceDown && "border-white/15 cursor-default",
           !faceDown &&
             meta &&
@@ -186,7 +239,9 @@ export function JitsuCard({
           dimmed && "grayscale",
           isDisabled && !faceDown && "opacity-55 cursor-not-allowed",
           blocked && "grayscale contrast-75",
-          !isDisabled && "cursor-pointer hover:brightness-110",
+          canDrag && "cursor-grab active:cursor-grabbing",
+          !isDisabled && !canDrag && "cursor-pointer hover:brightness-110",
+          isDragging && "shadow-[0_16px_40px_rgba(0,0,0,0.45)]",
           className
         )}
       >
@@ -247,8 +302,8 @@ export function JitsuCard({
       <motion.div
         layoutId={layoutId}
         transition={{ layout: LAYOUT_TRANSITION }}
-        className="shrink-0 relative z-[200]"
-        style={{ zIndex: 200 }}
+        className={cn("shrink-0 relative", isDragging ? "z-[500]" : "z-[200]")}
+        style={{ zIndex: isDragging ? 500 : 200 }}
       >
         {inner}
       </motion.div>

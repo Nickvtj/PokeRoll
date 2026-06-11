@@ -112,6 +112,8 @@ export function checkMatchWin(trophies: JitsuTrophy[]): {
 export function getWinProgressHint(trophies: JitsuTrophy[]): {
   needsType: JitsuElement | null;
   needsSameType: JitsuElement | null;
+  sameTypeUniqueCount: number;
+  sameTypeTarget: JitsuElement | null;
 } {
   const types: JitsuElement[] = ["FOGO", "AGUA", "PLANTA"];
   const usedPokemon = new Set<number>();
@@ -126,15 +128,23 @@ export function getWinProgressHint(trophies: JitsuTrophy[]): {
   }
 
   let needsSameType: JitsuElement | null = null;
+  let sameTypeUniqueCount = 0;
+  let sameTypeTarget: JitsuElement | null = null;
   for (const type of types) {
     const unique = new Set(trophies.filter((t) => t.type === type).map((t) => t.pokemonId));
-    if (unique.size === 2) {
+    if (unique.size >= 2 && unique.size < 3) {
       needsSameType = type;
+      sameTypeUniqueCount = unique.size;
+      sameTypeTarget = type;
       break;
+    }
+    if (unique.size >= 3) {
+      sameTypeTarget = type;
+      sameTypeUniqueCount = unique.size;
     }
   }
 
-  return { needsType, needsSameType };
+  return { needsType, needsSameType, sameTypeUniqueCount, sameTypeTarget };
 }
 
 /** Remove o troféu que mais atrapalha o combo adversário */

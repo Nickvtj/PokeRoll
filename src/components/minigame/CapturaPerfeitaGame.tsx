@@ -240,7 +240,7 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
             +1 <Coins className="w-3 h-3" /> na zona verde
           </p>
           <p className="text-amber-400 flex items-center justify-end gap-0.5">
-            +2 <Coins className="w-3 h-3" /> no perfeito
+            +1 <Coins className="w-3 h-3" /> no perfeito
           </p>
           {perfectHits > 0 && (
             <p className="text-amber-300">{perfectHits} perfeito{perfectHits > 1 ? "s" : ""}</p>

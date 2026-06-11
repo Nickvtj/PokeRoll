@@ -36,7 +36,7 @@ export function RewardPopup() {
   }, [show, reward, won, lost]);
 
   const handlePlayAgain = () => {
-    const replay = onPlayAgain;
+    const replay = useEconomyStore.getState().rewardPlayAgain;
     close();
     replay?.();
   };

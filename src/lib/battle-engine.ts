@@ -10,8 +10,8 @@ import {
 import { TEAM_MONOTYPE_DAMAGE_BONUS } from "@/data/economy-balance";
 import { attachMovesToTeam } from "@/lib/tactical-battle-engine";
 import {
-  BATTLE_BASE_COINS_MAX,
-  BATTLE_BASE_COINS_MIN,
+  BATTLE_COINS_MAX,
+  BATTLE_COINS_MIN,
   BATTLE_FREE_SPIN_CHANCE,
   BATTLE_XP_BASE,
 } from "@/data/economy-balance";
@@ -264,7 +264,9 @@ export function resolveCoinFlip(state: BattleState): BattleState {
       ...state.log,
       log("Cara ou coroa...", "info"),
       log(
-        playerStarts ? "Cara! Você começa atacando!" : "Coroa! O oponente começa atacando!",
+        playerStarts
+          ? "Cara! Voce comeca atacando!"
+          : "Coroa! O oponente comeca atacando!",
         "info"
       ),
     ],
@@ -289,13 +291,16 @@ export function initBattle(
   const playerStarts = performCoinFlip();
 
   const startLog: BattleLogEntry[] = [
-    log("A batalha tática começou!", "info"),
-    log("Escolha Pokémon, alvo e golpe a cada turno.", "info"),
+    log("A batalha tatica comecou!", "info"),
+    log("Escolha Pokemon, alvo e golpe a cada turno.", "info"),
   ];
   if (monotype && sharedType) {
     const typeLabel = sharedType.charAt(0).toUpperCase() + sharedType.slice(1);
     startLog.push(
-      log(`Time monocromático (${typeLabel})! +${Math.round(TEAM_MONOTYPE_DAMAGE_BONUS * 100)}% de dano`, "info")
+      log(
+        `Time monocromatico (${typeLabel})! +${Math.round(TEAM_MONOTYPE_DAMAGE_BONUS * 100)}% de dano`,
+        "info"
+      )
     );
   }
 
@@ -460,13 +465,13 @@ export function executeBattleTurn(
     };
   }
   if (livingEnemies.length === 0) {
-    const reward = calcBattleReward(state.wave);
+    const reward = calcBattleReward(state.wave, 0, computeBattlePerformance(state));
     return {
       state: {
         ...state,
         phase: "victory",
         reward,
-        log: [...state.log, log("Vitória!", "info")],
+        log: [...state.log, log("Vitoria!", "info")],
       },
       done: true,
     };
@@ -557,10 +562,10 @@ export function executeBattleTurn(
         damageMult * ability.value,
         bonuses.critChance
       );
-      const suffix = typeLabel ? ` · ${typeLabel}!` : "";
+      const suffix = typeLabel ? ` - ${typeLabel}!` : "";
       logEntries.push(
         log(
-          `${striker.pokemon.name} atingiu ${fresh.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${suffix})`,
+          `${striker.pokemon.name} atingiu ${fresh.pokemon.name} (-${damage}${isCrit ? " CRITICO!" : ""}${suffix})`,
           "damage",
           buildHitSound(striker, typeMult, isCrit)
         )
@@ -590,10 +595,10 @@ export function executeBattleTurn(
     bonuses.critChance
   );
 
-  const typeSuffix = typeLabel ? ` · ${typeLabel}!` : "";
+  const typeSuffix = typeLabel ? ` - ${typeLabel}!` : "";
   logEntries.push(
     log(
-      `${striker.pokemon.name} em ${victim.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${typeSuffix})`,
+      `${striker.pokemon.name} em ${victim.pokemon.name} (-${damage}${isCrit ? " CRITICO!" : ""}${typeSuffix})`,
       "attack",
       buildHitSound(striker, typeMult, isCrit)
     )
@@ -642,7 +647,7 @@ export function executeBattleTurn(
           counterTurn: false,
         };
         logEntries.push(
-          log(`${championAfter.pokemon.name} avança para o próximo oponente!`, "info")
+          log(`${championAfter.pokemon.name} avanca para o proximo oponente!`, "info")
         );
       }
     } else {
@@ -723,13 +728,15 @@ function applyFighterUpdates(
 
   if (livingEnemies.length === 0) {
     const isTraining = !state.mode || state.mode === "training";
-    const reward = isTraining ? calcBattleReward(state.wave) : null;
+    const reward = isTraining
+      ? calcBattleReward(state.wave, 0, computeBattlePerformance(newState))
+      : null;
     return {
       state: {
         ...newState,
         phase: "victory",
         reward,
-        log: [...logEntries, log("Vitória!", "info")],
+        log: [...logEntries, log("Vitoria!", "info")],
       },
       done: true,
     };
@@ -748,7 +755,7 @@ function applyFighterUpdates(
   return { state: newState, done: false };
 }
 
-/** Fallback quando combatBeat não veio no resultado — detecta pelo log/HP */
+/** Fallback quando combatBeat nao veio no resultado - detecta pelo log/HP */
 export function inferCombatBeatFromTurn(
   prev: BattleState,
   next: BattleState,
@@ -769,7 +776,7 @@ export function inferCombatBeatFromTurn(
   for (let i = logFrom; i < next.log.length; i++) {
     const entry = next.log[i];
     if (!entry.hitSound) continue;
-    const match = entry.message.match(/^(.+?) (?:→|atingiu) (.+?) \(-/);
+    const match = entry.message.match(/^(.+?) (?:em|atingiu) (.+?) \(-/);
     if (!match) continue;
     const strikerFlat = nextAll.findIndex((f) => f.pokemon.name === match[1]);
     const parsedVictim = nextAll.findIndex((f) => f.pokemon.name === match[2]);
@@ -791,12 +798,55 @@ export function inferCombatBeatFromTurn(
   return null;
 }
 
-export function calcBattleReward(wave: number, coinBonus = 0): BattleReward {
-  const base =
-    BATTLE_BASE_COINS_MIN +
-    Math.floor(Math.random() * (BATTLE_BASE_COINS_MAX - BATTLE_BASE_COINS_MIN + 1));
-  const waveBonus = (wave - 1) * 2;
-  const coins = Math.round((base + waveBonus) * (1 + coinBonus));
+export interface BattlePerformanceSnapshot {
+  playerDeaths: number;
+  turnCount: number;
+  /** Media de HP% dos Pokemon vivos do jogador (0-1) */
+  survivorsHpRatio: number;
+}
+
+export function computeBattlePerformance(state: BattleState): BattlePerformanceSnapshot {
+  const living = getLivingFighters(state.playerTeam);
+  const survivorsHpRatio =
+    living.length === 0
+      ? 0
+      : living.reduce((sum, f) => sum + f.currentHp / Math.max(1, f.maxHp), 0) / living.length;
+
+  return {
+    playerDeaths: state.playerDeaths ?? 0,
+    turnCount: state.turnCount ?? 0,
+    survivorsHpRatio,
+  };
+}
+
+export function calcBattleReward(
+  wave: number,
+  coinBonus = 0,
+  performance?: BattlePerformanceSnapshot
+): BattleReward {
+  const perf = performance ?? {
+    playerDeaths: 0,
+    turnCount: 18,
+    survivorsHpRatio: 0.5,
+  };
+
+  let coins = 5;
+
+  if (perf.playerDeaths === 0) coins += 4;
+  else if (perf.playerDeaths === 1) coins += 2;
+
+  if (perf.turnCount <= 10) coins += 3;
+  else if (perf.turnCount <= 16) coins += 2;
+  else if (perf.turnCount <= 22) coins += 1;
+
+  if (perf.survivorsHpRatio >= 0.75) coins += 2;
+  else if (perf.survivorsHpRatio >= 0.5) coins += 1;
+
+  coins += Math.min(2, Math.max(0, wave - 1));
+
+  coins = Math.min(BATTLE_COINS_MAX, Math.max(BATTLE_COINS_MIN, coins));
+  coins = Math.round(coins * (1 + coinBonus));
+
   const xp = BATTLE_XP_BASE + wave * 10;
   const freeSpin = Math.random() < BATTLE_FREE_SPIN_CHANCE;
   return { coins, xp, freeSpin };

@@ -45,6 +45,7 @@ import {
 import { mergeEconomyState } from "@/lib/economy-merge";
 import { useGymStore } from "@/stores/gym-store";
 import { getBeltForXp, JITSU_BELT_RANK_REWARDS } from "@/data/jitsu-belts";
+import { computeNewFlappyUnlocks } from "@/data/flappy-skins";
 import type { EconomyState, RewardPayload, RewardPlayAgainFn } from "@/types/economy";
 import type { PokemonLevelUpResult } from "@/types/battle";
 import {
@@ -85,9 +86,11 @@ interface EconomyStore extends EconomyState {
   recordEggHatch: () => void;
   recordEggSellCoins: (amount: number) => void;
   updateHighScore: (
-    game: "clickRush" | "perfectCapture" | "memory" | "jitsu",
+    game: "clickRush" | "perfectCapture" | "memory" | "jitsu" | "hunterCave" | "flappyZubat",
     score: number
   ) => boolean;
+  recordFlappyRun: (score: number) => { newSkins: string[]; isNewRecord: boolean };
+  setFlappySkin: (skinId: string) => void;
   recordJitsuMatch: (won: boolean) => {
     beltPromoted: boolean;
     newBeltId: string;
@@ -323,6 +326,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
     if (amount <= 0) return;
     set((s) => ({
       coins: s.coins + amount,
+      lifetimeCoinsEarned: (s.lifetimeCoinsEarned ?? 0) + amount,
       coinAnimation: "gain",
     }));
     get().sync();
@@ -506,6 +510,40 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
       return true; // Novo recorde!
     }
     return false;
+  },
+
+  recordFlappyRun: (score) => {
+    const isNewRecord = get().updateHighScore("flappyZubat", score);
+    const best = Math.max(score, get().highScores?.flappyZubat ?? 0);
+    const lifetime = get().lifetimeCoinsEarned ?? 0;
+    const currentUnlocked = get().flappyZubat?.unlockedSkins ?? ["zubat"];
+    const newSkins = computeNewFlappyUnlocks(best, lifetime, currentUnlocked);
+
+    if (newSkins.length > 0) {
+      set((s) => ({
+        flappyZubat: {
+          selectedSkin: s.flappyZubat?.selectedSkin ?? "zubat",
+          unlockedSkins: [
+            ...new Set([...(s.flappyZubat?.unlockedSkins ?? ["zubat"]), ...newSkins]),
+          ],
+        },
+      }));
+      get().sync();
+    }
+
+    return { newSkins, isNewRecord };
+  },
+
+  setFlappySkin: (skinId) => {
+    const unlocked = get().flappyZubat?.unlockedSkins ?? ["zubat"];
+    if (!unlocked.includes(skinId)) return;
+    set((s) => ({
+      flappyZubat: {
+        selectedSkin: skinId,
+        unlockedSkins: s.flappyZubat?.unlockedSkins ?? ["zubat"],
+      },
+    }));
+    get().sync();
   },
 
   recordJitsuMatch: (won) => {
@@ -834,6 +872,8 @@ function getEconomySnapshot(state: EconomyStore): EconomyState {
     highScores: state.highScores,
     jitsuXp: state.jitsuXp ?? 0,
     jitsuWins: state.jitsuWins ?? 0,
+    lifetimeCoinsEarned: state.lifetimeCoinsEarned ?? 0,
+    flappyZubat: state.flappyZubat,
   };
 }
 

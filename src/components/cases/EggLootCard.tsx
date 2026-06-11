@@ -11,9 +11,10 @@ import { cn } from "@/lib/utils";
 interface EggLootCardProps {
   pokemon?: Pokemon;
   variant?: "normal" | "shiny";
+  owned?: boolean;
 }
 
-export function EggLootCard({ pokemon, variant = "normal" }: EggLootCardProps) {
+export function EggLootCard({ pokemon, variant = "normal", owned }: EggLootCardProps) {
   const isShiny = variant === "shiny";
   const meta = pokemon ? RARITY_CONFIG[pokemon.rarity] : null;
 
@@ -22,7 +23,9 @@ export function EggLootCard({ pokemon, variant = "normal" }: EggLootCardProps) {
       className={cn(
         "group glass-card relative overflow-hidden transition-all duration-300",
         "hover:scale-[1.04] hover:-translate-y-0.5",
-        isShiny ? "border-amber-400/35" : meta && `rarity-glow-${pokemon!.rarity}`
+        isShiny ? "border-amber-400/35" : meta && `rarity-glow-${pokemon!.rarity}`,
+        owned === false && pokemon && "opacity-55 saturate-[0.65]",
+        owned === true && pokemon && "ring-1 ring-emerald-400/35"
       )}
       style={
         isShiny
@@ -41,6 +44,19 @@ export function EggLootCard({ pokemon, variant = "normal" }: EggLootCardProps) {
       {pokemon && (
         <span className="absolute top-2 left-2 text-[9px] text-white/35 font-mono z-10">
           #{String(pokemon.id).padStart(3, "0")}
+        </span>
+      )}
+
+      {pokemon && owned !== undefined && (
+        <span
+          className={cn(
+            "absolute top-2 right-2 z-10 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md border",
+            owned
+              ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
+              : "bg-slate-900/70 border-white/15 text-white/45"
+          )}
+        >
+          {owned ? "Tenho" : "Falta"}
         </span>
       )}
 
@@ -76,7 +92,7 @@ export function EggLootCard({ pokemon, variant = "normal" }: EggLootCardProps) {
           {isShiny ? "Shiny aleatório" : pokemon?.name}
         </p>
         {isShiny ? (
-          <p className="text-[9px] text-amber-300/65 text-center">~0,1% de chance</p>
+          <p className="text-[9px] text-amber-300/65 text-center">~0,8% de chance</p>
         ) : (
           pokemon && (
             <div className="flex justify-center w-full">

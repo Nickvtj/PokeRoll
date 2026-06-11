@@ -14,7 +14,10 @@ import { JitsuArenaFx } from "@/components/minigame/jitsu/JitsuArenaFx";
 import { JitsuCard } from "@/components/minigame/jitsu/JitsuCard";
 import { createInitialHand, createJitsuCard, JITSU_ELEMENT_META } from "@/data/jitsu-cards";
 import { describeSpecialOnPlay } from "@/data/jitsu-specials";
+import { JitsuFaceOffOverlay } from "@/components/minigame/jitsu/JitsuFaceOffOverlay";
 import { JitsuBeltProgress } from "@/components/minigame/jitsu/JitsuBeltProgress";
+import { getBeltForXp } from "@/data/jitsu-belts";
+import { JITSU_FACE_OFF_MS } from "@/data/economy-balance";
 import {
   checkMatchWin,
   filterPlayableHand,
@@ -77,7 +80,7 @@ function queueSpecialEffects(
   }
 }
 
-type Phase = "idle" | "playing" | "reveal" | "resolve";
+type Phase = "idle" | "faceOff" | "playing" | "reveal" | "resolve";
 
 export interface PokeJitsuGameResult extends JitsuMatchResult {
   won: boolean;
@@ -215,6 +218,16 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
   const [botModNext, setBotModNext] = useState(0);
   const endedRef = useRef(false);
   const prevTimerRef = useRef(JITSU_TIMER_SEC);
+  const playerTrophiesRef = useRef(playerTrophies);
+  const botTrophiesRef = useRef(botTrophies);
+
+  useEffect(() => {
+    playerTrophiesRef.current = playerTrophies;
+  }, [playerTrophies]);
+
+  useEffect(() => {
+    botTrophiesRef.current = botTrophies;
+  }, [botTrophies]);
 
   const playerHint = getWinProgressHint(playerTrophies);
   const timerUrgent = phase === "playing" && timer <= 5;
@@ -227,14 +240,14 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
 
   const startMatch = useCallback(() => {
     endedRef.current = false;
-    setPhase("playing");
+    setPhase("faceOff");
     setPlayerHand(createInitialHand(JITSU_HAND));
     setBotHand(createInitialHand(JITSU_HAND));
     setPlayerTrophies([]);
     setBotTrophies([]);
     setPlayerPlayed(null);
     setBotPlayed(null);
-    setRoundMsg("Escolha sua carta!");
+    setRoundMsg("");
     setWinnerFlash(null);
     setTimer(JITSU_TIMER_SEC);
     prevTimerRef.current = JITSU_TIMER_SEC;
@@ -245,6 +258,15 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
     setBotModNext(0);
     playUiConfirm();
   }, []);
+
+  useEffect(() => {
+    if (phase !== "faceOff") return;
+    const id = window.setTimeout(() => {
+      setPhase("playing");
+      setRoundMsg("Escolha sua carta!");
+    }, JITSU_FACE_OFF_MS);
+    return () => window.clearTimeout(id);
+  }, [phase]);
 
   useEffect(() => {
     onReady?.(startMatch);
@@ -287,7 +309,7 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
       const botBlockedThisTurn = botBlockNext;
       setBotBlockNext(null);
 
-      const botCard = pickBotCard(botHand, playerTrophies, botBlockedThisTurn);
+      const botCard = pickBotCard(botHand, playerTrophiesRef.current, botBlockedThisTurn);
       const newPlayerHand = playerHand.filter((c) => c.instanceId !== card.instanceId);
       const newBotHand = botHand.filter((c) => c.instanceId !== botCard.instanceId);
 
@@ -338,28 +360,46 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
         if (playerWon) void playJitsuRoundWin(card.type);
         else void playJitsuRoundLoss();
 
-        let nextPlayerTrophies = playerTrophies;
-        let nextBotTrophies = botTrophies;
+        let nextPlayerTrophies = playerTrophiesRef.current;
+        let nextBotTrophies = botTrophiesRef.current;
 
         if (playerWon) {
-          nextPlayerTrophies = [...playerTrophies, trophyFromCard(card)];
-          if (card.special === "destroy-trophy" && botTrophies.length > 0) {
-            const idx = pickTrophyToDestroy(botTrophies);
-            nextBotTrophies = botTrophies.filter((_, i) => i !== idx);
+          nextPlayerTrophies = [...playerTrophiesRef.current, trophyFromCard(card)];
+          if (card.special === "destroy-trophy" && botTrophiesRef.current.length > 0) {
+            const idx = pickTrophyToDestroy(botTrophiesRef.current);
+            nextBotTrophies = botTrophiesRef.current.filter((_, i) => i !== idx);
           }
           setPlayerTrophies(nextPlayerTrophies);
           setBotTrophies(nextBotTrophies);
+          playerTrophiesRef.current = nextPlayerTrophies;
+          botTrophiesRef.current = nextBotTrophies;
           void playJitsuTrophy();
         } else {
-          nextBotTrophies = [...botTrophies, trophyFromCard(botCard)];
-          if (botCard.special === "destroy-trophy" && playerTrophies.length > 0) {
-            const idx = pickTrophyToDestroy(playerTrophies);
-            nextPlayerTrophies = playerTrophies.filter((_, i) => i !== idx);
+          nextBotTrophies = [...botTrophiesRef.current, trophyFromCard(botCard)];
+          if (botCard.special === "destroy-trophy" && playerTrophiesRef.current.length > 0) {
+            const idx = pickTrophyToDestroy(playerTrophiesRef.current);
+            nextPlayerTrophies = playerTrophiesRef.current.filter((_, i) => i !== idx);
           } else {
-            nextPlayerTrophies = playerTrophies;
+            nextPlayerTrophies = playerTrophiesRef.current;
           }
           setPlayerTrophies(nextPlayerTrophies);
           setBotTrophies(nextBotTrophies);
+          playerTrophiesRef.current = nextPlayerTrophies;
+          botTrophiesRef.current = nextBotTrophies;
+        }
+
+        const roundsAfterWin = roundsPlayed + 1;
+        const pWin = checkMatchWin(nextPlayerTrophies);
+        const bWin = checkMatchWin(nextBotTrophies);
+        if (pWin.won) {
+          setRoundsPlayed(roundsAfterWin);
+          endMatch(true, nextPlayerTrophies, nextBotTrophies, pWin.reason, roundsAfterWin);
+          return;
+        }
+        if (bWin.won) {
+          setRoundsPlayed(roundsAfterWin);
+          endMatch(false, nextPlayerTrophies, nextBotTrophies, null, roundsAfterWin);
+          return;
         }
 
         const destroyNote =
@@ -390,17 +430,6 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
 
         const rounds = roundsPlayed + 1;
         setRoundsPlayed(rounds);
-
-        const pWin = checkMatchWin(nextPlayerTrophies);
-        const bWin = checkMatchWin(nextBotTrophies);
-        if (pWin.won) {
-          endMatch(true, nextPlayerTrophies, nextBotTrophies, pWin.reason, rounds);
-          return;
-        }
-        if (bWin.won) {
-          endMatch(false, nextPlayerTrophies, nextBotTrophies, null, rounds);
-          return;
-        }
       }
 
       setPlayerPlayed(null);
@@ -471,7 +500,7 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
           <h3 className="text-xl font-bold">Desafio Elemental</h3>
           <p className="text-white/50 text-sm mt-2 leading-relaxed max-w-sm mx-auto">
             Duelo tático Fogo · Água · Planta. Cartas especiais com efeitos únicos. Vença com 3
-            elementos diferentes ou 3 do mesmo tipo.
+            elementos diferentes ou 3 espécies distintas do mesmo tipo.
           </p>
         </div>
 
@@ -506,6 +535,19 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
         >
           INICIAR DUELO
         </AnimatedButton>
+      </div>
+    );
+  }
+
+  if (phase === "faceOff") {
+    return (
+      <div className="relative glass-card border border-emerald-500/20 overflow-hidden">
+        <JitsuFaceOffOverlay
+          player={playerTrainer}
+          opponent={SENSEI_PORTRAIT}
+          playerBelt={getBeltForXp(jitsuXp)}
+          playerFallbackLetter={profile.username.charAt(0)}
+        />
       </div>
     );
   }
@@ -710,6 +752,12 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
             <div className="flex justify-end">
               <TrophyRow trophies={playerTrophies} hint={playerHint} side="player" />
             </div>
+            {playerHint.needsSameType && (
+              <p className="text-[10px] text-amber-300/80 text-right">
+                {JITSU_ELEMENT_META[playerHint.needsSameType].label}:{" "}
+                {playerHint.sameTypeUniqueCount}/3 espécies distintas
+              </p>
+            )}
 
             {playerBlockNext && phase === "playing" && (
               <p className="text-center text-[10px] text-red-300/90 font-semibold flex items-center justify-center gap-1">

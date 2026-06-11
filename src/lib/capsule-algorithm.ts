@@ -4,7 +4,7 @@ import {
   pickCapsulePokemon,
   rollCapsuleRarity,
 } from "@/data/capsules";
-import { rollShiny } from "@/lib/spin-algorithm";
+import { rollEggShiny } from "@/lib/spin-algorithm";
 import { getSpinResultImage } from "@/lib/pokemon-display";
 import {
   CAPSULE_GOLD_TEASER_CHANCE,
@@ -25,7 +25,7 @@ export function rollCapsule(capsuleId: CapsuleId): CapsuleRollResult {
   const pool = getCapsulePoolPokemon(capsuleId);
   const rarity = rollCapsuleRarity(capsule.dropRates, pool);
   const pokemon = pickCapsulePokemon(capsuleId, rarity);
-  const isShiny = rollShiny();
+  const isShiny = rollEggShiny();
 
   return {
     pokemon,

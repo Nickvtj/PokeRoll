@@ -1,12 +1,17 @@
 import { RARITY_CHANCES } from "@/data/rarity";
-import { SHINY_CHANCE } from "@/data/pokemon-sprites";
+import { EGG_SHINY_CHANCE, SHINY_CHANCE } from "@/data/pokemon-sprites";
 import { getPokemonByRarity, POKEMON_LIST, getPokemonById, MEW_ID } from "@/data/pokemon";
 import { getSpinResultImage } from "@/lib/pokemon-display";
 import type { Pokemon, Rarity, SpinResult } from "@/types";
 
-/** 0,1% de chance de shiny por giro */
+/** 0,2% de chance de shiny por giro da roleta */
 export function rollShiny(): boolean {
   return Math.random() < SHINY_CHANCE;
+}
+
+/** Shiny em ovos — taxa maior que a roleta */
+export function rollEggShiny(): boolean {
+  return Math.random() < EGG_SHINY_CHANCE;
 }
 
 /**

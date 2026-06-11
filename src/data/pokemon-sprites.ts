@@ -10,8 +10,11 @@ export function POKEMON_SPRITE_LOCAL_URL(id: number): string {
   return `/sprites/${id}.png`;
 }
 
-/** Chance de shiny por giro da roleta (0,1%) */
-export const SHINY_CHANCE = 0.001;
+/** Chance de shiny por giro da roleta (0,2%) */
+export const SHINY_CHANCE = 0.002;
+
+/** Chance de shiny ao chocar ovos (0,8%) */
+export const EGG_SHINY_CHANCE = 0.008;
 
 /** Sprite servido localmente via /public/sprites/shiny */
 export function POKEMON_SHINY_SPRITE_LOCAL_URL(id: number): string {
@@ -25,6 +28,11 @@ export function POKEMON_SHINY_SPRITE_CDN_URL(id: number): string {
 export function getPokemonSpriteUrl(id: number): string {
   if (id === SECRET_MEW_ID) return POKEMON_SPRITE_CDN_URL(id);
   return POKEMON_SPRITE_LOCAL_URL(id);
+}
+
+/** Sprite pixelado estilo jogos classicos (PokeAPI front) */
+export function getPokemonRetroSpriteUrl(id: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 }
 
 export function getPokemonShinySpriteUrl(id: number): string {

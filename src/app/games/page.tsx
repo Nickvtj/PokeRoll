@@ -3,13 +3,15 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Gamepad2, Target, MousePointerClick, Brain, Coins, Play, Sparkles, Swords } from "lucide-react";
+import { Gamepad2, Target, MousePointerClick, Brain, Coins, Play, Sparkles, Swords, Ghost, Bird } from "lucide-react";
 import { JitsuBeltIcon } from "@/components/minigame/jitsu/JitsuBeltIcon";
 import {
   CLICK_BASE_COINS_MAX,
   CLICK_BASE_COINS_MIN,
   MEMORY_COINS_PER_PAIR,
   MEMORY_PAIR_COUNT,
+  HUNTER_ENTRY_COST,
+  HUNTER_MAX_POT,
 } from "@/data/economy-balance";
 import { getBeltForXp, getJitsuCoinRange } from "@/data/jitsu-belts";
 import { useEconomyStore } from "@/stores/economy-store";
@@ -63,6 +65,28 @@ const GAMES = [
     iconBg: "bg-rose-500/15",
     showBelt: true,
   },
+  {
+    href: "/games/hunter-cave",
+    title: "Caverna dos Hunter",
+    desc: "Aposte moedas, abra Pokébolas e fuja antes do Haunter.",
+    reward: `${HUNTER_ENTRY_COST} entrada · até ${HUNTER_MAX_POT} moedas`,
+    icon: Ghost,
+    gradient: "from-violet-600/20 to-transparent",
+    border: "border-violet-500/25 hover:border-violet-400/45",
+    iconColor: "text-violet-400",
+    iconBg: "bg-violet-500/15",
+  },
+  {
+    href: "/games/flappy-zubat",
+    title: "Flappy Zubat",
+    desc: "Voe pela torre assombrada e desbloqueie skins Pokémon.",
+    reward: "Grátis · até 18 moedas",
+    icon: Bird,
+    gradient: "from-indigo-600/20 to-transparent",
+    border: "border-indigo-500/25 hover:border-indigo-400/45",
+    iconColor: "text-indigo-400",
+    iconBg: "bg-indigo-500/15",
+  },
 ] as const;
 
 function GameCardLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -92,6 +116,8 @@ export default function GamesHubPage() {
     "/games/click-rush": highScores?.clickRush,
     "/games/memory": highScores?.memory,
     "/games/jitsu": highScores?.jitsu,
+    "/games/hunter-cave": highScores?.hunterCave,
+    "/games/flappy-zubat": highScores?.flappyZubat,
   };
 
   return (

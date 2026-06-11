@@ -9,6 +9,7 @@ import { EggPreviewRaritySection } from "@/components/cases/EggPreviewRaritySect
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { getCapsulePoolPokemon } from "@/data/capsules";
 import { getEggCardTheme } from "@/data/egg-styles";
+import { EGG_SHINY_CHANCE } from "@/data/pokemon-sprites";
 import { RARITY_ORDER } from "@/data/rarity";
 import type { CapsuleDefinition } from "@/types/capsule";
 import type { Pokemon, Rarity } from "@/types";
@@ -17,10 +18,11 @@ import { cn } from "@/lib/utils";
 interface EggPreviewViewProps {
   egg: CapsuleDefinition;
   coins: number;
+  collectedIds: Set<number>;
   onOpen: () => void;
 }
 
-export function EggPreviewView({ egg, coins, onOpen }: EggPreviewViewProps) {
+export function EggPreviewView({ egg, coins, collectedIds, onOpen }: EggPreviewViewProps) {
   const canAfford = coins >= egg.cost;
   const [shinyOpen, setShinyOpen] = useState(false);
   const cardTheme = getEggCardTheme(egg.id);
@@ -100,6 +102,7 @@ export function EggPreviewView({ egg, coins, onOpen }: EggPreviewViewProps) {
             rarity={rarity}
             mons={poolByRarity[rarity]}
             dropRate={egg.dropRates[rarity]}
+            collectedIds={collectedIds}
           />
         ))}
 
@@ -115,7 +118,9 @@ export function EggPreviewView({ egg, coins, onOpen }: EggPreviewViewProps) {
                 <h3 className="text-sm font-black uppercase tracking-wide text-amber-300">
                   Shiny secreto
                 </h3>
-                <p className="text-[10px] text-white/35">~0,1% · qualquer espécie do ovo</p>
+                <p className="text-[10px] text-white/35">
+                  ~{(EGG_SHINY_CHANCE * 100).toFixed(1)}% · qualquer espécie do ovo
+                </p>
               </div>
             </div>
             <ChevronDown

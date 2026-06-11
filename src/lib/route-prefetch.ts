@@ -12,6 +12,8 @@ export const MINIGAME_ROUTES = [
   "/games/click-rush",
   "/games/memory",
   "/games/jitsu",
+  "/games/hunter-cave",
+  "/games/flappy-zubat",
 ] as const;
 
 const MINIGAME_CHUNK_LOADERS = [
@@ -19,6 +21,8 @@ const MINIGAME_CHUNK_LOADERS = [
   () => import("@/components/minigame/ClickMinigame"),
   () => import("@/components/minigame/PokeMemoryGame"),
   () => import("@/components/minigame/PokeJitsuGame"),
+  () => import("@/components/minigame/HunterCaveGame"),
+  () => import("@/components/minigame/FlappyZubatGame"),
 ] as const;
 
 export function scheduleIdle(work: () => void, timeout = 2500): void {

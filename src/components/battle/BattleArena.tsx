@@ -234,7 +234,7 @@ export function BattleArena({
               "Inimigos"
             )}
           </p>
-          <div className="flex items-start gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {state.trainerDisplay && (
               <BattleTrainerChip
                 side="enemy"
@@ -321,7 +321,7 @@ export function BattleArena({
               "Seu Time"
             )}
           </p>
-          <div className="flex items-start gap-2 sm:gap-3 flex-row-reverse">
+          <div className="flex items-center gap-2 sm:gap-3 flex-row-reverse">
           <div className="grid grid-cols-3 gap-2 relative z-10 flex-1 min-w-0">
             {state.playerTeam.map((f, i) => {
               const slot = f.slotIndex ?? i;

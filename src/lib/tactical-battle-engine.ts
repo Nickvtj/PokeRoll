@@ -3,6 +3,7 @@ import { getDefaultEquippedMoves, resolveBattleMoves } from "@/data/pokemon-move
 import { getDualTypeEffectiveness, getDefenderTypes, TYPE_LABELS_PT } from "@/data/type-chart";
 import {
   calcBattleReward,
+  computeBattlePerformance,
   createFighter,
   performCoinFlip,
   type BattleStepResult,
@@ -312,7 +313,9 @@ function checkBattleEnd(state: BattleState): BattleStepResult | null {
       state: {
         ...state,
         phase: "victory",
-        reward: isTraining ? calcBattleReward(state.wave) : null,
+        reward: isTraining
+          ? calcBattleReward(state.wave, 0, computeBattlePerformance(state))
+          : null,
         log: [...state.log, log("Vitória!", "info")],
         tacticalPhase: undefined,
       },
@@ -467,6 +470,9 @@ export function resolveAction(
 
     if (newTargetHp === 0) {
       logs.push(log(`${target.pokemon.name} desmaiou!`, "ko"));
+      if (!actorIsPlayer) {
+        next = { ...next, playerDeaths: (next.playerDeaths ?? 0) + 1 };
+      }
       if (target.status?.effect === "sleep") {
         next = updateFighter(next, targetSlot, !actorIsPlayer, { status: null });
       }
@@ -550,14 +556,31 @@ function pickBestActionForActor(
   let bestTargetSlot = living[0]?.slotIndex ?? 0;
   let bestMoveIdx = 0;
 
+  const livingBySlot = [...living].sort((a, b) => (a.slotIndex ?? 0) - (b.slotIndex ?? 0));
+
   for (let mi = 0; mi < moves.length; mi++) {
     const move = moves[mi];
-    for (const target of living) {
+    for (const target of livingBySlot) {
       const score = scoreTacticalMove(actor, target, move, mi);
+      const targetSlot = target.slotIndex ?? 0;
+      const currentBest = livingBySlot.find((f) => (f.slotIndex ?? 0) === bestTargetSlot);
+
       if (score > bestScore) {
         bestScore = score;
         bestMoveIdx = mi;
-        bestTargetSlot = target.slotIndex ?? 0;
+        bestTargetSlot = targetSlot;
+        continue;
+      }
+
+      if (score === bestScore && currentBest) {
+        const preferLowerHp = target.currentHp < currentBest.currentHp;
+        const sameHpPreferHigherSlot =
+          target.currentHp === currentBest.currentHp &&
+          targetSlot > (currentBest.slotIndex ?? 0);
+        if (preferLowerHp || sameHpPreferHigherSlot) {
+          bestMoveIdx = mi;
+          bestTargetSlot = targetSlot;
+        }
       }
     }
   }

@@ -11,6 +11,7 @@ interface EggPreviewRaritySectionProps {
   rarity: Rarity;
   mons: Pokemon[];
   dropRate: number;
+  collectedIds: Set<number>;
   defaultOpen?: boolean;
 }
 
@@ -18,6 +19,7 @@ export function EggPreviewRaritySection({
   rarity,
   mons,
   dropRate,
+  collectedIds,
   defaultOpen = false,
 }: EggPreviewRaritySectionProps) {
   const [open, setOpen] = useState(defaultOpen);
@@ -62,7 +64,11 @@ export function EggPreviewRaritySection({
         <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 border-t border-white/5">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-4">
             {mons.map((p) => (
-              <EggLootCard key={p.id} pokemon={p} />
+              <EggLootCard
+                key={p.id}
+                pokemon={p}
+                owned={collectedIds.has(p.id)}
+              />
             ))}
           </div>
         </div>

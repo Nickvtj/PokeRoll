@@ -658,6 +658,19 @@ export async function playJitsuTimerTick(): Promise<void> {
   await playTone(880, 0.025, "sine", 0.04);
 }
 
+/** Apresentacao do duelo elemental (face-off) */
+export async function playJitsuFaceOff(): Promise<void> {
+  await playNoteSequence(
+    [
+      { freq: 196, dur: 0.07, vol: 0.06, type: "triangle" },
+      { freq: 262, dur: 0.08, vol: 0.07, type: "triangle" },
+      { freq: 330, dur: 0.1, vol: 0.08, type: "sine" },
+      { freq: 392, dur: 0.12, vol: 0.07, type: "sine" },
+    ],
+    0.05
+  );
+}
+
 /** Vitória na partida */
 export async function playJitsuMatchWin(): Promise<void> {
   await playBattleWin();

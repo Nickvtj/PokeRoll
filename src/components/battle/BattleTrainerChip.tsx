@@ -47,7 +47,7 @@ export function BattleTrainerChip({
 
   return (
     <div
-      className={cn("flex flex-col items-center gap-1.5 shrink-0 w-[4.5rem] pt-1", className)}
+      className={cn("flex flex-col items-center gap-1.5 shrink-0 w-[4.5rem]", className)}
     >
       <div
         className={cn(
@@ -71,8 +71,8 @@ export function BattleTrainerChip({
             onError={handleError}
             className={cn(
               "w-full h-full bg-slate-900",
-              avatarStyle || side === "player"
-                ? "object-contain p-1"
+              avatarStyle || side === "player" || side === "enemy"
+                ? "object-contain object-center p-1"
                 : "object-cover object-[center_15%] scale-125"
             )}
           />

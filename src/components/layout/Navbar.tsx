@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Disc3, BookOpen, Swords, Gamepad2, ChevronRight } from "lucide-react";
-import { EggIcon } from "@/components/ui/EggIcon";
+import { EggOutlineIcon } from "@/components/ui/EggIcon";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { CoinCounter } from "@/components/ui/CoinCounter";
 import { TrainerItemsBar } from "@/components/layout/TrainerItemsBar";
@@ -20,7 +20,7 @@ const navItems = [
   { href: "/battle", label: "Batalha", icon: Swords },
   { href: "/games", label: "Jogos", icon: Gamepad2 },
   { href: "/spin", label: "Roleta", icon: Disc3 },
-  { href: "/cases", label: "Ovos", icon: EggIcon },
+  { href: "/cases", label: "Ovos", icon: EggOutlineIcon },
   { href: "/album", label: "Álbum", icon: BookOpen },
 ] as const;
 

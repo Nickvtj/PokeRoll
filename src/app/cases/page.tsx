@@ -239,7 +239,12 @@ export default function CasesPage() {
       )}
 
       {phase === "preview" && activeEgg && (
-        <EggPreviewView egg={activeEgg} coins={coins} onOpen={handleConfirmOpen} />
+        <EggPreviewView
+          egg={activeEgg}
+          coins={coins}
+          collectedIds={new Set(Object.keys(collection).map(Number))}
+          onOpen={handleConfirmOpen}
+        />
       )}
 
       {phase === "opening" && activeEgg && result && (

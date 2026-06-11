@@ -36,6 +36,11 @@ export function getDefaultEconomy(): EconomyState {
     rareCandyCount: 0,
     eggsHatched: 0,
     eggSellCoins: 0,
+    lifetimeCoinsEarned: 0,
+    flappyZubat: {
+      selectedSkin: "zubat",
+      unlockedSkins: ["zubat"],
+    },
   };
 }
 
@@ -50,6 +55,13 @@ export function loadEconomy(): EconomyState {
         ...getDefaultEconomy(),
         ...parsed,
         welcomeClaimed: isLegacy ? true : parsed.welcomeClaimed ?? false,
+        lifetimeCoinsEarned:
+          parsed.lifetimeCoinsEarned ??
+          (typeof parsed.coins === "number" ? parsed.coins : 0),
+        flappyZubat: parsed.flappyZubat ?? {
+          selectedSkin: "zubat",
+          unlockedSkins: ["zubat"],
+        },
       };
     }
   } catch {

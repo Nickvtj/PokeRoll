@@ -1,6 +1,6 @@
 /** Balanceamento central da economia PokéRoll — spins são escassos, mas jogável */
 
-export const SPIN_COST_PER_REEL = 5;
+export const SPIN_COST_PER_REEL = 10;
 export const STARTING_COINS = 0;
 export const WELCOME_PACKAGE_COINS = 15;
 export const DUPLICATE_COIN_REWARD = 2;
@@ -16,7 +16,7 @@ export const DUPLICATE_COINS_BY_RARITY = {
 
 /** Minigames — sem teto diário; recompensas menores que batalha (4–7) */
 export const CAPTURE_SHAKE_MS = 700;
-/** Moedas por acerto — perfeito vale o dobro */
+/** Moedas por acerto — 1 moeda na zona verde ou no centro dourado */
 export const CAPTURE_COINS_PER_CATCH = 1;
 export const CAPTURE_PERFECT_COIN_BONUS = 0;
 export const CAPTURE_COINS_MIN = CAPTURE_COINS_PER_CATCH;
@@ -48,6 +48,25 @@ export const JITSU_COINS_WIN_MAX = 22;
 export const JITSU_COINS_LOSS = 3;
 export const JITSU_XP_WIN = 12;
 export const JITSU_XP_LOSS = 4;
+/** Apresentacao dos duelistas antes da primeira rodada */
+export const JITSU_FACE_OFF_MS = 2800;
+
+/** Caverna dos Hunter — push-your-luck com entrada */
+export const HUNTER_ENTRY_COST = 12;
+export const HUNTER_ROUND_REWARDS = [6, 8, 10, 14, 18, 22] as const;
+export const HUNTER_EXTRA_ROUND_REWARD = 22;
+export const HUNTER_MAX_POT = 80;
+export const HUNTER_BALL_COUNT = 4;
+
+/** Flappy Zubat — moedas por faixa de pontuacao */
+export const FLAPPY_COINS_TIERS = [
+  { minScore: 50, coins: 18 },
+  { minScore: 30, coins: 14 },
+  { minScore: 15, coins: 10 },
+  { minScore: 5, coins: 5 },
+  { minScore: 1, coins: 2 },
+] as const;
+export const FLAPPY_CHARIZARD_LIFETIME_COINS = 5000;
 
 /** @deprecated mantido por compat — sem teto/fadiga ativos */
 export const MINIGAME_DAILY_SOFT_CAP = 9999;
@@ -57,9 +76,13 @@ export const CLICK_DAILY_SOFT_CAP = MINIGAME_DAILY_SOFT_CAP;
 export const CLICK_FATIGUE_START = MINIGAME_FATIGUE_START;
 export const CLICK_FATIGUE_MULTIPLIER = MINIGAME_FATIGUE_MULTIPLIER;
 
-/** Auto Battle — fonte principal de moedas (~1 vitória ≈ 1 giro) */
-export const BATTLE_BASE_COINS_MIN = 4;
-export const BATTLE_BASE_COINS_MAX = 7;
+/** Auto Battle — moedas por desempenho (teto BATTLE_COINS_MAX) */
+export const BATTLE_COINS_MIN = 4;
+export const BATTLE_COINS_MAX = 15;
+/** @deprecated use BATTLE_COINS_MIN */
+export const BATTLE_BASE_COINS_MIN = BATTLE_COINS_MIN;
+/** @deprecated use BATTLE_COINS_MAX */
+export const BATTLE_BASE_COINS_MAX = BATTLE_COINS_MAX;
 export const BATTLE_FREE_SPIN_CHANCE = 0.04;
 export const BATTLE_XP_BASE = 14;
 export const BATTLE_DURATION_BASE_MS = 18000;

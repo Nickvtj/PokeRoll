@@ -33,6 +33,15 @@ export interface EconomyState {
     perfectCapture?: number;
     memory?: number;
     jitsu?: number;
+    hunterCave?: number;
+    flappyZubat?: number;
+  };
+  /** Moedas ganhas ao longo da conta (desbloqueios) */
+  lifetimeCoinsEarned?: number;
+  /** Flappy Zubat — skins e selecao */
+  flappyZubat?: {
+    selectedSkin: string;
+    unlockedSkins: string[];
   };
   /** Progressão do minigame Poké-Jitsu */
   jitsuXp?: number;
