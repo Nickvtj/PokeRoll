@@ -11,7 +11,6 @@ import {
   MEMORY_COINS_PER_PAIR,
   MEMORY_PAIR_COUNT,
   HUNTER_ENTRY_COST,
-  HUNTER_MAX_POT,
 } from "@/data/economy-balance";
 import { getBeltForXp, getJitsuCoinRange } from "@/data/jitsu-belts";
 import { useEconomyStore } from "@/stores/economy-store";
@@ -69,7 +68,7 @@ const GAMES = [
     href: "/games/hunter-cave",
     title: "Caverna dos Hunter",
     desc: "Aposte moedas, abra Pokébolas e fuja antes do Haunter.",
-    reward: `${HUNTER_ENTRY_COST} entrada · até ${HUNTER_MAX_POT} moedas`,
+    reward: `${HUNTER_ENTRY_COST} entrada · pote sem limite`,
     icon: Ghost,
     gradient: "from-violet-600/20 to-transparent",
     border: "border-violet-500/25 hover:border-violet-400/45",
@@ -171,7 +170,7 @@ export default function GamesHubPage() {
                       <h2 className="text-base font-bold truncate">{game.title}</h2>
                       {"showBelt" in game && game.showBelt && (
                         <span
-                          className="text-[9px] font-black bg-black/40 px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1"
+                          className="text-micro font-black bg-black/40 px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1"
                           style={{ color: jitsuBelt.color }}
                         >
                           <JitsuBeltIcon color={jitsuBelt.color} size="xs" />
@@ -179,13 +178,13 @@ export default function GamesHubPage() {
                         </span>
                       )}
                       {record !== undefined && record > 0 && (
-                        <span className="text-[9px] font-black bg-black/40 px-1.5 py-0.5 rounded text-amber-300 tabular-nums shrink-0">
+                        <span className="text-micro font-black bg-black/40 px-1.5 py-0.5 rounded text-amber-300 tabular-nums shrink-0">
                           REC {game.href === "/games/captura" ? `${record} seq` : record}
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-white/50 mt-0.5 line-clamp-2">{game.desc}</p>
-                    <p className="text-[11px] text-amber-400/85 font-bold flex items-center gap-1 mt-1.5">
+                    <p className="text-caption text-amber-400/85 font-bold flex items-center gap-1 mt-1.5">
                       <Coins className="w-3.5 h-3.5 shrink-0" />
                       {game.reward}
                     </p>

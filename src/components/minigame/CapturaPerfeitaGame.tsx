@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Coins, Sparkles, Target } from "lucide-react";
-import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { MinigameLobbyCard } from "@/components/minigame/MinigameLobbyCard";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import {
   calcStreakReward,
   evaluateCaptureHit,
   getCaptureConfig,
+  getRarityArenaBackground,
   pickWildPokemon,
   rollZoneCenter,
   type CaptureHitQuality,
@@ -197,24 +198,19 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
     caughtRef.current = nextCaught;
     setCaught(nextCaught);
 
-    setTimeout(() => spawnNext(), 700);
+    setTimeout(() => spawnNext(), 850);
   };
 
   if (phase === "idle") {
     return (
-      <div className="glass-card p-8 text-center space-y-4">
-        <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-          <Target className="w-7 h-7 text-emerald-400" />
-        </div>
-        <h3 className="text-xl font-bold">Captura Perfeita</h3>
-        <p className="text-white/50 text-sm leading-relaxed">
-          Acerte o timing e capture Pokémon em sequência. Centro dourado ou zona verde =
-          1 moeda cada. Errou? A sequência termina.
-        </p>
-        <AnimatedButton variant="primary" size="lg" onClick={startGame} className="w-full max-w-xs mx-auto">
-          ENCONTRAR POKÉMON!
-        </AnimatedButton>
-      </div>
+      <MinigameLobbyCard
+        accent="emerald"
+        icon={<Target className="w-8 h-8" />}
+        title="Captura Perfeita"
+        description="Acerte o timing e capture Pokémon em sequência. Zona verde ou centro dourado = 1 moeda por acerto. Errou? A sequência termina."
+        buttonLabel="ENCONTRAR POKÉMON!"
+        onStart={startGame}
+      />
     );
   }
 
@@ -223,105 +219,175 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
   const zoneHalf = config.zonePct / 2;
   const perfectHalf = zoneHalf * 0.38;
   const streak = caught.length;
+  const arenaStyle = getRarityArenaBackground(wild.rarity);
 
   return (
     <div className="space-y-4">
-      <div className="glass-card p-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[10px] text-white/40 uppercase tracking-wider">Sequência</p>
-          <p className="text-2xl font-black text-emerald-400">{streak}</p>
-        </div>
-        <div className="text-center flex-1 min-w-0">
-          <p className="font-bold truncate">{wild.name}</p>
-          <RarityBadge rarity={wild.rarity} size="sm" />
-        </div>
-        <div className="text-right text-xs text-white/50">
-          <p className="text-emerald-400 flex items-center justify-end gap-0.5">
-            +1 <Coins className="w-3 h-3" /> na zona verde
-          </p>
-          <p className="text-amber-400 flex items-center justify-end gap-0.5">
-            +1 <Coins className="w-3 h-3" /> no perfeito
-          </p>
-          {perfectHits > 0 && (
-            <p className="text-amber-300">{perfectHits} perfeito{perfectHits > 1 ? "s" : ""}</p>
-          )}
+      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 glass-card p-4">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.12),transparent_55%)] pointer-events-none" />
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="rounded-xl bg-emerald-500/10 border border-emerald-400/25 px-3 py-2 min-w-[4.5rem]">
+            <p className="text-[10px] text-emerald-200/60 uppercase tracking-wider font-bold">
+              Sequência
+            </p>
+            <p className="text-3xl font-black text-emerald-300 tabular-nums leading-none mt-0.5">
+              {streak}
+            </p>
+          </div>
+          <div className="text-center flex-1 min-w-0">
+            <p className="font-black text-lg truncate drop-shadow-sm">{wild.name}</p>
+            <RarityBadge rarity={wild.rarity} size="sm" />
+          </div>
+          <div className="text-right text-xs space-y-1">
+            <p className="text-emerald-300 flex items-center justify-end gap-0.5 font-semibold">
+              +1 <Coins className="w-3 h-3" /> zona verde
+            </p>
+            <p className="text-amber-300 flex items-center justify-end gap-0.5 font-semibold">
+              +1 <Coins className="w-3 h-3" /> perfeito
+            </p>
+            {perfectHits > 0 && (
+              <p className="text-amber-200/80 text-[10px]">
+                {perfectHits} perfeito{perfectHits > 1 ? "s" : ""}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
       {streak > 0 && (
-        <div className="flex gap-1 justify-center flex-wrap px-2">
-          {caught.slice(-6).map((p, i) => (
+        <div className="flex gap-1.5 justify-center flex-wrap px-2 py-1 rounded-full border border-white/5 bg-white/[0.03] max-w-fit mx-auto">
+          {caught.slice(-8).map((p, i) => (
             <Image
-              key={`catch-${caught.length - 6 + i}-${p.id}`}
+              key={`catch-${caught.length - 8 + i}-${p.id}`}
               src={p.image}
               alt={p.name}
-              width={32}
-              height={32}
-              className="object-contain opacity-80"
+              width={28}
+              height={28}
+              className="object-contain opacity-90 drop-shadow"
               unoptimized={!isLocalAsset(p.image)}
             />
           ))}
         </div>
       )}
 
-      <div className="glass-card p-6 relative overflow-hidden min-h-[260px] flex flex-col items-center justify-center">
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-2xl border min-h-[280px] flex flex-col items-center justify-center",
+          arenaStyle.border
+        )}
+      >
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: arenaStyle.gradient }}
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 h-24 pointer-events-none opacity-50"
+          style={{ background: `linear-gradient(to top, ${arenaStyle.glow}, transparent)` }}
+        />
+        <motion.div
+          className="absolute w-44 h-44 rounded-full border pointer-events-none"
+          style={{ borderColor: `${arenaStyle.glow}` }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.25, 0.5, 0.25] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+        />
+
         <AnimatePresence mode="wait">
           <motion.div
             key={pokemonKey}
-            initial={{ scale: 0.85, opacity: 0 }}
+            initial={{ scale: 0.85, opacity: 0, y: 12 }}
             animate={{
-              scale: ballAnim === "hit" ? 0 : 1,
-              opacity: ballAnim === "hit" ? 0 : 1,
-              x: ballAnim === "miss" ? [0, 30, 80] : 0,
+              scale: ballAnim === "hit" ? [1, 1, 0.15] : ballAnim === "miss" ? 1 : 1,
+              opacity: ballAnim === "hit" ? [1, 1, 0] : ballAnim === "miss" ? 1 : 1,
+              x: ballAnim === "miss" ? [0, 24, 72] : 0,
+              y: ballAnim === "none" ? [0, -6, 0] : ballAnim === "hit" ? [0, -4, 0] : 0,
+              rotate: ballAnim === "hit" ? [0, -6, 6, -4, 0] : 0,
             }}
-            transition={{ duration: ballAnim === "hit" ? 0.45 : 0.35 }}
-            className="relative flex flex-col items-center"
+            transition={{
+              duration: ballAnim === "hit" ? 0.75 : ballAnim === "miss" ? 0.5 : 0.35,
+              times: ballAnim === "hit" ? [0, 0.45, 1] : undefined,
+              y: ballAnim === "none" ? { duration: 2.2, repeat: Infinity, ease: "easeInOut" } : undefined,
+            }}
+            className="relative z-10 flex flex-col items-center"
           >
-            <Image
-              src={wild.image}
-              alt={wild.name}
-              width={120}
-              height={120}
-              className="object-contain drop-shadow-lg"
-              priority
-            />
+            <div
+              className="relative rounded-full p-3 bg-black/25 border border-white/10"
+              style={{ boxShadow: `0 0 40px ${arenaStyle.glow}` }}
+            >
+              <Image
+                src={wild.image}
+                alt={wild.name}
+                width={128}
+                height={128}
+                className="object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+                priority
+              />
+            </div>
           </motion.div>
         </AnimatePresence>
 
         {ballAnim !== "none" && (
           <motion.div
-            initial={{ y: -40, x: "-50%", opacity: 1, scale: 1 }}
+            initial={{ left: "50%", x: "-50%", y: 120, scale: 0.5, rotate: 0, opacity: 1 }}
             animate={
               ballAnim === "hit"
-                ? { y: 20, opacity: 0, scale: 0.5 }
-                : { y: 10, x: "calc(-50% + 90px)", opacity: 0, rotate: 45 }
+                ? {
+                    y: [120, -8, 12],
+                    scale: [0.5, 1.05, 0.3],
+                    rotate: [0, -720, -720],
+                    opacity: [1, 1, 0],
+                  }
+                : {
+                    y: [120, -12, 48],
+                    x: ["-50%", "-50%", "calc(-50% + 96px)"],
+                    rotate: [0, 180, 420],
+                    opacity: [1, 1, 0],
+                  }
             }
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="absolute left-1/2 top-1/2 pointer-events-none"
+            transition={{
+              duration: ballAnim === "hit" ? 0.72 : 0.58,
+              ease: "easeInOut",
+              times: ballAnim === "hit" ? [0, 0.58, 1] : [0, 0.45, 1],
+            }}
+            className="absolute z-20 pointer-events-none"
           >
-            <PokeballIcon size={40} />
+            <motion.div
+              animate={ballAnim === "hit" ? { scale: [1, 1.15, 0.85] } : undefined}
+              transition={{ duration: 0.72, times: [0, 0.58, 1] }}
+            >
+              <PokeballIcon size={48} />
+            </motion.div>
+            {ballAnim === "hit" && (
+              <motion.div
+                initial={{ scale: 0, opacity: 0.8 }}
+                animate={{ scale: [0, 2.2], opacity: [0.8, 0] }}
+                transition={{ delay: 0.42, duration: 0.35 }}
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 border-white/60"
+              />
+            )}
           </motion.div>
         )}
 
         {phase === "playing" && ballAnim === "none" && (
-          <p className="text-xs text-cyan-300/80 animate-pulse mt-3">Toque na zona verde!</p>
+          <p className="relative z-10 text-xs text-cyan-200/90 font-semibold mt-4 animate-pulse">
+            Toque na zona verde!
+          </p>
         )}
 
         {lastQuality && phase === "animating" && (
           <motion.p
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 6, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             className={cn(
-              "text-sm font-bold mt-2",
-              lastQuality === "perfect" && "text-amber-400",
-              lastQuality === "good" && "text-emerald-400",
-              lastQuality === "miss" && "text-red-400"
+              "relative z-10 text-base font-black mt-3 px-4 py-1 rounded-full border",
+              lastQuality === "perfect" && "text-amber-300 border-amber-400/40 bg-amber-500/10",
+              lastQuality === "good" && "text-emerald-300 border-emerald-400/40 bg-emerald-500/10",
+              lastQuality === "miss" && "text-red-300 border-red-400/40 bg-red-500/10"
             )}
           >
             {lastQuality === "perfect" && (
               <span className="inline-flex items-center gap-1">
-                Perfeito! +2 moedas
-                <Sparkles className="w-3.5 h-3.5" />
+                Perfeito! +1 moeda
+                <Sparkles className="w-4 h-4" />
               </span>
             )}
             {lastQuality === "good" && "Capturado!"}
@@ -336,45 +402,45 @@ export function CapturaPerfeitaGame({ onComplete, onReady }: CapturaPerfeitaGame
           onClick={handleTap}
           disabled={phase === "animating"}
           className={cn(
-            "w-full glass-card p-4 touch-none select-none transition-opacity",
+            "w-full relative overflow-hidden rounded-2xl border border-white/10 p-4 touch-none select-none transition-opacity",
+            "bg-gradient-to-b from-slate-900/90 to-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]",
             phase === "animating" && "opacity-60 pointer-events-none"
           )}
         >
-          <div className="relative h-12 rounded-2xl bg-slate-950/80 border-2 border-white/5 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
-            {/* Brilho de fundo da barra */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
-            
-            {/* Zona Verde (Captura) */}
+          <p className="text-[10px] uppercase tracking-wider text-white/35 font-bold mb-2 text-center">
+            Barra de timing
+          </p>
+          <div className="relative h-14 rounded-xl bg-slate-950/90 border border-white/10 overflow-hidden shadow-[inset_0_0_24px_rgba(0,0,0,0.6)]">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+
             <div
-              className="absolute top-0 bottom-0 bg-emerald-500/30 border-x-2 border-emerald-400/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+              className="absolute top-0 bottom-0 bg-emerald-500/35 border-x-2 border-emerald-300/50 shadow-[0_0_20px_rgba(16,185,129,0.35)]"
               style={{
                 left: `${zoneCenter - zoneHalf}%`,
                 width: `${config.zonePct}%`,
               }}
             >
-              <div className="absolute inset-0 bg-emerald-400/10 animate-pulse" />
+              <div className="absolute inset-0 bg-emerald-400/15 animate-pulse" />
             </div>
 
-            {/* Zona Dourada (Perfeito) */}
             <div
-              className="absolute top-1 bottom-1 bg-amber-400/40 rounded-lg border border-amber-300/60 shadow-[0_0_20px_rgba(251,191,36,0.4)]"
+              className="absolute top-1.5 bottom-1.5 rounded-lg bg-amber-400/45 border border-amber-200/60 shadow-[0_0_24px_rgba(251,191,36,0.45)]"
               style={{
                 left: `${zoneCenter - perfectHalf}%`,
                 width: `${perfectHalf * 2}%`,
               }}
             >
-               <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white/15 to-transparent rounded-lg" />
             </div>
 
-            {/* Cursor (Thumb) */}
             <div
               ref={cursorThumbRef}
-              className="absolute top-0 bottom-0 w-1.5 z-20"
-              style={{ left: "calc(50% - 3px)" }}
+              className="absolute top-0 bottom-0 w-1 z-20"
+              style={{ left: "calc(50% - 2px)" }}
             >
-              <div className="h-full w-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] relative">
-                <div className="absolute top-[-4px] left-[-2px] right-[-2px] h-2 bg-white rounded-full shadow-[0_0_10px_white]" />
-                <div className="absolute bottom-[-4px] left-[-2px] right-[-2px] h-2 bg-white rounded-full shadow-[0_0_10px_white]" />
+              <div className="h-full w-full bg-white shadow-[0_0_18px_rgba(255,255,255,0.9)] relative">
+                <div className="absolute top-[-5px] left-[-3px] right-[-3px] h-2.5 bg-white rounded-full shadow-[0_0_12px_white]" />
+                <div className="absolute bottom-[-5px] left-[-3px] right-[-3px] h-2.5 bg-white rounded-full shadow-[0_0_12px_white]" />
               </div>
             </div>
           </div>

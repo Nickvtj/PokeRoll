@@ -1,5 +1,7 @@
 /** Motor de áudio compartilhado — leve, sem arquivos externos */
 
+import { isSoundEnabled } from "@/lib/player-preferences";
+
 let audioContext: AudioContext | null = null;
 
 export async function getAudioContext(): Promise<AudioContext | null> {
@@ -23,6 +25,8 @@ export async function playTone(
   volume = 0.15,
   delay = 0
 ): Promise<void> {
+  if (!isSoundEnabled()) return;
+
   const ctx = await getAudioContext();
   if (!ctx) return;
 
@@ -111,6 +115,7 @@ export async function playBattleFaint(): Promise<void> {
 
 /** Lançamento da moeda — whoosh curto para cima */
 export async function playBattleCoinToss(): Promise<void> {
+  if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
   if (!ctx) return;
 
@@ -137,6 +142,7 @@ export async function playBattleCoinToss(): Promise<void> {
  * Duração alinhada à animação (~2s).
  */
 export async function playBattleCoinSpinSequence(durationSec = 2.05): Promise<void> {
+  if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
   if (!ctx) return;
 
@@ -174,6 +180,7 @@ export async function playBattleCoinSpinSequence(durationSec = 2.05): Promise<vo
 
 /** Moeda parou + revelação de quem ataca primeiro */
 export async function playBattleCoinResultReveal(playerStarts: boolean): Promise<void> {
+  if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
   if (!ctx) return;
 
@@ -226,6 +233,7 @@ export async function playBattleCoinResultReveal(playerStarts: boolean): Promise
 
 /** Roleta da cápsula — ticks que desaceleram até parar */
 export async function playCapsuleRollSequence(durationSec = 8.5): Promise<void> {
+  if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
   if (!ctx) return;
 
@@ -266,6 +274,7 @@ export async function playCapsuleReveal(
   rarity: string,
   isShiny: boolean
 ): Promise<void> {
+  if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
   if (!ctx) return;
 
@@ -328,6 +337,7 @@ export async function playXpGain(): Promise<void> {
 
 /** Som ascendente enquanto a barra de XP enche (estilo jogos Pokémon) */
 export async function playXpBarFill(durationSec = 1): Promise<void> {
+  if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
   if (!ctx) return;
 
@@ -463,6 +473,7 @@ export async function playCardFlip(): Promise<void> {
 
 /** Embate VS — fanfarra de início de batalha estilo Pokémon */
 export async function playBattleFaceOffSequence(): Promise<void> {
+  if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
   if (!ctx) return;
 
@@ -542,6 +553,34 @@ export async function playMemoryMismatch(): Promise<void> {
   );
 }
 
+export async function playBattleFightStart(): Promise<void> {
+  await playNoteSequence(
+    [
+      { freq: 220, dur: 0.06, vol: 0.1, type: "square" },
+      { freq: 330, dur: 0.08, vol: 0.11, type: "square" },
+      { freq: 440, dur: 0.14, vol: 0.12, type: "triangle" },
+    ],
+    0.04
+  );
+}
+
+/** Som clássico de bater asas (Flappy Bird) */
+export async function playFlappyFlap(): Promise<void> {
+  await playTone(520, 0.035, "square", 0.055);
+  await playTone(380, 0.05, "sine", 0.035);
+}
+
+/** Ping curto ao marcar ponto no Flappy */
+export async function playFlappyScore(): Promise<void> {
+  await playNoteSequence(
+    [
+      { freq: 784, dur: 0.04, vol: 0.07, type: "triangle" },
+      { freq: 1047, dur: 0.07, vol: 0.08, type: "triangle" },
+    ],
+    0.02
+  );
+}
+
 export async function playCaptureThrow(): Promise<void> {
   await playTone(320, 0.04, "triangle", 0.06);
 }
@@ -580,6 +619,7 @@ export async function playCapturePerfect(): Promise<void> {
 
 /** Som ao acertar nota — sem BGM, só feedback no hit */
 export function playDanceHitNote(laneIndex: number, perfect: boolean): void {
+  if (!isSoundEnabled()) return;
   const notes = [392, 494, 587, 740];
   const freq = notes[laneIndex % notes.length] ?? 587;
   void playTone(freq, perfect ? 0.12 : 0.09, "triangle", perfect ? 0.065 : 0.05);

@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { Play, Swords, Gamepad2, Disc3 } from "lucide-react";
-import { EggIcon } from "@/components/ui/EggIcon";
+import { EggOutlineIcon } from "@/components/ui/EggIcon";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { useVisualQuality } from "@/components/layout/VisualQualityProvider";
 import { useGameStore } from "@/stores/game-store";
 import { POKEMON_LIST } from "@/data/pokemon";
 import { isLocalAsset } from "@/lib/image-utils";
@@ -43,7 +44,7 @@ const gameModes = [
   },
   {
     href: "/cases",
-    icon: EggIcon,
+    icon: EggOutlineIcon,
     title: "Ovos",
     desc: "Choque ovos temáticos e complete o álbum",
     color: "from-amber-500/20 to-orange-500/20 border-amber-500/30",
@@ -54,6 +55,9 @@ const gameModes = [
 export default function HomePage() {
   const getUniqueCount = useGameStore((s) => s.getUniqueCount);
   const getProgress = useGameStore((s) => s.getProgress);
+  const quality = useVisualQuality();
+  const prefersReducedMotion = useReducedMotion();
+  const animateFloaters = !prefersReducedMotion && quality !== "low";
 
   return (
     <div className="page-fit relative px-4 overflow-hidden">
@@ -65,8 +69,16 @@ export default function HomePage() {
             left: `${15 + i * 30}%`,
             top: `${20 + (i % 2) * 40}%`,
           }}
-          animate={{ y: [0, -20, 0], rotate: [0, 5, -5, 0] }}
-          transition={{ duration: 4 + i, repeat: Infinity, ease: "easeInOut" }}
+          animate={
+            animateFloaters
+              ? { y: [0, -20, 0], rotate: [0, 5, -5, 0] }
+              : undefined
+          }
+          transition={
+            animateFloaters
+              ? { duration: 4 + i, repeat: Infinity, ease: "easeInOut" }
+              : undefined
+          }
         >
           <Image
             src={pokemon.image}

@@ -8,6 +8,7 @@ import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import { getPlayerTrainerPortrait, trainerSpriteUrl } from "@/data/battle-trainers";
 import { useGameStore } from "@/stores/game-store";
 import { JitsuElementIcon } from "@/components/minigame/jitsu/JitsuElementIcon";
+import { MinigameLobbyCard } from "@/components/minigame/MinigameLobbyCard";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { JitsuArenaCard } from "@/components/minigame/jitsu/JitsuArenaCard";
 import { JitsuArenaFx } from "@/components/minigame/jitsu/JitsuArenaFx";
@@ -33,6 +34,7 @@ import {
 import {
   playJitsuCardPlay,
   playJitsuReveal,
+  playBattleFightStart,
   playJitsuRoundLoss,
   playJitsuRoundWin,
   playJitsuTie,
@@ -80,7 +82,7 @@ function queueSpecialEffects(
   }
 }
 
-type Phase = "idle" | "faceOff" | "playing" | "reveal" | "resolve";
+type Phase = "idle" | "faceOff" | "fightStart" | "playing" | "reveal" | "resolve";
 
 export interface PokeJitsuGameResult extends JitsuMatchResult {
   won: boolean;
@@ -261,10 +263,17 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
 
   useEffect(() => {
     if (phase !== "faceOff") return;
+    const id = window.setTimeout(() => setPhase("fightStart"), JITSU_FACE_OFF_MS);
+    return () => window.clearTimeout(id);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "fightStart") return;
+    void playBattleFightStart();
     const id = window.setTimeout(() => {
       setPhase("playing");
       setRoundMsg("Escolha sua carta!");
-    }, JITSU_FACE_OFF_MS);
+    }, 900);
     return () => window.clearTimeout(id);
   }, [phase]);
 
@@ -487,24 +496,15 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
 
   if (phase === "idle") {
     return (
-      <div className="relative glass-card p-6 sm:p-8 text-center space-y-5 border border-rose-500/20">
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-indigo-500/10 pointer-events-none rounded-[inherit] overflow-hidden" />
-        <motion.div
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="relative mx-auto w-16 h-16 rounded-2xl bg-rose-500/15 border border-rose-500/35 flex items-center justify-center shadow-[0_0_30px_rgba(244,63,94,0.2)]"
-        >
-          <Swords className="w-8 h-8 text-rose-400" />
-        </motion.div>
-        <div className="relative">
-          <h3 className="text-xl font-bold">Desafio Elemental</h3>
-          <p className="text-white/50 text-sm mt-2 leading-relaxed max-w-sm mx-auto">
-            Duelo tático Fogo · Água · Planta. Cartas especiais com efeitos únicos. Vença com 3
-            elementos diferentes ou 3 espécies distintas do mesmo tipo.
-          </p>
-        </div>
-
-        <div className="relative flex justify-center gap-3 py-2">
+      <MinigameLobbyCard
+        accent="rose"
+        icon={<Swords className="w-8 h-8" />}
+        title="Desafio Elemental"
+        description="Duelo tático Fogo · Água · Planta. Cartas especiais com efeitos únicos. Vença com 3 elementos diferentes ou 3 espécies distintas do mesmo tipo."
+        buttonLabel="INICIAR DUELO"
+        onStart={startMatch}
+      >
+        <div className="flex justify-center gap-3 py-1">
           {ELEMENT_TRIANGLE.map(({ type, icon: Icon, beats }) => {
             const meta = JITSU_ELEMENT_META[type];
             return (
@@ -525,23 +525,14 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
             );
           })}
         </div>
-
-        <JitsuBeltProgress wins={jitsuXp} className="relative" />
-        <AnimatedButton
-          variant="primary"
-          size="lg"
-          onClick={startMatch}
-          className="relative w-full max-w-xs mx-auto"
-        >
-          INICIAR DUELO
-        </AnimatedButton>
-      </div>
+        <JitsuBeltProgress wins={jitsuXp} className="relative max-w-xs mx-auto" />
+      </MinigameLobbyCard>
     );
   }
 
   if (phase === "faceOff") {
     return (
-      <div className="relative glass-card border border-emerald-500/20 overflow-hidden">
+      <div className="relative glass-card border border-emerald-500/20 overflow-hidden min-h-[22rem]">
         <JitsuFaceOffOverlay
           player={playerTrainer}
           opponent={SENSEI_PORTRAIT}
@@ -549,6 +540,31 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
           playerFallbackLetter={profile.username.charAt(0)}
         />
       </div>
+    );
+  }
+
+  if (phase === "fightStart") {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative glass-card border border-emerald-500/25 overflow-hidden min-h-[22rem] flex items-center justify-center"
+      >
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: [0.5, 1.1, 1], opacity: 1 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className="text-center space-y-3 px-6"
+        >
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-[0_0_36px_rgba(16,185,129,0.45)]">
+            <Swords className="w-7 h-7 text-white" />
+          </div>
+          <p className="text-4xl font-black italic text-white drop-shadow-lg tracking-tight">
+            DUELO!
+          </p>
+          <p className="text-sm text-emerald-200/80 font-semibold">Prepare suas cartas elementais</p>
+        </motion.div>
+      </motion.div>
     );
   }
 
@@ -658,23 +674,13 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
               )}
             >
               {playerPlayed ? (
-                <motion.div
-                  animate={
-                    winnerFlash === "bot" && phase === "resolve"
-                      ? { x: [0, -5, 5, -3, 0] }
-                      : { x: 0 }
-                  }
-                  transition={{ duration: 0.38, ease: "easeInOut" }}
-                >
-                  <JitsuCard
-                    card={playerPlayed}
-                    layoutId={layoutIdFor(playerPlayed)}
-                    size="md"
-                    disabled
-                    dimmed={winnerFlash === "bot" && phase === "resolve"}
-                    pulsing={winnerFlash === "player" && phase === "resolve"}
-                  />
-                </motion.div>
+                <JitsuArenaCard
+                  card={playerPlayed}
+                  side="player"
+                  winnerFlash={winnerFlash}
+                  isResolving={phase === "resolve"}
+                  isClashing={phase === "reveal"}
+                />
               ) : (
                 <span className="text-[10px] text-white/20 uppercase tracking-wider">Você</span>
               )}
@@ -683,15 +689,23 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
             <motion.div
               animate={
                 phase === "reveal"
-                  ? { scale: [1, 1.12, 1], opacity: [0.6, 1, 0.6] }
+                  ? { scale: [1, 1.35, 1], opacity: [0.5, 1, 0.5], rotate: [0, -12, 12, 0] }
                   : phase === "resolve"
                     ? { rotate: [0, -8, 8, 0], scale: [1, 1.1, 1] }
                     : { scale: 1, opacity: 1, rotate: 0 }
               }
-              transition={{ duration: phase === "reveal" ? 0.85 : 0.45, ease: "easeInOut" }}
-              className="pb-6"
+              transition={{ duration: phase === "reveal" ? 0.58 : 0.45, ease: "easeInOut" }}
+              className="pb-6 relative"
             >
-              <Swords className="w-6 h-6 text-emerald-300/50 shrink-0" />
+              {phase === "reveal" && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0.9 }}
+                  animate={{ scale: [0, 2.4], opacity: [0.85, 0] }}
+                  transition={{ delay: 0.28, duration: 0.4 }}
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-2 border-amber-200/50 bg-amber-300/20 pointer-events-none"
+                />
+              )}
+              <Swords className="w-6 h-6 text-emerald-300/50 shrink-0 relative z-10" />
             </motion.div>
 
             <div
@@ -708,6 +722,7 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
                   side="bot"
                   winnerFlash={winnerFlash}
                   isResolving={phase === "resolve"}
+                  isClashing={phase === "reveal"}
                 />
               ) : (
                 <span className="text-[9px] text-white/20 uppercase tracking-wider">Sensei</span>

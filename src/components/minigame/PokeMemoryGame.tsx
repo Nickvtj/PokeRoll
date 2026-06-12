@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Brain } from "lucide-react";
-import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { MinigameLobbyCard } from "@/components/minigame/MinigameLobbyCard";
 import { CardBackFace } from "@/components/ui/CardBackFace";
 import {
   MEMORY_GAME_DURATION_SEC,
@@ -161,20 +161,20 @@ export function PokeMemoryGame({ onComplete, onReady }: PokeMemoryGameProps) {
 
   if (!started) {
     return (
-      <div className="glass-card p-8 text-center space-y-4">
-        <div className="mx-auto w-14 h-14 rounded-2xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center">
-          <Brain className="w-7 h-7 text-violet-400" />
-        </div>
-        <h3 className="text-xl font-bold">Poké Memory</h3>
-        <p className="text-white/50 text-sm leading-relaxed">
-          Encontre os {MEMORY_PAIR_COUNT} pares em {MEMORY_GAME_DURATION_SEC} segundos. Errou? As
-          cartas viram de novo. Continue até acabar o tempo. Recompensa: {MEMORY_COINS_PER_PAIR}{" "}
-          moeda por par, até {MEMORY_PAIR_COUNT * MEMORY_COINS_PER_PAIR} moedas ao completar.
-        </p>
-        <AnimatedButton variant="primary" size="lg" onClick={start} className="w-full max-w-xs mx-auto">
-          COMEÇAR!
-        </AnimatedButton>
-      </div>
+      <MinigameLobbyCard
+        accent="violet"
+        icon={<Brain className="w-8 h-8" />}
+        title="Poké Memory"
+        description={
+          <>
+            Encontre os {MEMORY_PAIR_COUNT} pares em {MEMORY_GAME_DURATION_SEC} segundos. Errou? As
+            cartas viram de novo. Recompensa: {MEMORY_COINS_PER_PAIR} moeda por par, até{" "}
+            {MEMORY_PAIR_COUNT * MEMORY_COINS_PER_PAIR} moedas ao completar.
+          </>
+        }
+        buttonLabel="ENTRAR NA ARENA"
+        onStart={start}
+      />
     );
   }
 

@@ -10,6 +10,9 @@
   --neon-indigo: #6366f1;
   --neon-cyan: #22d3ee;
   --neon-gold: #fbbf24;
+  --text-micro: 0.6875rem;
+  --text-caption: 0.75rem;
+  --text-body-sm: 0.875rem;
 }
 
 * {
@@ -59,19 +62,22 @@ body {
     background: rgba(255, 255, 255, 0.06);
   }
 
-  /* Glass translúcido — identidade PokéRoll; blur leve em medium, completo em high */
+  /* Glass translúcido — identidade PokéRoll.
+     backdrop-blur é caro em composição (recalculado a cada paint/scroll e
+     multiplicado por dezenas de cards). Só "high" aplica blur; medium/low usam
+     fundo mais opaco — mesma estética escura, sem o custo de GPU e com mais
+     contraste de texto. */
   html[data-visual-quality="high"] .glass {
     @apply backdrop-blur-md;
     background: rgba(255, 255, 255, 0.06);
   }
 
   html[data-visual-quality="medium"] .glass {
-    @apply backdrop-blur-sm;
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   html[data-visual-quality="low"] .glass {
-    background: rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.1);
   }
 
   .glass-card {
@@ -81,18 +87,26 @@ body {
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
-  html[data-visual-quality="high"] .glass-card,
-  html[data-visual-quality="medium"] .glass-card {
+  html[data-visual-quality="high"] .glass-card {
     background: rgba(15, 22, 41, 0.32);
   }
 
+  html[data-visual-quality="medium"] .glass-card {
+    background: rgba(15, 22, 41, 0.62);
+  }
+
+  html[data-visual-quality="low"] .glass-card {
+    background: rgba(13, 19, 36, 0.86);
+  }
+
+  /* Overlays/modais: blur full-screen é o efeito mais caro de todos.
+     Mantido só em high; medium/low usam fundo sólido escuro. */
   html[data-visual-quality="low"] .glass-blur {
-    background: rgba(10, 14, 26, 0.92);
+    background: rgba(10, 14, 26, 0.95);
   }
 
   html[data-visual-quality="medium"] .glass-blur {
-    @apply backdrop-blur-sm;
-    background: rgba(10, 14, 26, 0.88);
+    background: rgba(10, 14, 26, 0.92);
   }
 
   html[data-visual-quality="high"] .glass-blur {
@@ -1009,6 +1023,25 @@ body {
     }
   }
 
+  /* Acessibilidade: usuários que pedem menos movimento têm animações/transições
+     CSS praticamente desligadas (mantém o estado final, sem o movimento). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Foco de teclado visível e consistente em toda a UI. */
+  :focus-visible {
+    outline: 2px solid rgba(129, 140, 248, 0.9);
+    outline-offset: 2px;
+  }
+
   .text-balance {
     text-wrap: balance;
   }
@@ -1133,16 +1166,57 @@ body {
   animation: reward-coin-burst 0.8s ease-out forwards;
 }
 
+@layer utilities {
+  .text-micro {
+    font-size: var(--text-micro);
+    line-height: 1.25;
+  }
+
+  .text-caption {
+    font-size: var(--text-caption);
+    line-height: 1.35;
+  }
+
+  .nav-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 /* Scrollbar customizada */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.4);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.profile-scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) rgba(255, 255, 255, 0.04);
+}
+
+.profile-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+.profile-scroll-area::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+.profile-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+.profile-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
 }
 
 /* === Cursor Roblox 2013 (PNG 16px, leve inclinação à esquerda) === */
@@ -1152,49 +1226,49 @@ body {
     --cursor-poke-pointer: url("/cursors/roblox-2013.png") 4 1, pointer;
   }
 
-  html,
-  body {
+  html[data-custom-cursor="on"],
+  html[data-custom-cursor="on"] body {
     cursor: var(--cursor-poke-default);
   }
 
-  a,
-  button,
-  [role="button"],
-  [role="link"],
-  [role="tab"],
-  [role="menuitem"],
-  [role="option"],
-  label[for],
-  select,
-  summary,
-  input[type="button"],
-  input[type="submit"],
-  input[type="reset"],
-  input[type="checkbox"],
-  input[type="radio"],
-  .cursor-pointer {
+  html[data-custom-cursor="on"] a,
+  html[data-custom-cursor="on"] button,
+  html[data-custom-cursor="on"] [role="button"],
+  html[data-custom-cursor="on"] [role="link"],
+  html[data-custom-cursor="on"] [role="tab"],
+  html[data-custom-cursor="on"] [role="menuitem"],
+  html[data-custom-cursor="on"] [role="option"],
+  html[data-custom-cursor="on"] label[for],
+  html[data-custom-cursor="on"] select,
+  html[data-custom-cursor="on"] summary,
+  html[data-custom-cursor="on"] input[type="button"],
+  html[data-custom-cursor="on"] input[type="submit"],
+  html[data-custom-cursor="on"] input[type="reset"],
+  html[data-custom-cursor="on"] input[type="checkbox"],
+  html[data-custom-cursor="on"] input[type="radio"],
+  html[data-custom-cursor="on"] .cursor-pointer {
     cursor: var(--cursor-poke-pointer);
   }
 
-  input[type="text"],
-  input[type="search"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  input[type="url"],
-  input[type="tel"],
-  textarea,
-  [contenteditable="true"] {
+  html[data-custom-cursor="on"] input[type="text"],
+  html[data-custom-cursor="on"] input[type="search"],
+  html[data-custom-cursor="on"] input[type="email"],
+  html[data-custom-cursor="on"] input[type="password"],
+  html[data-custom-cursor="on"] input[type="number"],
+  html[data-custom-cursor="on"] input[type="url"],
+  html[data-custom-cursor="on"] input[type="tel"],
+  html[data-custom-cursor="on"] textarea,
+  html[data-custom-cursor="on"] [contenteditable="true"] {
     cursor: text;
   }
 
-  :disabled,
-  [aria-disabled="true"],
-  .cursor-not-allowed {
+  html[data-custom-cursor="on"] :disabled,
+  html[data-custom-cursor="on"] [aria-disabled="true"],
+  html[data-custom-cursor="on"] .cursor-not-allowed {
     cursor: not-allowed;
   }
 
-  .cursor-default {
+  html[data-custom-cursor="on"] .cursor-default {
     cursor: var(--cursor-poke-default);
   }
 

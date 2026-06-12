@@ -10,6 +10,7 @@ import {
   UltraBallIcon,
   MasterBallIcon,
 } from "@/components/ui/PokeBallIcons";
+import { MinigameLobbyCard } from "@/components/minigame/MinigameLobbyCard";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { ComboCounter } from "@/components/minigame/ComboCounter";
 import {
@@ -330,57 +331,97 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
 
   if (!playing) {
     return (
-      <div className="glass-card p-8 text-center space-y-4">
-        <div className="mx-auto w-14 h-14 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center">
-          <MousePointerClick className="w-7 h-7 text-cyan-400" />
-        </div>
-        <h3 className="text-xl font-bold">Click Rush</h3>
-        <p className="text-white/50 text-sm leading-relaxed">
-          Pokébolas aparecem na tela. Clique o máximo que conseguir em{" "}
-          {CLICK_GAME_DURATION_SEC} segundos — você tem {CLICK_STARTING_LIVES} vidas. Evite a
-          Pokébola bomba! Combos aumentam sua pontuação. Itens especiais: +{CLICK_TIME_BONUS_SEC}s,
-          congela o tempo, pontos em dobro e Frenesi Master. Recompensa: {CLICK_BASE_COINS_MIN}~
-          {CLICK_BASE_COINS_MAX} moedas conforme seu desempenho.
-        </p>
-        <AnimatedButton variant="primary" size="lg" onClick={start} className="w-full max-w-xs mx-auto">
-          COMEÇAR!
-        </AnimatedButton>
-      </div>
+      <MinigameLobbyCard
+        accent="cyan"
+        icon={<MousePointerClick className="w-8 h-8" />}
+        title="Click Rush"
+        description={
+          <>
+            Pokébolas surgem na arena — clique o máximo em {CLICK_GAME_DURATION_SEC}s. Você tem{" "}
+            {CLICK_STARTING_LIVES} vidas; evite a bomba! Combos, congelamento, dobro de pontos e
+            Frenesi Master te esperam. Recompensa: {CLICK_BASE_COINS_MIN}~{CLICK_BASE_COINS_MAX}{" "}
+            moedas.
+          </>
+        }
+        buttonLabel="ENTRAR NA ARENA"
+        onStart={start}
+      />
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between glass-card px-4 py-2 gap-2">
-        <div className="text-sm">
-          <span className="text-white/50">Tempo: </span>
-          <span className={cn("font-bold", timeLeft <= 5 ? "text-red-400" : "text-white")}>
-            {timeLeft}s
-          </span>
+    <div className="relative rounded-2xl border border-cyan-400/25 bg-slate-950/80 p-3 sm:p-4 space-y-3 shadow-[0_0_40px_rgba(99,102,241,0.12)]">
+      <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+      <div className="flex items-center justify-between gap-2 px-1">
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-cyan-300/55 font-bold">Click Rush</p>
+          <p className="text-xs text-white/35">Arena ativa</p>
         </div>
-        <div className="flex items-center gap-0.5" title="Vidas">
-          {Array.from({ length: CLICK_STARTING_LIVES }).map((_, i) => (
-            <Heart
-              key={i}
-              className={cn(
-                "w-4 h-4",
-                i < lives ? "text-rose-400 fill-rose-400/70" : "text-white/15"
-              )}
-            />
-          ))}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div className="flex items-center gap-2 rounded-xl bg-black/25 border border-white/10 px-3 py-1.5">
+            <Timer className={cn("w-4 h-4", timeLeft <= 5 ? "text-red-400" : "text-cyan-300")} />
+            <span className={cn("font-black tabular-nums", timeLeft <= 5 ? "text-red-400" : "text-white")}>
+              {timeLeft}s
+            </span>
+          </div>
+          <div className="flex items-center gap-0.5" title="Vidas">
+            {Array.from({ length: CLICK_STARTING_LIVES }).map((_, i) => (
+              <Heart
+                key={i}
+                className={cn(
+                  "w-4 h-4",
+                  i < lives ? "text-rose-400 fill-rose-400/70" : "text-white/15"
+                )}
+              />
+            ))}
+          </div>
+          <ComboCounter combo={combo} maxCombo={maxCombo} />
+          <div className="rounded-xl bg-amber-500/10 border border-amber-400/25 px-3 py-1.5">
+            <span className="text-amber-300 font-black tabular-nums">{score} pts</span>
+          </div>
         </div>
-        <ComboCounter combo={combo} maxCombo={maxCombo} />
-        <div className="text-sm font-bold text-amber-400">{score} pts</div>
       </div>
+      {(freezeActive || doubleActive) && (
+        <div className="flex gap-2 justify-center flex-wrap px-1">
+          {freezeActive && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-200 bg-cyan-500/15 border border-cyan-400/30 px-2.5 py-1 rounded-full">
+              Congelado
+            </span>
+          )}
+          {doubleActive && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-200 bg-amber-500/15 border border-amber-400/30 px-2.5 py-1 rounded-full">
+              2x pontos
+            </span>
+          )}
+        </div>
+      )}
 
       <div
         className={cn(
-          "relative glass-card rounded-2xl overflow-hidden select-none touch-none transition-all duration-500",
-          freezeActive && "ring-4 ring-blue-400 shadow-[inset_0_0_50px_rgba(56,189,248,0.3)]",
-          doubleActive && "ring-4 ring-yellow-400 shadow-[inset_0_0_50px_rgba(250,204,21,0.3)]"
+          "relative overflow-hidden rounded-xl border-2 select-none touch-none transition-all duration-500",
+          "bg-gradient-to-b from-indigo-950/80 via-slate-900 to-black",
+          freezeActive && "border-cyan-400/60 shadow-[inset_0_0_60px_rgba(34,211,238,0.15)]",
+          doubleActive && "border-amber-400/60 shadow-[inset_0_0_60px_rgba(251,191,36,0.15)]",
+          !freezeActive && !doubleActive && "border-cyan-500/20 shadow-[inset_0_0_80px_rgba(99,102,241,0.1)]"
         )}
         style={{ height: 520 }}
       >
+        <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/50 to-transparent z-[5] pointer-events-none flex items-center justify-center">
+          <span className="text-[9px] uppercase tracking-[0.3em] text-cyan-300/40 font-bold">Tap Zone</span>
+        </div>
+        <div className="absolute inset-0 opacity-40 pointer-events-none bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.25),transparent_40%),radial-gradient(circle_at_70%_80%,rgba(34,211,238,0.12),transparent_35%)]" />
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={`orb-${i}`}
+            className="absolute w-2 h-2 rounded-full bg-white/10 pointer-events-none"
+            animate={{
+              y: [0, -20, 0],
+              opacity: [0.2, 0.5, 0.2],
+            }}
+            transition={{ duration: 3 + i * 0.4, repeat: Infinity, delay: i * 0.3 }}
+            style={{ left: `${12 + i * 14}%`, top: `${18 + (i % 3) * 22}%` }}
+          />
+        ))}
         {/* Overlay de Gelo */}
         <AnimatePresence>
           {freezeActive && (

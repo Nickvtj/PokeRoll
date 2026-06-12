@@ -4,11 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { Coins, Ghost, Shield, Sparkles } from "lucide-react";
+import { MinigameLobbyCard } from "@/components/minigame/MinigameLobbyCard";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { PokeballIcon } from "@/components/ui/PokeballIcon";
 import {
   HUNTER_ENTRY_COST,
-  HUNTER_MAX_POT,
 } from "@/data/economy-balance";
 import { getPokemonById } from "@/data/pokemon";
 import {
@@ -144,12 +144,38 @@ export function HunterCaveGame({
   const profit = pot - HUNTER_ENTRY_COST;
   const canAfford = coins >= HUNTER_ENTRY_COST;
 
+  if (phase === "idle") {
+    return (
+      <MinigameLobbyCard
+        accent="violet"
+        icon={<Ghost className="w-8 h-8" />}
+        title="Caverna dos Hunter"
+        description="Pokébolas misteriosas escondem moedas — ou um Haunter faminto. Fuja a tempo ou perca tudo."
+        buttonLabel={canAfford ? "ENTRAR NA CAVERNA" : "Moedas insuficientes"}
+        onStart={startRun}
+        disabled={!canAfford}
+      >
+        <div className="relative rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3 text-sm space-y-1 max-w-xs mx-auto">
+          <p className="text-white/45">
+            Entrada:{" "}
+            <span className="text-amber-300 font-bold">{HUNTER_ENTRY_COST} moedas</span>
+          </p>
+          {bestPot > 0 && (
+            <p className="text-white/35 text-xs">
+              Melhor fuga: <span className="text-emerald-300 font-semibold">{bestPot} moedas</span>
+            </p>
+          )}
+        </div>
+      </MinigameLobbyCard>
+    );
+  }
+
   return (
     <motion.div
       animate={shake ? { x: [0, -10, 10, -8, 8, -4, 0] } : { x: 0 }}
       transition={{ duration: 0.45 }}
       className={cn(
-        "relative rounded-2xl overflow-hidden border border-violet-500/25 min-h-[420px]",
+        "relative rounded-2xl overflow-hidden border border-violet-500/30 min-h-[440px] shadow-[0_0_48px_rgba(88,28,135,0.2)]",
         phase === "haunter" && "grayscale-[0.85] contrast-90"
       )}
     >
@@ -157,57 +183,28 @@ export function HunterCaveGame({
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 90% 70% at 50% 100%, rgba(88,28,135,0.35), transparent 65%), radial-gradient(ellipse 60% 40% at 20% 20%, rgba(67,56,202,0.2), transparent 55%), linear-gradient(180deg, #0f172a 0%, #1e1b4b 45%, #0c0a1a 100%)",
+            "radial-gradient(ellipse 90% 70% at 50% 100%, rgba(88,28,135,0.45), transparent 65%), radial-gradient(ellipse 50% 35% at 15% 15%, rgba(99,102,241,0.25), transparent 55%), linear-gradient(180deg, #0a0618 0%, #1e1b4b 40%, #0c0a1a 100%)",
+        }}
+      />
+      <motion.div
+        className="absolute inset-0 pointer-events-none opacity-30"
+        animate={{ opacity: [0.15, 0.35, 0.15] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 40% at 50% 60%, rgba(139,92,246,0.35), transparent 70%)",
         }}
       />
       <div
-        className="absolute inset-0 opacity-[0.06] pointer-events-none"
+        className="absolute top-0 inset-x-0 h-16 pointer-events-none opacity-20"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(255,255,255,0.4) 24px, rgba(255,255,255,0.4) 25px)",
+            "repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(167,139,250,0.15) 18px, rgba(167,139,250,0.15) 20px)",
         }}
       />
 
       <div className="relative z-10 p-5 sm:p-6 flex flex-col min-h-[420px]">
-        {phase === "idle" ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-5 py-4">
-            <motion.div
-              animate={{ y: [0, -5, 0] }}
-              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-              className="w-16 h-16 rounded-2xl bg-violet-500/15 border border-violet-400/35 flex items-center justify-center shadow-[0_0_32px_rgba(139,92,246,0.25)]"
-            >
-              <Ghost className="w-8 h-8 text-violet-300" />
-            </motion.div>
-            <div>
-              <h3 className="text-xl font-bold text-violet-100">Caverna dos Hunter</h3>
-              <p className="text-white/50 text-sm mt-2 max-w-xs mx-auto leading-relaxed">
-                Pokébolas misteriosas escondem moedas — ou um Haunter faminto. Fuja a tempo ou
-                perca tudo.
-              </p>
-            </div>
-            <div className="glass-card px-4 py-3 rounded-xl border border-violet-500/20 text-sm space-y-1 w-full max-w-xs">
-              <p className="text-white/45">
-                Entrada:{" "}
-                <span className="text-amber-300 font-bold">{HUNTER_ENTRY_COST} moedas</span>
-              </p>
-              {bestPot > 0 && (
-                <p className="text-white/35 text-xs">
-                  Melhor fuga: <span className="text-emerald-300 font-semibold">{bestPot} moedas</span>
-                </p>
-              )}
-            </div>
-            <AnimatedButton
-              variant="primary"
-              size="lg"
-              disabled={!canAfford}
-              onClick={startRun}
-              className="w-full max-w-xs"
-            >
-              {canAfford ? "ENTRAR NA CAVERNA" : "Moedas insuficientes"}
-            </AnimatedButton>
-          </div>
-        ) : (
-          <>
+        <>
             <div className="flex items-center justify-between gap-2 mb-6">
               <div className="text-left">
                 <p className="text-[10px] uppercase tracking-wider text-white/35 font-bold">
@@ -242,8 +239,8 @@ export function HunterCaveGame({
                 )}
               </motion.div>
               <div className="text-right">
-                <p className="text-[10px] uppercase tracking-wider text-white/35 font-bold">Teto</p>
-                <p className="text-xs text-white/45 tabular-nums">{HUNTER_MAX_POT}</p>
+                <p className="text-[10px] uppercase tracking-wider text-white/35 font-bold">Pote</p>
+                <p className="text-xs text-emerald-300/80 font-semibold">Sem limite</p>
               </div>
             </div>
 
@@ -258,7 +255,7 @@ export function HunterCaveGame({
                       : ""}
               </p>
 
-              <div className="flex items-center justify-center gap-3 sm:gap-5">
+              <div className="flex items-center justify-center gap-3 sm:gap-6 py-2">
                 {[0, 1, 2, 3].map((i) => {
                   const isHaunterReveal =
                     (phase === "reveal" || phase === "haunter") &&
@@ -287,14 +284,15 @@ export function HunterCaveGame({
                           : { duration: 0.25 }
                       }
                       className={cn(
-                        "relative w-[4.5rem] h-[4.5rem] sm:w-[5rem] sm:h-[5rem] rounded-2xl flex items-center justify-center transition-all",
+                        "relative w-[4.75rem] h-[4.75rem] sm:w-[5.25rem] sm:h-[5.25rem] rounded-2xl flex items-center justify-center transition-all",
                         phase === "playing" &&
-                          "cursor-pointer bg-violet-950/40 border border-violet-400/25 hover:border-amber-400/40 hover:shadow-[0_0_24px_rgba(251,191,36,0.2)]",
-                        phase !== "playing" && "cursor-default bg-black/20 border border-white/10",
-                        isSafeReveal && "border-emerald-400/50 shadow-[0_0_28px_rgba(52,211,153,0.35)]",
-                        isHaunterReveal && "border-violet-400/60 shadow-[0_0_32px_rgba(139,92,246,0.45)]"
+                          "cursor-pointer bg-gradient-to-b from-violet-950/60 to-black/40 border border-violet-400/30 hover:border-amber-400/50 hover:shadow-[0_0_32px_rgba(251,191,36,0.25)] hover:-translate-y-1",
+                        phase !== "playing" && "cursor-default bg-black/25 border border-white/10",
+                        isSafeReveal && "border-emerald-400/55 shadow-[0_0_32px_rgba(52,211,153,0.4)]",
+                        isHaunterReveal && "border-violet-300/60 shadow-[0_0_40px_rgba(139,92,246,0.5)]"
                       )}
                     >
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-12 h-2 rounded-full bg-black/50 blur-sm pointer-events-none" />
                       <AnimatePresence mode="wait">
                         {isHaunterReveal ? (
                           <motion.div
@@ -363,8 +361,7 @@ export function HunterCaveGame({
                 FUGIR DA CAVERNA · Levar {pot} moedas
               </AnimatedButton>
             </div>
-          </>
-        )}
+        </>
       </div>
     </motion.div>
   );

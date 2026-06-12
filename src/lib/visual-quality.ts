@@ -1,9 +1,14 @@
+import { getVisualQualityMode } from "@/lib/player-preferences";
+
 export type VisualQuality = "high" | "medium" | "low";
 
 const QUALITY_ATTR = "data-visual-quality";
 
 export function detectVisualQuality(): VisualQuality {
   if (typeof window === "undefined") return "medium";
+
+  const mode = getVisualQualityMode();
+  if (mode !== "auto") return mode;
 
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     return "low";

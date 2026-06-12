@@ -3,12 +3,19 @@ import { applyMinigameCoinBonus } from "@/lib/minigame-rewards";
 
 export const FLAPPY_GRAVITY = 0.42;
 export const FLAPPY_FLAP_VELOCITY = -7.2;
-export const FLAPPY_PIPE_GAP = 118;
+export const FLAPPY_PIPE_GAP = 124;
 export const FLAPPY_PIPE_WIDTH = 58;
 export const FLAPPY_PIPE_SPEED = 2.65;
 export const FLAPPY_PIPE_SPAWN_MS = 2100;
 export const FLAPPY_BIRD_SIZE = 36;
 export const FLAPPY_BIRD_X_RATIO = 0.22;
+/** Proporção da altura onde começa o chão (render + colisão usam o mesmo valor) */
+export const FLAPPY_GROUND_RATIO = 0.84;
+
+/** Linha do chão em pixels — fonte única de verdade para render e colisão */
+export function getFlappyGroundY(canvasHeight: number): number {
+  return Math.floor(canvasHeight * FLAPPY_GROUND_RATIO);
+}
 
 export function calcFlappyCoins(score: number, coinBonus = 0): number {
   if (score <= 0) return 0;
@@ -33,9 +40,13 @@ export interface FlappyPipe {
 }
 
 export function createPipe(id: number, canvasWidth: number, canvasHeight: number): FlappyPipe {
-  const margin = 72;
-  const gapCenter =
-    margin + Math.random() * Math.max(80, canvasHeight - margin * 2 - FLAPPY_PIPE_GAP);
+  const groundY = getFlappyGroundY(canvasHeight);
+  const topMargin = 56;
+  const bottomMargin = 28;
+  const minCenter = topMargin + FLAPPY_PIPE_GAP / 2;
+  const maxCenter = groundY - bottomMargin - FLAPPY_PIPE_GAP / 2;
+  const range = Math.max(40, maxCenter - minCenter);
+  const gapCenter = minCenter + Math.random() * range;
   return {
     id,
     x: canvasWidth + 20,
@@ -76,24 +87,6 @@ export function tickFlappyPipes(
   }
 
   return { pipes: updated, nextId: id, lastSpawn: spawn, scoreDelta };
-}
-
-export function checkFlappyCollision(
-  birdY: number,
-  birdSize: number,
-  canvasHeight: number,
-  pipes: FlappyPipe[]
-): boolean {
-  const pad = 4;
-  const top = birdY - birdSize / 2 + pad;
-  const bottom = birdY + birdSize / 2 - pad;
-
-  if (top <= 0 || bottom >= canvasHeight) return true;
-
-  const birdX = 0; // caller passes relative — use canvas width ratio in component
-  void birdX;
-
-  return false;
 }
 
 export function birdHitsPipe(

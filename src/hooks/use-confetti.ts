@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { fireCelebrationConfetti, fireShinyConfetti } from "@/lib/confetti";
+import { fireCelebrationConfetti, fireNewPokemonConfetti, fireShinyConfetti } from "@/lib/confetti";
 import type { Rarity } from "@/types";
 
 export function useConfetti() {
@@ -13,5 +13,9 @@ export function useConfetti() {
     fireShinyConfetti();
   }, []);
 
-  return { fireConfetti, fireShiny };
+  const fireNewPokemon = useCallback((rarity: Rarity) => {
+    fireNewPokemonConfetti(rarity);
+  }, []);
+
+  return { fireConfetti, fireShiny, fireNewPokemon };
 }

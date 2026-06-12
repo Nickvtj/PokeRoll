@@ -57,7 +57,7 @@ export default function CasesPage() {
   const resultRef = useRef<CapsuleRollResult | null>(null);
   const soundsPlayedRef = useRef(false);
 
-  const { fireConfetti, fireShiny } = useConfetti();
+  const { fireConfetti, fireShiny, fireNewPokemon } = useConfetti();
   const { playNewPokemonWin, playDuplicate, playLegendary, playShinyEpic } = useSoundEffects();
 
   const activeEgg = activeEggId ? getCapsuleById(activeEggId) : null;
@@ -150,21 +150,19 @@ export default function CasesPage() {
       if (rarity === "legendary") {
         void playLegendary();
         window.setTimeout(() => fireConfetti(rarity, true), 120);
-      } else if (rarity === "epic" || rarity === "rare") {
+      } else if (rarity === "epic") {
         void playNewPokemonWin();
         window.setTimeout(() => fireConfetti(rarity, true), 120);
       } else {
         void playNewPokemonWin();
-        if (rarity === "uncommon") {
-          window.setTimeout(() => fireConfetti(rarity, true), 120);
-        }
+        window.setTimeout(() => fireNewPokemon(rarity), 120);
       }
       return;
     }
 
     if (isDuplicate) {
       void playDuplicate();
-      if (rarity === "legendary" || rarity === "epic" || rarity === "rare") {
+      if (rarity === "legendary" || rarity === "epic") {
         window.setTimeout(() => fireConfetti(rarity, true), 120);
       }
     }
@@ -176,6 +174,7 @@ export default function CasesPage() {
     playDuplicate,
     fireShiny,
     fireConfetti,
+    fireNewPokemon,
   ]);
 
   const handleSell = useCallback(() => {

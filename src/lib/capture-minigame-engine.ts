@@ -23,9 +23,9 @@ const RARITY_WEIGHTS: Record<Rarity, number> = {
 };
 
 const CAPTURE_BY_RARITY: Record<Rarity, CaptureConfig> = {
-  common: { shakes: 2, zonePct: 26, speed: 1.0 },
-  uncommon: { shakes: 2, zonePct: 22, speed: 1.15 },
-  rare: { shakes: 2, zonePct: 18, speed: 1.3 },
+  common: { shakes: 2, zonePct: 18, speed: 1.2 },
+  uncommon: { shakes: 2, zonePct: 14, speed: 1.4 },
+  rare: { shakes: 3, zonePct: 12, speed: 1.55 },
   epic: { shakes: 3, zonePct: 14, speed: 1.45 },
   legendary: { shakes: 3, zonePct: 11, speed: 1.65 },
 };
@@ -135,4 +135,44 @@ export function getRarityColor(rarity: Rarity): string {
     legendary: "text-amber-400",
   };
   return colors[rarity];
+}
+
+export function getRarityArenaBackground(rarity: Rarity): {
+  gradient: string;
+  border: string;
+  glow: string;
+} {
+  const styles: Record<Rarity, { gradient: string; border: string; glow: string }> = {
+    common: {
+      gradient:
+        "radial-gradient(ellipse 80% 55% at 50% 100%, rgba(148,163,184,0.2), transparent 60%), linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
+      border: "border-slate-500/20",
+      glow: "rgba(148,163,184,0.35)",
+    },
+    uncommon: {
+      gradient:
+        "radial-gradient(ellipse 80% 55% at 50% 100%, rgba(34,197,94,0.22), transparent 60%), linear-gradient(180deg, #052e16 0%, #14532d 48%, #064e3b 100%)",
+      border: "border-emerald-500/25",
+      glow: "rgba(34,197,94,0.4)",
+    },
+    rare: {
+      gradient:
+        "radial-gradient(ellipse 80% 55% at 50% 100%, rgba(59,130,246,0.25), transparent 60%), linear-gradient(180deg, #0c1929 0%, #1e3a8a 48%, #172554 100%)",
+      border: "border-blue-500/30",
+      glow: "rgba(59,130,246,0.45)",
+    },
+    epic: {
+      gradient:
+        "radial-gradient(ellipse 80% 55% at 50% 100%, rgba(168,85,247,0.28), transparent 60%), linear-gradient(180deg, #1a0a2e 0%, #581c87 48%, #3b0764 100%)",
+      border: "border-purple-500/35",
+      glow: "rgba(168,85,247,0.5)",
+    },
+    legendary: {
+      gradient:
+        "radial-gradient(ellipse 80% 55% at 50% 100%, rgba(251,191,36,0.3), transparent 60%), linear-gradient(180deg, #1c1408 0%, #92400e 45%, #78350f 100%)",
+      border: "border-amber-500/40",
+      glow: "rgba(251,191,36,0.55)",
+    },
+  };
+  return styles[rarity];
 }

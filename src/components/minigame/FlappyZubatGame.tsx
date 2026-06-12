@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Check, Lock, Play, Sparkles, Trophy } from "lucide-react";
-import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { MinigameLobbyCard } from "@/components/minigame/MinigameLobbyCard";
 import {
   FLAPPY_SKINS,
   getFlappySkin,
@@ -18,11 +18,13 @@ import {
   FLAPPY_BIRD_X_RATIO,
   FLAPPY_FLAP_VELOCITY,
   FLAPPY_GRAVITY,
+  FLAPPY_PIPE_SPEED,
+  getFlappyGroundY,
   tickFlappyPipes,
   type FlappyPipe,
 } from "@/lib/flappy-zubat-engine";
 import { drawFlappyScene } from "@/lib/flappy-zubat-render";
-import { playBattleLoss, playJitsuRoundWin } from "@/lib/sound-engine";
+import { playBattleLoss, playFlappyFlap, playFlappyScore } from "@/lib/sound-engine";
 import { playUiConfirm } from "@/lib/ui-sounds";
 import { cn } from "@/lib/utils";
 
@@ -78,54 +80,51 @@ function FlappySkinPicker({
 
   return (
     <div className="space-y-3">
-      <div className="relative overflow-hidden rounded-xl border-4 border-[#306850] bg-[#081820] shadow-[inset_0_0_0_2px_#0f380f,0_0_24px_rgba(155,188,15,0.12)]">
-        <div
-          className="absolute inset-0 opacity-[0.07] pointer-events-none"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(155,188,15,0.5) 2px, rgba(155,188,15,0.5) 3px)",
-          }}
-        />
-        <div className="relative px-4 py-3 flex items-center justify-between border-b-2 border-[#306850] bg-[#0f2847]/80">
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#9bbc0f]">
-            PC · Escolher Pokemon
+      <div
+        className="relative overflow-hidden rounded-2xl border border-white/10 glass-card"
+        style={{
+          background: `linear-gradient(135deg, ${selected.scene.skyTop} 0%, ${selected.scene.skyMid} 55%, ${selected.scene.skyBot} 100%)`,
+        }}
+      >
+        <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.15),transparent_45%)]" />
+        <div className="relative px-4 py-3 flex items-center justify-between border-b border-white/10">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-white/70">
+            Escolher Pokémon
           </p>
           {bestScore > 0 && (
-            <span className="text-[10px] font-bold text-[#8bac0f] flex items-center gap-1 tabular-nums font-mono">
-              <Trophy className="w-3 h-3" /> REC {bestScore}
+            <span className="text-[10px] font-bold text-amber-300 flex items-center gap-1 tabular-nums">
+              <Trophy className="w-3 h-3" /> Recorde {bestScore}
             </span>
           )}
         </div>
 
         <div className="relative p-4 flex flex-col sm:flex-row gap-4 items-center">
           <motion.div
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-            className="relative w-28 h-28 shrink-0 rounded-lg border-2 border-[#306850] bg-[#0f380f]/60 flex items-center justify-center"
-            style={{ boxShadow: `inset 0 0 20px ${selected.accent}33` }}
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            className="relative w-28 h-28 shrink-0 rounded-2xl border border-white/15 bg-black/25 flex items-center justify-center shadow-lg"
+            style={{ boxShadow: `0 0 32px ${selected.accent}44` }}
           >
             <Image
               src={selected.spriteUrl}
               alt=""
               width={96}
               height={96}
-              className="pixel-art w-20 h-20 object-contain drop-shadow-[2px_2px_0_#0f380f]"
+              className="w-20 h-20 object-contain drop-shadow-lg"
               unoptimized
             />
           </motion.div>
 
           <div className="flex-1 text-center sm:text-left min-w-0">
-            <p className="text-[10px] font-mono text-[#8bac0f]/70 uppercase tracking-wider">
-              No. {String(selected.dexNo).padStart(3, "0")}
+            <p className="text-[10px] text-white/45 uppercase tracking-wider">
+              #{String(selected.dexNo).padStart(3, "0")}
             </p>
-            <h3 className="text-lg font-black text-[#e8f5e9]" style={{ color: selected.accent }}>
+            <h3 className="text-xl font-black" style={{ color: selected.accent }}>
               {selected.label}
             </h3>
-            <p className="text-[11px] text-[#9bbc0f]/55 mt-1 font-mono">
-              Torre Lavender · Rota Noturna
-            </p>
-            <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded border border-[#306850] bg-[#0f380f]/40 text-[9px] font-bold text-[#9bbc0f] uppercase">
-              <Sparkles className="w-3 h-3" /> Skin ativa
+            <p className="text-xs text-white/55 mt-1">{selected.scene.location}</p>
+            <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-white/15 bg-white/5 text-[10px] font-bold text-white/70 uppercase">
+              <Sparkles className="w-3 h-3 text-amber-300" /> Skin ativa
             </div>
           </div>
         </div>
@@ -144,35 +143,34 @@ function FlappySkinPicker({
               disabled={!unlocked}
               onClick={() => onSelectSkin(s.id)}
               className={cn(
-                "relative text-left rounded-xl border-2 p-2.5 transition-all duration-200",
-                "bg-[#081820]",
-                unlocked && !selectedCard && "border-[#306850] hover:border-[#8bac0f]/50 hover:bg-[#0f2847]/80",
-                selectedCard && unlocked && "border-[#9bbc0f] bg-[#0f380f]/50 shadow-[0_0_16px_rgba(155,188,15,0.2)]",
-                !unlocked && "border-[#1a1a2e] opacity-90 cursor-not-allowed"
+                "relative text-left rounded-xl border p-2.5 transition-all duration-200 glass-card",
+                unlocked && !selectedCard && "border-white/10 hover:border-white/25 hover:bg-white/5",
+                selectedCard &&
+                  unlocked &&
+                  "border-indigo-400/50 shadow-[0_0_20px_rgba(99,102,241,0.25)]",
+                !unlocked && "border-white/5 opacity-75 cursor-not-allowed"
               )}
             >
               {selectedCard && unlocked && (
-                <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#9bbc0f] flex items-center justify-center">
-                  <Check className="w-3 h-3 text-[#081820]" strokeWidth={3} />
+                <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
                 </span>
               )}
 
               <div className="flex items-start gap-2">
                 <div
                   className={cn(
-                    "relative w-12 h-12 shrink-0 rounded-lg border flex items-center justify-center",
-                    unlocked ? "border-[#306850] bg-[#0f380f]/40" : "border-[#303030] bg-black/40"
+                    "relative w-12 h-12 shrink-0 rounded-xl border flex items-center justify-center",
+                    unlocked ? "border-white/15 bg-black/20" : "border-white/5 bg-black/30"
                   )}
+                  style={unlocked ? { boxShadow: `0 0 12px ${s.accent}33` } : undefined}
                 >
                   <Image
                     src={s.spriteUrl}
                     alt=""
                     width={40}
                     height={40}
-                    className={cn(
-                      "pixel-art w-9 h-9 object-contain",
-                      !unlocked && "brightness-0 opacity-35"
-                    )}
+                    className={cn("w-9 h-9 object-contain", !unlocked && "brightness-0 opacity-35")}
                     unoptimized
                   />
                   {!unlocked && (
@@ -181,26 +179,24 @@ function FlappySkinPicker({
                 </div>
 
                 <div className="min-w-0 flex-1 pt-0.5">
-                  <p className="text-[9px] font-mono text-[#8bac0f]/50">
-                    #{String(s.dexNo).padStart(3, "0")}
-                  </p>
+                  <p className="text-[11px] text-white/50 tabular-nums">#{String(s.dexNo).padStart(3, "0")}</p>
                   <p
                     className={cn(
-                      "text-xs font-black truncate",
-                      unlocked ? "text-[#e8f5e9]" : "text-white/35"
+                      "text-xs font-bold truncate",
+                      unlocked ? "text-white" : "text-white/35"
                     )}
                   >
                     {s.label}
                   </p>
                   {!unlocked && (
                     <>
-                      <p className="text-[8px] text-white/30 leading-tight mt-0.5 line-clamp-2">
+                      <p className="text-[11px] text-white/45 leading-tight mt-0.5 line-clamp-2">
                         {s.unlockLabel}
                       </p>
                       {progress != null && progress > 0 && (
-                        <div className="mt-1.5 h-1 rounded-full bg-[#0f380f] overflow-hidden">
+                        <div className="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden">
                           <div
-                            className="h-full bg-[#8bac0f] transition-all"
+                            className="h-full bg-indigo-400 transition-all"
                             style={{ width: `${progress * 100}%` }}
                           />
                         </div>
@@ -227,6 +223,8 @@ export function FlappyZubatGame({
   onReady,
 }: FlappyZubatGameProps) {
   const [phase, setPhase] = useState<Phase>("lobby");
+  const [displayScore, setDisplayScore] = useState(0);
+  const [flash, setFlash] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -247,7 +245,6 @@ export function FlappyZubatGame({
 
   useEffect(() => {
     const img = new window.Image();
-    img.crossOrigin = "anonymous";
     img.src = skin.spriteUrl;
     img.onload = () => {
       spriteRef.current = img;
@@ -269,6 +266,8 @@ export function FlappyZubatGame({
     pipeIdRef.current = 0;
     lastSpawnRef.current = performance.now();
     lastTsRef.current = performance.now();
+    setDisplayScore(0);
+    setFlash(false);
     setPhase("playing");
     playUiConfirm();
   }, []);
@@ -287,12 +286,14 @@ export function FlappyZubatGame({
       endedRef.current = true;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       setPhase("dead");
+      setFlash(true);
+      window.setTimeout(() => setFlash(false), 160);
       void playBattleLoss();
       const coins = calcFlappyCoins(score);
       const accountXp = calcFlappyAccountXp(score);
       window.setTimeout(() => {
         onComplete({ score, coins, accountXp });
-      }, 400);
+      }, 620);
     },
     [onComplete]
   );
@@ -300,6 +301,7 @@ export function FlappyZubatGame({
   const flap = useCallback(() => {
     if (phase !== "playing") return;
     velRef.current = FLAPPY_FLAP_VELOCITY;
+    void playFlappyFlap();
   }, [phase]);
 
   const gameLoop = useCallback(
@@ -310,11 +312,13 @@ export function FlappyZubatGame({
 
       const dt = Math.min(32, ts - lastTsRef.current);
       lastTsRef.current = ts;
-      scrollRef.current += dt;
+      const dtScale = dt / 16.67;
+      // scroll medido em pixels, na mesma velocidade dos canos (parallax coerente)
+      scrollRef.current += FLAPPY_PIPE_SPEED * dtScale;
 
-      velRef.current += FLAPPY_GRAVITY * (dt / 16.67);
-      birdYRef.current += velRef.current * (dt / 16.67);
-      wingRef.current += dt * 0.012;
+      velRef.current += FLAPPY_GRAVITY * dtScale;
+      birdYRef.current += velRef.current * dtScale;
+      wingRef.current += dt * 0.018;
 
       const tick = tickFlappyPipes(
         pipesRef.current,
@@ -330,15 +334,18 @@ export function FlappyZubatGame({
       lastSpawnRef.current = tick.lastSpawn;
       if (tick.scoreDelta > 0) {
         scoreRef.current += tick.scoreDelta;
-        void playJitsuRoundWin("AGUA");
+        setDisplayScore(scoreRef.current);
+        void playFlappyScore();
       }
 
       const birdX = CANVAS_W * FLAPPY_BIRD_X_RATIO;
+      const groundY = getFlappyGroundY(CANVAS_H);
 
       if (
         birdYRef.current - FLAPPY_BIRD_SIZE / 2 <= 0 ||
-        birdYRef.current + FLAPPY_BIRD_SIZE / 2 >= CANVAS_H
+        birdYRef.current + FLAPPY_BIRD_SIZE / 2 >= groundY
       ) {
+        birdYRef.current = Math.min(birdYRef.current, groundY - FLAPPY_BIRD_SIZE / 2);
         endRun(scoreRef.current);
         return;
       }
@@ -355,16 +362,17 @@ export function FlappyZubatGame({
         CANVAS_W,
         CANVAS_H,
         birdYRef.current,
+        velRef.current,
         wingRef.current,
         pipesRef.current,
-        scoreRef.current,
         spriteRef.current,
-        scrollRef.current
+        scrollRef.current,
+        skin
       );
 
       rafRef.current = requestAnimationFrame(gameLoop);
     },
-    [phase, endRun]
+    [phase, endRun, skin]
   );
 
   useEffect(() => {
@@ -399,47 +407,80 @@ export function FlappyZubatGame({
             onSelectSkin={onSelectSkin}
           />
 
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border-2 border-[#306850] bg-[#081820]/90 p-5 text-center space-y-3"
-          >
-            <p className="text-[#9bbc0f]/70 text-sm font-mono leading-relaxed">
-              Voe pela rota noturna ate a Torre Lavender.
-              <br />
-              Toque ou pressione espaco para bater as asas.
-            </p>
-            <AnimatedButton
-              variant="primary"
-              size="lg"
-              onClick={startGame}
-              icon={<Play className="w-4 h-4 fill-current" />}
-              className="w-full max-w-xs mx-auto !bg-[#306850] hover:!from-[#306850] hover:!to-[#8bac0f] !border-[#9bbc0f]/40 font-black tracking-wider"
-            >
-              DECOLAR
-            </AnimatedButton>
-          </motion.div>
+          <MinigameLobbyCard
+            accent="indigo"
+            icon={<Play className="w-7 h-7 fill-current" />}
+            title="Flappy Zubat"
+            description={
+              <>
+                Voe por <span className="text-white font-semibold">{skin.scene.location}</span>.
+                Toque ou pressione espaço para bater as asas e desviar dos obstáculos.
+              </>
+            }
+            buttonLabel="DECOLAR"
+            buttonIcon={<Play className="w-4 h-4 fill-current" />}
+            onStart={startGame}
+          />
         </>
       )}
 
       {(phase === "playing" || phase === "dead") && (
         <div
           ref={wrapRef}
-          className="relative mx-auto rounded-lg overflow-hidden border-4 border-[#306850] shadow-[0_0_32px_rgba(15,56,15,0.35),inset_0_0_0_2px_#0f380f] max-w-[360px]"
-          style={{ aspectRatio: `${CANVAS_W}/${CANVAS_H}` }}
+          className="relative mx-auto rounded-2xl overflow-hidden border border-white/15 max-w-[360px]"
+          style={{
+            aspectRatio: `${CANVAS_W}/${CANVAS_H}`,
+            boxShadow: `0 0 48px ${skin.accent}33`,
+          }}
         >
           <canvas
             ref={canvasRef}
             width={CANVAS_W}
             height={CANVAS_H}
             onPointerDown={flap}
-            className="w-full h-full touch-none cursor-pointer bg-[#081820] pixel-art"
+            className="w-full h-full touch-none cursor-pointer pixel-art"
           />
-          {phase === "playing" && (
-            <p className="absolute bottom-2 inset-x-0 text-center text-[9px] text-[#9bbc0f]/50 pointer-events-none font-mono uppercase tracking-wider">
+
+          <motion.div
+            key={displayScore}
+            initial={{ scale: 1.35, y: -2 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 420, damping: 18 }}
+            className="absolute top-4 inset-x-0 flex justify-center pointer-events-none"
+          >
+            <span
+              className="text-4xl font-black tabular-nums"
+              style={{
+                color: "#fff",
+                textShadow: `0 2px 0 rgba(0,0,0,0.5), 0 0 14px ${skin.accent}aa`,
+              }}
+            >
+              {displayScore}
+            </span>
+          </motion.div>
+
+          {phase === "playing" && displayScore === 0 && (
+            <motion.p
+              animate={{ opacity: [0.35, 0.7, 0.35] }}
+              transition={{ duration: 1.6, repeat: Infinity }}
+              className="absolute top-1/3 inset-x-0 text-center text-[11px] text-white/70 pointer-events-none uppercase tracking-[0.2em]"
+            >
               Toque para voar
-            </p>
+            </motion.p>
           )}
+
+          <AnimatePresence>
+            {flash && (
+              <motion.div
+                key="flash"
+                initial={{ opacity: 0.75 }}
+                animate={{ opacity: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="absolute inset-0 bg-white pointer-events-none"
+              />
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>

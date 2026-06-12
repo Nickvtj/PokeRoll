@@ -26,7 +26,11 @@ export function AchievementUnlockToast() {
   const Icon = achievement ? getAchievementIcon(achievement.iconKey) : Trophy;
 
   return (
-    <div className="fixed bottom-20 lg:bottom-6 right-4 z-[180] pointer-events-none max-w-[min(92vw,320px)]">
+    <div
+      className="fixed bottom-20 lg:bottom-6 right-4 z-[180] pointer-events-none max-w-[min(92vw,320px)]"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       <AnimatePresence mode="wait">
         {achievement && style && (
           <motion.div
@@ -51,11 +55,11 @@ export function AchievementUnlockToast() {
                 <Icon className={cn("w-6 h-6", style.icon)} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className={cn("text-[10px] font-black uppercase tracking-widest", style.label)}>
+                <p className={cn("text-micro font-black uppercase tracking-widest", style.label)}>
                   Conquista desbloqueada
                 </p>
                 <p className="text-sm font-bold truncate">{achievement.label}</p>
-                <p className="text-[10px] text-white/45 truncate">{achievement.description}</p>
+                <p className="text-caption text-white/50 truncate">{achievement.description}</p>
               </div>
             </div>
           </motion.div>

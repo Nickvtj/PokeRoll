@@ -7,7 +7,7 @@ import {
   type HunterCaveResult,
 } from "@/components/minigame/HunterCaveGame";
 import { GamePageShell } from "@/components/minigame/GamePageShell";
-import { HUNTER_ENTRY_COST, HUNTER_MAX_POT } from "@/data/economy-balance";
+import { HUNTER_ENTRY_COST } from "@/data/economy-balance";
 import { calcHunterFleeReward } from "@/lib/hunter-cave-engine";
 import { recordMinigameToSupabase } from "@/lib/economy-supabase";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
@@ -72,7 +72,7 @@ export default function HunterCavePage() {
   return (
     <GamePageShell
       title="Caverna dos Hunter"
-      subtitle={`Aposta ${HUNTER_ENTRY_COST} moedas · fuja com até ${HUNTER_MAX_POT} ou perca tudo`}
+      subtitle={`Aposta ${HUNTER_ENTRY_COST} moedas · acumule moedas sem limite ou fuja antes do Haunter`}
       icon={<Ghost className="w-7 h-7 text-violet-400 shrink-0" />}
     >
       <HunterCaveGame

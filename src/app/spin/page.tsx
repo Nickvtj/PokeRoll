@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Coins, Disc3, Stars, Volume2, VolumeX } from "lucide-react";
+import { Coins, Disc3, Stars } from "lucide-react";
 import { SHINY_CHANCE } from "@/data/pokemon-sprites";
 import { SpinMachine } from "@/components/spin/SpinMachine";
 import { SpinLeverButton } from "@/components/spin/SpinLeverButton";
@@ -11,6 +11,7 @@ import { RarityBadge } from "@/components/ui/RarityBadge";
 import { RARITY_CONFIG, RARITY_ORDER } from "@/data/rarity";
 import { useGameStore } from "@/stores/game-store";
 import { useEconomyStore } from "@/stores/economy-store";
+import { usePreferencesStore } from "@/stores/preferences-store";
 import { useSoundEffects, playSpinTick } from "@/hooks/use-sound-effects";
 import { useConfetti } from "@/hooks/use-confetti";
 import type { SpinMultiplier } from "@/types";
@@ -24,7 +25,7 @@ const RevealAnimation = dynamic(
 const MULTIPLIERS: SpinMultiplier[] = [1, 2, 3];
 
 export default function SpinPage() {
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabled = usePreferencesStore((s) => s.soundEnabled);
   const lastSoundKeyRef = useRef("");
 
   const isSpinning = useGameStore((s) => s.isSpinning);
@@ -127,7 +128,13 @@ export default function SpinPage() {
       const best = newResults.reduce((a, b) =>
         rarityOrder.indexOf(b.rarity) > rarityOrder.indexOf(a.rarity) ? b : a
       );
-      setTimeout(() => fireConfetti(best.rarity, true), 150);
+      if (
+        best.rarity === "legendary" ||
+        best.rarity === "epic" ||
+        lastSpinResults.some((r) => r.isNewShinyUnlock)
+      ) {
+        setTimeout(() => fireConfetti(best.rarity, true), 150);
+      }
     }
   }, [
     showReveal,
@@ -237,15 +244,6 @@ export default function SpinPage() {
           willUseFreeSpin={willUseFreeSpin}
           freeSpins={freeSpins}
         />
-
-        <button
-          type="button"
-          onClick={() => setSoundEnabled(!soundEnabled)}
-          className="flex items-center justify-center gap-1.5 w-full text-xs text-white/40 hover:text-white/65 transition-colors"
-        >
-          {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-          Som {soundEnabled ? "ligado" : "desligado"}
-        </button>
 
         <div className="glass-card p-4 sm:p-5 space-y-4 w-full">
           <p className="text-xs font-semibold text-white/45 text-center uppercase tracking-wider">

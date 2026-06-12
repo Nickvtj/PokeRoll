@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Coins, Star, Gift, RotateCcw, Skull, Trophy } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { useEconomyStore } from "@/stores/economy-store";
-import { fireCelebrationConfetti, fireJitsuVictoryConfetti, fireMinigameRecordConfetti } from "@/lib/confetti";
+import { fireJitsuVictoryConfetti, fireMinigameRecordConfetti } from "@/lib/confetti";
 import { playBattleLoss, playBattleWin, playCoinGain, playReward } from "@/lib/sound-engine";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export function RewardPopup() {
   const router = useRouter();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const show = useEconomyStore((s) => s.showReward);
   const reward = useEconomyStore((s) => s.lastReward);
   const onPlayAgain = useEconomyStore((s) => s.rewardPlayAgain);
@@ -21,13 +22,19 @@ export function RewardPopup() {
   const lost = reward?.outcome === "loss";
   const hasOutcome = won || lost;
 
+  const handleClose = () => {
+    const path = reward?.onClosePath;
+    close();
+    if (path) router.push(path);
+  };
+
   useEffect(() => {
     if (!show || !reward) return;
     if (reward.isNewRecord) {
-      fireCelebrationConfetti();
       fireMinigameRecordConfetti();
+    } else if (won) {
+      fireJitsuVictoryConfetti();
     }
-    else if (won) fireJitsuVictoryConfetti();
 
     if (won) void playBattleWin();
     else if (lost) void playBattleLoss();
@@ -35,16 +42,20 @@ export function RewardPopup() {
     else void playReward();
   }, [show, reward, won, lost]);
 
+  useEffect(() => {
+    if (!show) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", onKey);
+    dialogRef.current?.focus();
+    return () => window.removeEventListener("keydown", onKey);
+  }, [show, reward?.onClosePath, close, router]);
+
   const handlePlayAgain = () => {
     const replay = useEconomyStore.getState().rewardPlayAgain;
     close();
     replay?.();
-  };
-
-  const handleClose = () => {
-    const path = reward?.onClosePath;
-    close();
-    if (path) router.push(path);
   };
 
   return (
@@ -58,6 +69,11 @@ export function RewardPopup() {
         >
           <div className="absolute inset-0 bg-black/70 backdrop-blur-md pointer-events-none" />
           <motion.div
+            ref={dialogRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-live="polite"
             initial={{ scale: 0.85, y: 40 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0 }}

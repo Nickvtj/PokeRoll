@@ -2,10 +2,12 @@
 
 import { useCallback } from "react";
 import { getAudioContext, playTone } from "@/lib/sound-engine";
+import { isSoundEnabled } from "@/lib/player-preferences";
 
 /** Efeitos sonoros estilo caça-níquel via Web Audio API */
 export function useSoundEffects() {
   const playCoinClink = useCallback(async (delay = 0, pitch = 1800) => {
+    if (!isSoundEnabled()) return;
     const ctx = await getAudioContext();
     if (!ctx) return;
 
@@ -33,6 +35,7 @@ export function useSoundEffects() {
   }, []);
 
   const playNewPokemonWin = useCallback(async () => {
+    if (!isSoundEnabled()) return;
     const ctx = await getAudioContext();
     if (!ctx) return;
 
@@ -93,6 +96,7 @@ export function useSoundEffects() {
   }, []);
 
   const playLegendary = useCallback(async () => {
+    if (!isSoundEnabled()) return;
     const ctx = await getAudioContext();
     if (!ctx) return;
 
@@ -119,6 +123,7 @@ export function useSoundEffects() {
   }, [playCoinClink]);
 
   const playShinyEpic = useCallback(async () => {
+    if (!isSoundEnabled()) return;
     const ctx = await getAudioContext();
     if (!ctx) return;
 

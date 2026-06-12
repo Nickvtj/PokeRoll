@@ -2,11 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import {
-  BATTLE_COIN_FLIP_MS,
-  BATTLE_COIN_REVEAL_MS,
-  BATTLE_FACE_OFF_MS,
-} from "@/data/economy-balance";
-import { advanceToCoinFlip, resolveCoinFlip } from "@/lib/battle-engine";
+  advanceToCoinFlip,
+  resolveCoinFlip,
+} from "@/lib/battle-engine";
+import { getBattleCeremonyTimings } from "@/lib/battle-ceremony";
 import {
   playBattleCoinResultReveal,
   playBattleCoinSpinSequence,
@@ -25,9 +24,11 @@ export function useBattleCoinFlip(
       return undefined;
     }
 
+    const { faceOffMs } = getBattleCeremonyTimings();
+
     const faceOffTimer = window.setTimeout(() => {
       setBattleState((prev) => (prev?.phase === "faceOff" ? advanceToCoinFlip(prev) : prev));
-    }, BATTLE_FACE_OFF_MS);
+    }, faceOffMs);
 
     return () => {
       window.clearTimeout(faceOffTimer);
@@ -40,22 +41,27 @@ export function useBattleCoinFlip(
       return;
     }
 
+    const timings = getBattleCeremonyTimings();
     const playerStarts = battleState.playerStarts ?? true;
-    const spinSec = BATTLE_COIN_REVEAL_MS / 1000;
+    const spinSec = timings.coinRevealMs / 1000;
 
-    if (!soundsStartedRef.current) {
+    if (!soundsStartedRef.current && !timings.skipSounds) {
       soundsStartedRef.current = true;
       void playBattleCoinToss();
       void playBattleCoinSpinSequence(spinSec);
+    } else if (!soundsStartedRef.current) {
+      soundsStartedRef.current = true;
     }
 
     const revealTimer = window.setTimeout(() => {
-      void playBattleCoinResultReveal(playerStarts);
-    }, BATTLE_COIN_REVEAL_MS);
+      if (!timings.skipSounds) {
+        void playBattleCoinResultReveal(playerStarts);
+      }
+    }, timings.coinRevealMs);
 
     const resolveTimer = window.setTimeout(() => {
       setBattleState((prev) => (prev?.phase === "coinFlip" ? resolveCoinFlip(prev) : prev));
-    }, BATTLE_COIN_FLIP_MS);
+    }, timings.coinFlipMs);
 
     return () => {
       window.clearTimeout(revealTimer);

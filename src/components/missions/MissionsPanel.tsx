@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { CheckCircle, Circle, Coins, Flame, Gift, Trophy, Sparkles, Lock, CheckCircle2 } from "lucide-react";
+import { CheckCircle, CheckCircle2, Circle, Coins, Flame, Gift, Sparkles, Lock, Trophy } from "lucide-react";
 import {
   ACHIEVEMENTS,
   getAchievementIcon,
@@ -12,11 +12,10 @@ import { MEW_ID, MEW_POKEMON } from "@/data/pokemon";
 import { getPokemonSpriteUrl } from "@/data/pokemon-sprites";
 import { isLocalAsset } from "@/lib/image-utils";
 import { ProfileSection } from "@/components/profile/ProfileSection";
-import { ProfileStatCard } from "@/components/profile/ProfileStatCard";
 import { useGameStore } from "@/stores/game-store";
 import { LUCKY_EGG_SPRITE, RARE_CANDY_SPRITE } from "@/data/item-sprites";
 import { ItemSprite } from "@/components/ui/ItemSprite";
-import { DAILY_MISSIONS, getStreakMissionMultiplier } from "@/data/economy-balance";
+import { DAILY_LOGIN_COINS, DAILY_MISSIONS, getStreakMissionMultiplier } from "@/data/economy-balance";
 import { useEconomyStore } from "@/stores/economy-store";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { cn } from "@/lib/utils";
@@ -45,7 +44,10 @@ export function MissionsPanel() {
   const claimMission = useEconomyStore((s) => s.claimMission);
   const claimAllMissions = useEconomyStore((s) => s.claimAllMissions);
   const dailyStreak = useEconomyStore((s) => s.dailyStreak);
+  const lastLoginDate = useEconomyStore((s) => s.lastLoginDate);
   const streakBonus = Math.round((getStreakMissionMultiplier(dailyStreak) - 1) * 100);
+  const today = new Date().toISOString().slice(0, 10);
+  const claimedToday = lastLoginDate === today;
 
   const claimableCount = DAILY_MISSIONS.filter(
     (m) =>
@@ -54,32 +56,114 @@ export function MissionsPanel() {
   ).length;
 
   return (
-    <div className="glass-card p-5 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="font-bold flex items-center gap-2">
-          <Gift className="w-5 h-5 text-indigo-400" />
-          Missões Diárias
-        </h3>
-        <div className="flex items-center gap-2">
-          {claimableCount > 0 && (
-            <AnimatedButton variant="primary" size="sm" onClick={() => claimAllMissions()}>
-              Coletar tudo ({claimableCount})
-            </AnimatedButton>
-          )}
-          <span className="text-xs text-amber-400 flex items-center gap-1">
-            <Flame className="w-3.5 h-3.5" />
-            Streak: {dailyStreak}d
-          </span>
+    <div className="relative overflow-hidden rounded-2xl border border-indigo-500/20 bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.1),transparent_55%)]" />
+
+      <div className="relative border-b border-white/[0.06] px-5 py-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h3 className="font-bold flex items-center gap-2 text-lg">
+              <Gift className="w-5 h-5 text-indigo-400" />
+              Missões Diárias
+            </h3>
+            <p className="text-[11px] text-white/40 mt-1">
+              {streakBonus > 0
+                ? `Bônus de streak: +${streakBonus}% nas recompensas`
+                : "Complete missões e mantenha sua sequência de login"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {claimableCount > 0 && (
+              <AnimatedButton variant="primary" size="sm" onClick={() => claimAllMissions()}>
+                Coletar tudo ({claimableCount})
+              </AnimatedButton>
+            )}
+            <span className="text-xs text-amber-200 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 font-bold tabular-nums">
+              <Flame className="w-3.5 h-3.5 text-amber-400" />
+              {dailyStreak} {dailyStreak === 1 ? "dia" : "dias"}
+            </span>
+          </div>
         </div>
       </div>
 
-      {streakBonus > 0 && (
-        <p className="text-[11px] text-emerald-400/90">
-          Bônus de streak: +{streakBonus}% nas recompensas de missão
-        </p>
-      )}
+      <div className="relative px-5 py-4 border-b border-white/[0.06] bg-amber-500/[0.04]">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-amber-200/80">
+            Sequência de login
+          </p>
+          <p className="text-[11px] text-white/45 tabular-nums">
+            Próximo bônus:{" "}
+            <span className="text-amber-300 font-semibold">
+              {DAILY_LOGIN_COINS[Math.min(dailyStreak, DAILY_LOGIN_COINS.length - 1)]} moedas
+            </span>
+          </p>
+        </div>
 
-      <div className="space-y-2">
+        <div className="flex items-center gap-1">
+          {DAILY_LOGIN_COINS.map((coins, i) => {
+            const dayNum = i + 1;
+            const isPast = dailyStreak >= dayNum;
+            const isToday = claimedToday && dailyStreak === dayNum;
+            const isCurrent = !claimedToday && dailyStreak + 1 === dayNum;
+
+            return (
+              <div key={dayNum} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+                <div className="w-full flex items-center">
+                  {i > 0 && (
+                    <div
+                      className={cn(
+                        "h-0.5 flex-1 rounded-full",
+                        dailyStreak >= i ? "bg-amber-400/50" : "bg-white/10"
+                      )}
+                    />
+                  )}
+                  <div
+                    className={cn(
+                      "w-7 h-7 shrink-0 rounded-full border-2 flex items-center justify-center text-[10px] font-black transition-all",
+                      isPast || isToday
+                        ? "border-amber-400 bg-amber-500/25 text-amber-100"
+                        : isCurrent
+                          ? "border-indigo-400 bg-indigo-500/20 text-indigo-200 ring-2 ring-indigo-400/25"
+                          : "border-white/15 bg-white/[0.03] text-white/30"
+                    )}
+                  >
+                    {isPast || isToday ? <CheckCircle className="w-3.5 h-3.5" /> : dayNum}
+                  </div>
+                  {i < DAILY_LOGIN_COINS.length - 1 && (
+                    <div
+                      className={cn(
+                        "h-0.5 flex-1 rounded-full",
+                        dailyStreak > dayNum ? "bg-amber-400/50" : "bg-white/10"
+                      )}
+                    />
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    "text-[9px] font-semibold tabular-nums",
+                    isPast || isToday ? "text-amber-300/90" : "text-white/30"
+                  )}
+                >
+                  {coins}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="text-[11px] text-center mt-3">
+          {claimedToday ? (
+            <span className="inline-flex items-center gap-1.5 text-emerald-400/90">
+              <CheckCircle className="w-3.5 h-3.5" />
+              Login de hoje registrado — volte amanhã!
+            </span>
+          ) : (
+            <span className="text-white/40">Entre hoje para avançar na sequência.</span>
+          )}
+        </p>
+      </div>
+
+      <div className="relative p-5 sm:p-6 grid gap-3 sm:grid-cols-2">
         {DAILY_MISSIONS.map((mission) => {
           const progress = missionProgress[mission.id] ?? 0;
           const claimed = missionsClaimed.includes(mission.id);
@@ -90,45 +174,56 @@ export function MissionsPanel() {
             <div
               key={mission.id}
               className={cn(
-                "p-3 rounded-xl border transition-all",
+                "rounded-xl border p-4 sm:p-4.5 min-h-[5.5rem] transition-all",
                 claimed
-                  ? "bg-white/5 border-white/10 opacity-50"
+                  ? "bg-white/[0.02] border-white/8 opacity-55"
                   : done
-                    ? "bg-indigo-500/10 border-indigo-500/30"
-                    : "bg-white/5 border-white/10"
+                    ? "bg-indigo-500/10 border-indigo-400/30"
+                    : "bg-slate-950/40 border-white/10 hover:border-white/18"
               )}
             >
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2.5 min-w-0">
                   {claimed ? (
-                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                  ) : done ? (
+                    <CheckCircle2 className="w-5 h-5 text-indigo-300 shrink-0" />
                   ) : (
-                    <Circle className="w-4 h-4 text-white/30" />
+                    <Circle className="w-5 h-5 text-white/25 shrink-0" />
                   )}
-                  <span className="text-sm font-medium">{mission.label}</span>
+                  <span className="text-[15px] font-semibold leading-snug">{mission.label}</span>
                 </div>
-                <span className="text-xs text-amber-400 font-bold flex items-center gap-0.5">
+                <span className="text-xs text-amber-300 font-bold flex items-center gap-1 shrink-0">
                   {rewardLabel(mission, dailyStreak)}
                   <RewardIcon mission={mission} />
                 </span>
               </div>
-              <div className="progress-bar h-1.5">
-                <div className="progress-fill" style={{ width: `${pct}%` }} />
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-[10px] text-white/40">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-2 rounded-full bg-black/35 overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-[width] duration-500",
+                      done
+                        ? "bg-gradient-to-r from-indigo-400 to-violet-400"
+                        : "bg-gradient-to-r from-cyan-500/80 to-indigo-400/80"
+                    )}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-xs text-white/45 tabular-nums font-semibold shrink-0 w-11 text-right">
                   {progress}/{mission.target}
                 </span>
-                {done && !claimed && (
-                  <AnimatedButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => claimMission(mission.id)}
-                  >
-                    Resgatar
-                  </AnimatedButton>
-                )}
               </div>
+              {done && !claimed && (
+                <AnimatedButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => claimMission(mission.id)}
+                  className="w-full mt-2.5"
+                >
+                  Resgatar
+                </AnimatedButton>
+              )}
             </div>
           );
         })}
@@ -140,17 +235,17 @@ export function MissionsPanel() {
 function AchievementProgressBar({ current, target, done }: AchievementProgress & { done: boolean }) {
   const pct = done ? 100 : Math.min(100, Math.round((current / target) * 100));
   return (
-    <div className="space-y-1 mt-2">
-      <div className="flex justify-between text-[9px] text-white/35 tabular-nums">
+    <div className="mt-auto pt-3 space-y-1">
+      <div className="flex justify-between text-[10px] text-white/40 tabular-nums">
         <span>
           {Math.min(current, target)}/{target}
         </span>
         <span>{pct}%</span>
       </div>
-      <div className="progress-bar h-1">
+      <div className="h-1.5 rounded-full bg-black/35 overflow-hidden">
         <div
           className={cn(
-            "progress-fill transition-[width] duration-500",
+            "h-full rounded-full transition-[width] duration-500",
             done ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-indigo-400 to-purple-400"
           )}
           style={{ width: `${pct}%` }}
@@ -190,12 +285,13 @@ export function AchievementsPanel() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4 flex-1 min-h-0 lg:overflow-hidden">
       <ProfileSection
         title="Pokemon Secreto"
         description="Complete todas as conquistas para liberar o Mew na roleta."
         icon={Sparkles}
         iconClassName="text-pink-400"
+        className="shrink-0"
       >
         <div className="flex items-start gap-4">
           <div className="relative w-20 h-20 shrink-0 rounded-xl bg-slate-900/50 ring-1 ring-inset ring-pink-400/15 flex items-center justify-center overflow-hidden">
@@ -235,59 +331,28 @@ export function AchievementsPanel() {
                 {unlocked.size}/{ACHIEVEMENTS.length}
               </p>
             </div>
-            <div className="progress-bar h-1">
+            <div className="h-1 rounded-full bg-black/30 overflow-hidden">
               <div
-                className="progress-fill bg-gradient-to-r from-pink-400 to-purple-400 transition-[width] duration-700"
+                className="h-full rounded-full bg-gradient-to-r from-pink-400 to-purple-400 transition-[width] duration-700"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
             {allDone && (
-              <p className="text-xs text-emerald-300/90 font-medium">
-                Mew liberado na roleta!
-              </p>
+              <p className="text-xs text-emerald-300/90 font-medium">Mew liberado na roleta!</p>
             )}
           </div>
         </div>
       </ProfileSection>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <ProfileStatCard
-          icon={Trophy}
-          label="Concluidas"
-          value={`${unlocked.size}/${ACHIEVEMENTS.length}`}
-          accent="amber"
-          layout="horizontal"
-        />
-        <ProfileStatCard
-          icon={CheckCircle2}
-          label="Restantes"
-          value={String(ACHIEVEMENTS.length - unlocked.size)}
-          accent="indigo"
-          layout="horizontal"
-        />
-        <ProfileStatCard
-          icon={Sparkles}
-          label="Mew"
-          value={hasMew ? "Sim" : "Nao"}
-          accent="purple"
-          layout="horizontal"
-        />
-        <ProfileStatCard
-          icon={Trophy}
-          label="Meta"
-          value={allDone ? "100%" : `${progressPct}%`}
-          accent="emerald"
-          layout="horizontal"
-        />
-      </div>
 
       <ProfileSection
         title="Conquistas"
         description="Metas da sua jornada em Kanto."
         icon={Trophy}
         iconClassName="text-amber-400"
+        scrollable
+        className="flex-1 min-h-0 lg:min-h-[12rem]"
       >
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 pb-1">
           {ACHIEVEMENTS.map((a) => {
             const done = unlocked.has(a.id);
             const Icon = getAchievementIcon(a.iconKey);
@@ -297,52 +362,46 @@ export function AchievementsPanel() {
               <div
                 key={a.id}
                 className={cn(
-                  "relative overflow-hidden rounded-xl bg-slate-900/40 ring-1 ring-inset px-3 py-3",
+                  "rounded-xl border px-3.5 py-3 flex flex-col min-h-[7.25rem]",
+                  "bg-slate-950/50 transition-colors hover:border-white/15",
                   done
-                    ? "ring-emerald-400/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                    : "ring-white/8",
+                    ? "border-emerald-400/20"
+                    : "border-white/10",
                   allDone && done && "shiny-rainbow-border"
                 )}
               >
                 <div className="flex items-start gap-3">
                   <div
                     className={cn(
-                      "w-10 h-10 shrink-0 rounded-lg flex items-center justify-center ring-1 ring-inset",
+                      "w-10 h-10 shrink-0 rounded-lg flex items-center justify-center border",
                       done
-                        ? "bg-emerald-500/10 ring-emerald-400/20"
-                        : "bg-white/[0.03] ring-white/10"
+                        ? "bg-emerald-500/10 border-emerald-400/25"
+                        : "bg-white/[0.03] border-cyan-400/20"
                     )}
                   >
                     <Icon
-                      className={cn(
-                        "w-5 h-5",
-                        done ? "text-emerald-300" : "text-white/35"
-                      )}
+                      className={cn("w-5 h-5", done ? "text-emerald-300" : "text-cyan-300/70")}
                     />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-white leading-tight">{a.label}</p>
-                        <p className="text-[11px] text-white/40 mt-0.5 leading-snug">
-                          {a.description}
-                        </p>
-                      </div>
-                      {done ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                      ) : null}
+                      <p className="text-sm font-bold text-white leading-tight">{a.label}</p>
+                      {done && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
                     </div>
-                    {!done && (
-                      <AchievementProgressBar current={current} target={target} done={false} />
-                    )}
-                    {done && (
-                      <p className="text-[9px] font-bold text-emerald-400/80 uppercase tracking-wider mt-2">
-                        Concluida
-                      </p>
-                    )}
+                    <p className="text-[11px] text-white/45 mt-0.5 leading-snug line-clamp-2">
+                      {a.description}
+                    </p>
                   </div>
                 </div>
+
+                {done ? (
+                  <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mt-auto pt-3">
+                    Concluída
+                  </p>
+                ) : (
+                  <AchievementProgressBar current={current} target={target} done={false} />
+                )}
               </div>
             );
           })}

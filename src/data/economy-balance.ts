@@ -24,14 +24,14 @@ export const CAPTURE_COINS_MAX = CAPTURE_COINS_PER_CATCH;
 
 export const CLICK_GAME_DURATION_SEC = 30;
 /** Click Rush — moedas por desempenho (pontos + combo) */
-export const CLICK_BASE_COINS_MIN = 3;
-export const CLICK_BASE_COINS_MAX = 18;
+export const CLICK_BASE_COINS_MIN = 5;
+export const CLICK_BASE_COINS_MAX = 28;
 /** Limites de pontos para cada faixa de moeda base */
 export const CLICK_SCORE_TIER_THRESHOLDS = [120, 250, 400, 600, 800, 1000] as const;
 export const CLICK_COMBO_BONUS_TIER_1 = 18;
 export const CLICK_COMBO_BONUS_TIER_2 = 35;
-export const CLICK_COMBO_BONUS_COINS_1 = 2;
-export const CLICK_COMBO_BONUS_COINS_2 = 4;
+export const CLICK_COMBO_BONUS_COINS_1 = 3;
+export const CLICK_COMBO_BONUS_COINS_2 = 6;
 
 export const MEMORY_PAIR_COUNT = 12;
 export const MEMORY_GAME_DURATION_SEC = 60;
@@ -55,7 +55,6 @@ export const JITSU_FACE_OFF_MS = 2800;
 export const HUNTER_ENTRY_COST = 12;
 export const HUNTER_ROUND_REWARDS = [6, 8, 10, 14, 18, 22] as const;
 export const HUNTER_EXTRA_ROUND_REWARD = 22;
-export const HUNTER_MAX_POT = 80;
 export const HUNTER_BALL_COUNT = 4;
 
 /** Flappy Zubat — moedas por faixa de pontuacao */
@@ -139,6 +138,7 @@ export const DAILY_MISSIONS: {
   { id: "gym_badge", label: "Vencer um ginásio (líder)", target: 1, reward: { kind: "luckyEgg", amount: 1 }, type: "gym_win" },
   { id: "capture_streak_5", label: "Capturar 5 Pokémon em sequência (Captura Perfeita)", target: 1, reward: { kind: "rareCandy", amount: 1 }, type: "perfect_capture" },
   { id: "spin_15", label: "Girar 15 vezes", target: 15, reward: { kind: "luckyEgg", amount: 1 }, type: "spins" },
+  { id: "games_4", label: "Jogar 4 minigames", target: 4, reward: { kind: "coins", amount: 14 }, type: "clicks" },
 ];
 
 /** Bônus de streak no login: +10% recompensa de missão por dia (máx. +70%) */

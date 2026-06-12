@@ -25,6 +25,7 @@ import type { BattleState } from "@/types/battle";
 import { getActorBestOpportunity, getBestMoveMatchup } from "@/lib/battle-matchup";
 import type { TypeMatchupHint } from "@/lib/battle-matchup";
 import { cn } from "@/lib/utils";
+import { BattleFightRevealOverlay } from "@/components/battle/BattleFightRevealOverlay";
 
 interface BattleArenaProps {
   state: BattleState | null;
@@ -66,7 +67,10 @@ export function BattleArena({
     () => state?.trainerDisplay?.opponent ?? rollTrainingOpponent(),
     [state?.trainerDisplay?.opponent]
   );
-  const isPreFight = state?.phase === "faceOff" || state?.phase === "coinFlip";
+  const isPreFight =
+    state?.phase === "faceOff" ||
+    state?.phase === "coinFlip" ||
+    state?.phase === "fightReveal";
 
   if (!state) {
     return (
@@ -171,6 +175,16 @@ export function BattleArena({
       {state.phase === "coinFlip" && (
         <BattleCoinFlipOverlay playerStarts={state.playerStarts ?? true} />
       )}
+
+      <AnimatePresence>
+        {state.phase === "fightReveal" && (
+          <BattleFightRevealOverlay
+            key="fight-reveal"
+            playerStarts={state.playerStarts ?? true}
+            accentColor={state.gymMeta?.themeColor}
+          />
+        )}
+      </AnimatePresence>
 
       <div className={isPreFight ? "opacity-25 pointer-events-none select-none" : ""}>
       <div className="flex items-center justify-between gap-4 mb-2">

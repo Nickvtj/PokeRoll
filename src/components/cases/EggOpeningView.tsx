@@ -168,7 +168,7 @@ export function EggOpeningView({
     <div className="space-y-5 page-enter">
       <div className="glass-card p-4 border border-white/10 flex flex-col items-center gap-2">
         <EggVisual egg={egg} size="sm" cracking />
-        <p className="text-[10px] text-white/40 uppercase tracking-widest">Chocando</p>
+        <p className="text-caption text-white/50 uppercase tracking-widest">Chocando</p>
         <h2 className="text-lg font-black text-white">{egg.name}</h2>
       </div>
 
@@ -204,7 +204,7 @@ export function EggOpeningView({
         </div>
       </div>
 
-      <p className="text-center text-[10px] text-white/30 animate-pulse">
+      <p className="text-center text-caption text-white/45 animate-pulse">
         O ovo está prestes a abrir...
       </p>
     </div>

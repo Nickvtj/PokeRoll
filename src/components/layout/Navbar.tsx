@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Disc3, BookOpen, Swords, Gamepad2, ChevronRight } from "lucide-react";
 import { EggOutlineIcon } from "@/components/ui/EggIcon";
@@ -31,15 +30,11 @@ function NavItemLink({
   href: string;
   children: React.ReactNode;
 }) {
-  return (
-    <GuardedNavLink href={href}>
-      {children}
-    </GuardedNavLink>
-  );
+  return <GuardedNavLink href={href}>{children}</GuardedNavLink>;
 }
 
 function ProfileButton({ className }: { className?: string }) {
-  const profilePrefetch = usePrefetchOnIntent("/profile");
+  usePrefetchOnIntent("/profile");
   const username = useGameStore((s) => s.profile.username);
   const level = useEconomyStore((s) => s.level);
   const selectedAvatarId = useEconomyStore((s) => s.selectedAvatarId ?? "default");
@@ -48,24 +43,21 @@ function ProfileButton({ className }: { className?: string }) {
     <GuardedNavLink
       href="/profile"
       className={cn(
-        "group flex items-center gap-2 px-3 py-1.5 rounded-xl glass text-xs border border-white/10 shrink-0",
-        "hover:bg-indigo-500/15 hover:border-indigo-400/40 hover:shadow-lg hover:shadow-indigo-500/20",
-        "hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer",
+        "group flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-xl text-xs",
+        "bg-slate-900/60 border border-white/10 shrink-0",
+        "hover:bg-indigo-500/10 hover:border-indigo-400/35 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)]",
+        "active:scale-[0.98] transition-all duration-200 cursor-pointer",
         className
       )}
     >
-      <TrainerAvatarDisplay
-        avatarId={selectedAvatarId}
-        username={username}
-        size="xs"
-      />
-      <span className="text-white/70 font-medium truncate max-w-[88px] group-hover:text-white transition-colors hidden xl:inline">
+      <TrainerAvatarDisplay avatarId={selectedAvatarId} username={username} size="xs" />
+      <span className="text-white/75 font-semibold truncate max-w-[88px] group-hover:text-white transition-colors hidden xl:inline">
         {username}
       </span>
-      <span className="text-indigo-400 font-semibold group-hover:text-indigo-300 whitespace-nowrap">
+      <span className="text-indigo-300 font-bold group-hover:text-indigo-200 whitespace-nowrap tabular-nums">
         Nv.{level}
       </span>
-      <ChevronRight className="w-3.5 h-3.5 text-white/25 group-hover:text-indigo-300 group-hover:translate-x-0.5 transition-all hidden sm:block" />
+      <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-indigo-300 group-hover:translate-x-0.5 transition-all hidden sm:block" />
     </GuardedNavLink>
   );
 }
@@ -82,53 +74,66 @@ export function Navbar() {
 
   return (
     <>
-      <header className="hidden lg:grid fixed top-0 left-0 right-0 z-40 grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-3 glass glass-blur border-b border-white/10">
-        <GuardedNavLink
-          href="/"
-          className="flex items-center gap-2 group shrink-0 justify-self-start"
-        >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
-            <PokeballIcon size={22} />
-          </div>
-          <h1 className="font-bold text-lg neon-text leading-none">PokéRoll</h1>
-        </GuardedNavLink>
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-40 border-b border-indigo-500/15 bg-slate-950/75 backdrop-blur-xl">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/30 to-transparent" />
+        <div className="relative flex items-center justify-between h-14 px-6">
+          <GuardedNavLink
+            href="/"
+            className="flex items-center gap-2.5 group shrink-0 z-10"
+          >
+            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-600 to-fuchsia-600 flex items-center justify-center shadow-[0_0_24px_rgba(99,102,241,0.35)] group-hover:scale-105 transition-transform">
+              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
+              <PokeballIcon size={22} />
+            </div>
+            <h1 className="font-black text-base neon-text leading-none">PokéRoll</h1>
+          </GuardedNavLink>
 
-        <nav className="flex items-center gap-0.5 justify-self-center">
-          {navItems.map(({ href, label, icon: Icon }) => {
-            const active =
-              href === "/"
-                ? pathname === "/"
-                : pathname === href || pathname.startsWith(`${href}/`);
-            return (
-              <NavItemLink key={href} href={href}>
-                <span
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors whitespace-nowrap",
-                    active
-                      ? "bg-indigo-500/20 text-indigo-300"
-                      : "text-white/60 hover:text-white hover:bg-white/5"
-                  )}
-                >
-                  <Icon className="w-3.5 h-3.5 shrink-0" />
-                  {label}
-                </span>
-              </NavItemLink>
-            );
-          })}
-        </nav>
+          <nav
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1"
+            aria-label="Menu principal"
+          >
+            {navItems.map(({ href, label, icon: Icon }) => {
+              const active =
+                href === "/"
+                  ? pathname === "/"
+                  : pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <NavItemLink key={href} href={href}>
+                  <span
+                    className={cn(
+                      "relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap",
+                      active
+                        ? "text-white"
+                        : "text-white/45 hover:text-white/85"
+                    )}
+                  >
+                    <Icon className={cn("w-3.5 h-3.5 shrink-0", active && "text-indigo-300")} />
+                    {label}
+                    {active && (
+                      <span className="absolute inset-x-2 -bottom-0.5 h-0.5 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.6)]" />
+                    )}
+                  </span>
+                </NavItemLink>
+              );
+            })}
+          </nav>
 
-        <div className="flex items-center justify-end gap-2 justify-self-end min-w-0">
-          <TrainerItemsBar />
-          <CoinCounter size="sm" />
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass text-xs whitespace-nowrap shrink-0">
-            <BookOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span>{uniqueCount}/{TOTAL_POKEMON}</span>
+          <div className="flex items-center justify-end gap-2 shrink-0 z-10">
+            <TrainerItemsBar />
+            <CoinCounter size="sm" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-cyan-500/15 text-xs whitespace-nowrap">
+              <BookOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="font-semibold tabular-nums">
+                {uniqueCount}/{TOTAL_POKEMON}
+              </span>
+            </div>
+            <ProfileButton />
           </div>
-          <ProfileButton />
         </div>
       </header>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass glass-blur border-t border-white/10">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-indigo-500/15 bg-slate-950/85 backdrop-blur-xl">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/25 to-transparent" />
         <div className="grid grid-cols-6 items-center py-1 px-0.5">
           {navItems.map(({ href, label, icon: Icon }) => {
             const active =
@@ -139,12 +144,12 @@ export function Navbar() {
               <NavItemLink key={href} href={href}>
                 <span
                   className={cn(
-                    "flex flex-col items-center gap-0.5 py-1.5 rounded-xl",
-                    active ? "text-indigo-400" : "text-white/40"
+                    "flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl nav-touch-target transition-colors",
+                    active ? "text-indigo-300" : "text-white/35"
                   )}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-[8px] font-medium">{label}</span>
+                  <Icon className={cn("w-4 h-4", active && "drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]")} />
+                  <span className="text-micro font-semibold leading-none">{label}</span>
                 </span>
               </NavItemLink>
             );
@@ -155,7 +160,7 @@ export function Navbar() {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-3 py-2 pointer-events-none">
         <div className="flex items-center gap-1.5 pointer-events-auto">
           <TrainerItemsBar />
-          <CoinCounter size="sm" className="shadow-xl" />
+          <CoinCounter size="sm" className="shadow-xl border border-white/10" />
         </div>
         <ProfileButton className="pointer-events-auto shadow-xl" />
       </div>

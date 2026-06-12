@@ -2,13 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  BATTLE_COIN_FLIP_MS,
-  BATTLE_COIN_REVEAL_MS,
-  BATTLE_FACE_OFF_MS,
   BATTLE_FLASH_MS,
-  BATTLE_POST_COIN_PAUSE_MS,
   BATTLE_STRIKE_MS,
 } from "@/data/economy-balance";
+import { getBattleCeremonyTimings } from "@/lib/battle-ceremony";
 import { advanceToCoinFlip } from "@/lib/battle-engine";
 import {
   executeEnemyAction,
@@ -33,6 +30,7 @@ import {
   playBattleCoinToss,
 } from "@/lib/sound-engine";
 import { playTacticalCombatSounds } from "@/lib/battle-sound-utils";
+import { usePreferencesStore } from "@/stores/preferences-store";
 import type { BattleState, TacticalPhase } from "@/types/battle";
 
 export interface BattleCombatHighlight {
@@ -81,12 +79,15 @@ export function useTacticalBattle({
   const stateRef = useRef(battleState);
   const faceOffTimerRef = useRef<number | null>(null);
   const coinFlipTimerRef = useRef<number | null>(null);
+  const fightRevealTimerRef = useRef<number | null>(null);
   const chainTimerRef = useRef<number | null>(null);
   const autoTimerRef = useRef<number | null>(null);
   const combatTimersRef = useRef<number[]>([]);
   const finishTurnRef = useRef<(state: BattleState, done: boolean) => void>(() => {});
 
   const soundsStartedRef = useRef(false);
+  const lastCeremonySkipTokenRef = useRef(0);
+  const ceremonySkipToken = usePreferencesStore((s) => s.ceremonySkipToken);
 
   fightingRef.current = fighting;
   stateRef.current = battleState;
@@ -102,6 +103,13 @@ export function useTacticalBattle({
     if (coinFlipTimerRef.current != null) {
       window.clearTimeout(coinFlipTimerRef.current);
       coinFlipTimerRef.current = null;
+    }
+  }, []);
+
+  const clearFightRevealTimer = useCallback(() => {
+    if (fightRevealTimerRef.current != null) {
+      window.clearTimeout(fightRevealTimerRef.current);
+      fightRevealTimerRef.current = null;
     }
   }, []);
 
@@ -171,6 +179,56 @@ export function useTacticalBattle({
     },
     [setBattleState]
   );
+
+  const skipCeremonyToFighting = useCallback(() => {
+    const prev = stateRef.current;
+    if (!prev || !fightingRef.current) return;
+    if (
+      prev.phase !== "faceOff" &&
+      prev.phase !== "coinFlip" &&
+      prev.phase !== "fightReveal"
+    ) {
+      return;
+    }
+
+    clearFaceOffTimer();
+    clearCoinFlipTimer();
+    clearFightRevealTimer();
+    soundsStartedRef.current = true;
+
+    if (prev.phase === "fightReveal") {
+      const resolved = { ...prev, phase: "fighting" as const };
+      stateRef.current = resolved;
+      syncBattleState(resolved);
+      if (resolved.tacticalPhase === "enemy-turn") {
+        scheduleEnemyChain(getBattleCeremonyTimings(true).postCoinPauseMs);
+      }
+      return;
+    }
+
+    const state = prev.phase === "faceOff" ? advanceToCoinFlip(prev) : prev;
+    if (state.phase !== "coinFlip") return;
+
+    const resolved = resolveTacticalCoinFlip(state);
+    stateRef.current = resolved;
+    syncBattleState(resolved);
+
+    if (resolved.tacticalPhase === "enemy-turn") {
+      scheduleEnemyChain(getBattleCeremonyTimings(true).postCoinPauseMs);
+    }
+  }, [
+    clearFaceOffTimer,
+    clearCoinFlipTimer,
+    clearFightRevealTimer,
+    syncBattleState,
+    scheduleEnemyChain,
+  ]);
+
+  useEffect(() => {
+    if (ceremonySkipToken === lastCeremonySkipTokenRef.current) return;
+    lastCeremonySkipTokenRef.current = ceremonySkipToken;
+    skipCeremonyToFighting();
+  }, [ceremonySkipToken, skipCeremonyToFighting]);
 
   const playCombatBeat = useCallback(
     (
@@ -397,6 +455,7 @@ export function useTacticalBattle({
       setDisplayState(null);
       clearFaceOffTimer();
       clearCoinFlipTimer();
+      clearFightRevealTimer();
       clearChainTimer();
       clearAutoTimer();
       clearCombatTimers();
@@ -408,29 +467,41 @@ export function useTacticalBattle({
       return undefined;
     }
 
+    const timings = getBattleCeremonyTimings();
     const playerStarts = battleState.playerStarts ?? true;
-    if (!soundsStartedRef.current) {
+    if (!soundsStartedRef.current && !timings.skipSounds) {
       soundsStartedRef.current = true;
       void playBattleCoinToss();
-      void playBattleCoinSpinSequence(BATTLE_COIN_REVEAL_MS / 1000);
+      void playBattleCoinSpinSequence(timings.coinRevealMs / 1000);
+    } else if (!soundsStartedRef.current) {
+      soundsStartedRef.current = true;
     }
 
     const revealTimer = window.setTimeout(() => {
-      void playBattleCoinResultReveal(playerStarts);
-    }, BATTLE_COIN_REVEAL_MS);
+      if (!timings.skipSounds) {
+        void playBattleCoinResultReveal(playerStarts);
+      }
+    }, timings.coinRevealMs);
 
     coinFlipTimerRef.current = window.setTimeout(() => {
       coinFlipTimerRef.current = null;
       const prev = stateRef.current;
       if (!prev || prev.phase !== "coinFlip") return;
       const resolved = resolveTacticalCoinFlip(prev);
-      stateRef.current = resolved;
-      syncBattleState(resolved);
 
-      if (resolved.tacticalPhase === "enemy-turn") {
-        scheduleEnemyChain(BATTLE_POST_COIN_PAUSE_MS);
+      if (timings.skipSounds) {
+        stateRef.current = resolved;
+        syncBattleState(resolved);
+        if (resolved.tacticalPhase === "enemy-turn") {
+          scheduleEnemyChain(timings.postCoinPauseMs);
+        }
+        return;
       }
-    }, BATTLE_COIN_FLIP_MS);
+
+      const revealState = { ...resolved, phase: "fightReveal" as const };
+      stateRef.current = revealState;
+      syncBattleState(revealState);
+    }, timings.coinFlipMs);
 
     return () => {
       window.clearTimeout(revealTimer);
@@ -449,11 +520,42 @@ export function useTacticalBattle({
   ]);
 
   useEffect(() => {
+    if (!fighting || battleState?.phase !== "fightReveal") {
+      return undefined;
+    }
+
+    const timings = getBattleCeremonyTimings();
+    fightRevealTimerRef.current = window.setTimeout(() => {
+      fightRevealTimerRef.current = null;
+      const prev = stateRef.current;
+      if (!prev || prev.phase !== "fightReveal") return;
+      const resolved = { ...prev, phase: "fighting" as const };
+      stateRef.current = resolved;
+      syncBattleState(resolved);
+      if (resolved.tacticalPhase === "enemy-turn") {
+        scheduleEnemyChain(timings.postCoinPauseMs);
+      }
+    }, timings.fightRevealMs);
+
+    return () => {
+      clearFightRevealTimer();
+    };
+  }, [
+    fighting,
+    battleState?.phase,
+    syncBattleState,
+    scheduleEnemyChain,
+    clearFightRevealTimer,
+  ]);
+
+  useEffect(() => {
     if (!fighting) return undefined;
 
     if (battleState?.phase !== "faceOff") {
       return undefined;
     }
+
+    const { faceOffMs } = getBattleCeremonyTimings();
 
     faceOffTimerRef.current = window.setTimeout(() => {
       faceOffTimerRef.current = null;
@@ -462,7 +564,7 @@ export function useTacticalBattle({
       const next = advanceToCoinFlip(prev);
       stateRef.current = next;
       syncBattleState(next);
-    }, BATTLE_FACE_OFF_MS);
+    }, faceOffMs);
 
     return () => {
       clearFaceOffTimer();

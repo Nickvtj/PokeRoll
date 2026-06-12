@@ -10,6 +10,7 @@ interface JitsuArenaCardProps {
   side: "player" | "bot";
   winnerFlash: "player" | "bot" | "tie" | null;
   isResolving: boolean;
+  isClashing?: boolean;
 }
 
 const FLY_FROM = {
@@ -17,9 +18,16 @@ const FLY_FROM = {
   bot: { x: 24, y: -72 },
 };
 
-export function JitsuArenaCard({ card, side, winnerFlash, isResolving }: JitsuArenaCardProps) {
+export function JitsuArenaCard({
+  card,
+  side,
+  winnerFlash,
+  isResolving,
+  isClashing = false,
+}: JitsuArenaCardProps) {
   const meta = JITSU_ELEMENT_META[card.type];
   const from = FLY_FROM[side];
+  const clashDir = side === "player" ? 1 : -1;
   const playerWon = winnerFlash === "player";
   const botWon = winnerFlash === "bot";
   const won = side === "player" ? playerWon : botWon;
@@ -29,8 +37,18 @@ export function JitsuArenaCard({ card, side, winnerFlash, isResolving }: JitsuAr
     <motion.div
       key={card.instanceId}
       initial={{ x: from.x, y: from.y, scale: 0.7, opacity: 0 }}
-      animate={{ x: 0, y: 0, scale: 1, opacity: 1 }}
-      transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+      animate={
+        isClashing
+          ? {
+              x: [from.x, clashDir * 34, clashDir * -8, 0],
+              y: [from.y, 0, 0, 0],
+              scale: [0.7, 1.12, 0.96, 1],
+              opacity: 1,
+              rotate: [0, clashDir * -6, clashDir * 4, 0],
+            }
+          : { x: 0, y: 0, scale: 1, opacity: 1, rotate: 0 }
+      }
+      transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
       className="relative"
     >
       <motion.div

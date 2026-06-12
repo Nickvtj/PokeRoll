@@ -8,6 +8,7 @@ import { useAchievementSync, useDuplicateRewardGuard } from "@/hooks/use-achieve
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGymStore } from "@/stores/gym-store";
 import { useGameStore } from "@/stores/game-store";
+import { usePreferencesStore } from "@/stores/preferences-store";
 import { useEffect } from "react";
 import { prefetchAppRoutes } from "@/lib/route-prefetch";
 import { preloadPrioritySpritesDeferred } from "@/lib/sprite-preload";
@@ -48,14 +49,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const { isLoading } = useGameInit();
   const initializeEconomy = useEconomyStore((s) => s.initializeEconomy);
   const initializeGym = useGymStore((s) => s.initializeGym);
+  const initializePreferences = usePreferencesStore((s) => s.initializePreferences);
 
   useAchievementSync(!isLoading);
   useDuplicateRewardGuard();
 
   useEffect(() => {
+    initializePreferences();
     initializeEconomy();
     initializeGym();
-  }, [initializeEconomy, initializeGym]);
+  }, [initializePreferences, initializeEconomy, initializeGym]);
 
   useEffect(() => {
     if (isLoading) return;

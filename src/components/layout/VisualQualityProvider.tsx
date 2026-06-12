@@ -12,17 +12,20 @@ import {
   detectVisualQuality,
   type VisualQuality,
 } from "@/lib/visual-quality";
+import { usePreferencesStore } from "@/stores/preferences-store";
 
 export type { VisualQuality } from "@/lib/visual-quality";
 
 const VisualQualityContext = createContext<VisualQuality>("medium");
 
 export function VisualQualityProvider({ children }: { children: ReactNode }) {
+  const visualQualityMode = usePreferencesStore((s) => s.visualQualityMode);
   const [quality, setQuality] = useState<VisualQuality>("medium");
 
   useEffect(() => {
     const update = () => {
-      const next = detectVisualQuality();
+      const next =
+        visualQualityMode !== "auto" ? visualQualityMode : detectVisualQuality();
       setQuality(next);
       applyVisualQuality(next);
     };
@@ -39,7 +42,7 @@ export function VisualQualityProvider({ children }: { children: ReactNode }) {
       motionQuery.removeEventListener("change", update);
       mobileQuery.removeEventListener("change", update);
     };
-  }, []);
+  }, [visualQualityMode]);
 
   return (
     <VisualQualityContext.Provider value={quality}>

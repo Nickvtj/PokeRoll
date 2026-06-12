@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" data-visual-quality="medium">
+    <html lang="pt-BR" data-visual-quality="medium" data-custom-cursor="on">
       <body className="font-body antialiased">
         <VisualQualityProvider>
           <AnimatedBackground />

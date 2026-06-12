@@ -2,7 +2,6 @@ import {
   HUNTER_BALL_COUNT,
   HUNTER_ENTRY_COST,
   HUNTER_EXTRA_ROUND_REWARD,
-  HUNTER_MAX_POT,
   HUNTER_ROUND_REWARDS,
 } from "@/data/economy-balance";
 import { applyMinigameCoinBonus } from "@/lib/minigame-rewards";
@@ -14,11 +13,12 @@ export function rollHaunterIndex(): number {
 export function getRoundReward(roundNumber: number): number {
   const idx = roundNumber - 1;
   if (idx < HUNTER_ROUND_REWARDS.length) return HUNTER_ROUND_REWARDS[idx];
-  return HUNTER_EXTRA_ROUND_REWARD;
+  const extraRound = roundNumber - HUNTER_ROUND_REWARDS.length;
+  return HUNTER_EXTRA_ROUND_REWARD + extraRound * 2;
 }
 
 export function addToPot(currentPot: number, reward: number): number {
-  return Math.min(HUNTER_MAX_POT, currentPot + reward);
+  return currentPot + reward;
 }
 
 export function calcHunterProfit(pot: number): number {
@@ -50,4 +50,4 @@ export function calcHunterFleeReward(
   };
 }
 
-export { HUNTER_ENTRY_COST, HUNTER_MAX_POT };
+export { HUNTER_ENTRY_COST };

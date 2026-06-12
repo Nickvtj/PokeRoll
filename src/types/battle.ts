@@ -63,7 +63,14 @@ export interface BattleFighter {
   status?: FighterStatus | null;
 }
 
-export type BattlePhase = "idle" | "faceOff" | "coinFlip" | "fighting" | "victory" | "defeat";
+export type BattlePhase =
+  | "idle"
+  | "faceOff"
+  | "coinFlip"
+  | "fightReveal"
+  | "fighting"
+  | "victory"
+  | "defeat";
 
 export type BattleHitEffectiveness = "super" | "weak" | "immune" | "normal";
 

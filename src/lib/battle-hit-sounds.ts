@@ -1,4 +1,5 @@
 import { getAudioContext } from "@/lib/sound-engine";
+import { isSoundEnabled } from "@/lib/player-preferences";
 import type { BattleHitSound } from "@/types/battle";
 
 type OscType = OscillatorType;
@@ -208,6 +209,7 @@ function getTypePreset(type: string): ToneSpec[] {
 }
 
 export async function playBattleStrike(): Promise<void> {
+  if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
   if (!ctx) return;
 
@@ -224,6 +226,7 @@ export async function playBattleStrike(): Promise<void> {
 
 /** Som curto ao piscar (dano recebido) — estilo Game Boy */
 export async function playBattleDamage(sound: BattleHitSound): Promise<void> {
+  if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
   if (!ctx) return;
 
@@ -245,6 +248,7 @@ export async function playBattleDamage(sound: BattleHitSound): Promise<void> {
 }
 
 export async function playBattleHit(sound: BattleHitSound): Promise<void> {
+  if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
   if (!ctx) return;
 

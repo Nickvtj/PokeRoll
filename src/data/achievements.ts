@@ -383,15 +383,6 @@ export const ACHIEVEMENTS: Achievement[] = [
     progress: (s) => ({ current: s.eggsHatched, target: 100 }),
   },
   {
-    id: "egg_sell_100",
-    label: "Mercador de Ovos",
-    description: "Ganhe 100 moedas vendendo duplicatas de ovos",
-    iconKey: "coins",
-    category: "eggs",
-    check: (s) => s.eggSellCoins >= 100,
-    progress: (s) => ({ current: s.eggSellCoins, target: 100 }),
-  },
-  {
     id: "egg_sell_500",
     label: "Tycoon dos Ovos",
     description: "Ganhe 500 moedas vendendo duplicatas de ovos",

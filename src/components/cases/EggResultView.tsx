@@ -9,6 +9,7 @@ import { RarityBadge } from "@/components/ui/RarityBadge";
 import { StickerBadge } from "@/components/ui/StickerBadge";
 import { DuplicateSadEffect } from "@/components/spin/DuplicateSadEffect";
 import { EggCelebration } from "@/components/cases/EggCelebration";
+import { EggNewRevealFx } from "@/components/cases/EggNewRevealFx";
 import { RARITY_CONFIG } from "@/data/rarity";
 import { getCapsuleSellPrice } from "@/lib/capsule-sell";
 import { isLocalAsset } from "@/lib/image-utils";
@@ -34,6 +35,8 @@ export function EggResultView({
   const meta = RARITY_CONFIG[pokemon.rarity];
   const sellPrice = getCapsuleSellPrice(pokemon.rarity, isShiny);
   const showDuplicateActions = isDuplicate && !isNew && !isNewShinyUnlock;
+  const isFreshUnlock = (isNew || isNewShinyUnlock) && !showDuplicateActions;
+  const revealColor = isShiny ? "#fbbf24" : meta.color;
   const isHighTier =
     isShiny || pokemon.rarity === "legendary" || pokemon.rarity === "epic" || pokemon.rarity === "rare";
 
@@ -53,7 +56,7 @@ export function EggResultView({
             "font-black uppercase tracking-widest",
             isHighTier ? "text-sm" : "text-xs"
           )}
-          style={{ color: isShiny ? "#fbbf24" : meta.color }}
+          style={{ color: revealColor }}
         >
           {isShiny
             ? "Nasceu um Shiny!"
@@ -61,29 +64,38 @@ export function EggResultView({
               ? "Lendário!"
               : pokemon.rarity === "epic"
                 ? "Épico!"
-                : "O ovo chocou!"}
+                : isFreshUnlock
+                  ? "Novo Pokémon!"
+                  : "O ovo chocou!"}
         </p>
         <h2 className="text-2xl font-black text-white">{pokemon.name}</h2>
       </div>
 
       <div
         className={cn(
-          "glass-card p-6 text-center relative overflow-hidden border-2",
-          showDuplicateActions && "saturate-[0.85]"
+          "relative overflow-hidden rounded-2xl border-2 text-center",
+          showDuplicateActions
+            ? "glass-card p-6 saturate-[0.85]"
+            : isFreshUnlock
+              ? "bg-gradient-to-b from-slate-950 via-slate-900/95 to-slate-950 p-5 sm:p-6"
+              : "glass-card p-6"
         )}
         style={{
           borderColor: isShiny
             ? "#fde04770"
             : showDuplicateActions
               ? "#64748b50"
-              : `${meta.color}50`,
+              : `${meta.color}55`,
           boxShadow: isShiny
             ? "0 0 60px rgba(251,191,36,0.4)"
             : pokemon.rarity === "legendary"
               ? "0 0 55px rgba(245,158,11,0.45)"
-              : `0 0 40px ${meta.glowColor}`,
+              : isFreshUnlock
+                ? `0 0 48px ${meta.glowColor}`
+                : `0 0 40px ${meta.glowColor}`,
         }}
       >
+        {isFreshUnlock && <EggNewRevealFx color={revealColor} isShiny={isShiny} />}
         <EggCelebration rarity={pokemon.rarity} isShiny={isShiny} />
 
         {showDuplicateActions && <DuplicateSadEffect />}
@@ -98,55 +110,63 @@ export function EggResultView({
           <StickerBadge variant={isNew || isNewShinyUnlock ? "new" : "duplicate"} size="sm" />
         </div>
 
-        <RarityBadge rarity={pokemon.rarity} className="mx-auto mb-4" />
+        <div className="relative z-10">
+          <RarityBadge rarity={pokemon.rarity} className="mx-auto mb-4" />
 
-        <motion.div
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 180, damping: 14, delay: 0.1 }}
-          className="relative mx-auto w-44 h-44 mb-4"
-        >
-          {!showDuplicateActions && (
-            <motion.div
-              animate={
-                isShiny
-                  ? { scale: [1, 1.18, 1], opacity: [0.35, 0.65, 0.35] }
-                  : { scale: [1, 1.08, 1], opacity: [0.25, 0.45, 0.25] }
-              }
-              transition={{ duration: 2, repeat: Infinity }}
-              className="absolute inset-0 rounded-full blur-2xl"
-              style={{ backgroundColor: isShiny ? "#fbbf24" : meta.color }}
-            />
-          )}
-          <Image
-            src={pokemon.image}
-            alt={pokemon.name}
-            fill
+          <motion.div
+            initial={{ scale: 0.4, opacity: 0, y: 12 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 16, delay: 0.08 }}
             className={cn(
-              "relative z-10 object-contain drop-shadow-2xl",
-              showDuplicateActions && "grayscale-[30%]"
+              "relative mx-auto mb-4",
+              isFreshUnlock ? "w-48 h-48 sm:w-52 sm:h-52" : "w-44 h-44"
             )}
-            unoptimized={!isLocalAsset(pokemon.image)}
-          />
-        </motion.div>
+          >
+            {!showDuplicateActions && (
+              <motion.div
+                animate={
+                  isShiny
+                    ? { scale: [1, 1.18, 1], opacity: [0.35, 0.65, 0.35] }
+                    : isFreshUnlock
+                      ? { scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }
+                      : { scale: [1, 1.08, 1], opacity: [0.25, 0.45, 0.25] }
+                }
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 rounded-full blur-2xl"
+                style={{ backgroundColor: revealColor }}
+              />
+            )}
+            <Image
+              src={pokemon.image}
+              alt={pokemon.name}
+              fill
+              className={cn(
+                "relative z-10 object-contain drop-shadow-2xl",
+                showDuplicateActions && "grayscale-[30%]",
+                isFreshUnlock && "drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+              )}
+              unoptimized={!isLocalAsset(pokemon.image)}
+            />
+          </motion.div>
 
-        {isNewShinyUnlock && (
-          <p className="text-sm font-bold text-amber-300 flex items-center justify-center gap-1.5">
-            <Sparkles className="w-4 h-4" />
-            Shiny desbloqueado no álbum!
-          </p>
-        )}
-        {isNew && !isNewShinyUnlock && (
-          <p className="text-sm font-bold text-emerald-300 flex items-center justify-center gap-1.5">
-            <BookOpen className="w-4 h-4" />
-            Adicionado ao álbum!
-          </p>
-        )}
-        {showDuplicateActions && (
-          <p className="text-xs text-orange-200/80 mt-1">
-            Você já tem este Pokémon. O que deseja fazer?
-          </p>
-        )}
+          {isNewShinyUnlock && (
+            <p className="text-sm font-bold text-amber-300 flex items-center justify-center gap-1.5">
+              <Sparkles className="w-4 h-4" />
+              Shiny desbloqueado no álbum!
+            </p>
+          )}
+          {isNew && !isNewShinyUnlock && (
+            <p className="text-sm font-bold text-emerald-300 flex items-center justify-center gap-1.5">
+              <BookOpen className="w-4 h-4" />
+              Adicionado ao álbum!
+            </p>
+          )}
+          {showDuplicateActions && (
+            <p className="text-xs text-orange-200/80 mt-1">
+              Você já tem este Pokémon. O que deseja fazer?
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-3">
