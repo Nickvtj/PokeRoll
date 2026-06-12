@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 interface GamePageShellProps {
   title: string;
   subtitle: string;
   icon: React.ReactNode;
   children: React.ReactNode;
+  compact?: boolean;
 }
 
 export function GamePageShell({
@@ -14,9 +16,15 @@ export function GamePageShell({
   subtitle,
   icon,
   children,
+  compact = false,
 }: GamePageShellProps) {
   return (
-    <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
+    <div
+      className={cn(
+        "max-w-lg mx-auto px-4",
+        compact ? "py-4 space-y-4" : "py-8 space-y-6"
+      )}
+    >
       <div className="flex items-center gap-3 min-w-0">
         <Link
           href="/games"

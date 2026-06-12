@@ -69,8 +69,9 @@ export default function FlappyZubatPage() {
 
   return (
     <GamePageShell
+      compact
       title="Flappy Zubat"
-      subtitle="Voe pela torre assombrada · desbloqueie skins · até 18 moedas por partida"
+      subtitle="Desbloqueie skins · até 18 moedas por partida"
       icon={<Bird className="w-7 h-7 text-indigo-400 shrink-0" />}
     >
       <FlappyZubatGame

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Lock, Play, Sparkles, Trophy } from "lucide-react";
-import { MinigameLobbyCard } from "@/components/minigame/MinigameLobbyCard";
+import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import {
   FLAPPY_SKINS,
   getFlappySkin,
@@ -63,151 +63,183 @@ function skinProgress(
   return null;
 }
 
+function skinUnlockDetail(
+  skin: (typeof FLAPPY_SKINS)[number],
+  bestScore: number,
+  lifetimeCoins: number
+): { current: number; target: number } | null {
+  if (skin.unlockType === "score" && skin.unlockValue) {
+    return { current: bestScore, target: skin.unlockValue };
+  }
+  if (skin.unlockType === "lifetime" && skin.unlockValue) {
+    return { current: lifetimeCoins, target: skin.unlockValue };
+  }
+  return null;
+}
+
 function FlappySkinPicker({
   selectedSkinId,
   unlockedSkins,
   bestScore,
   lifetimeCoins,
   onSelectSkin,
+  onStart,
 }: {
   selectedSkinId: string;
   unlockedSkins: string[];
   bestScore: number;
   lifetimeCoins: number;
   onSelectSkin: (id: string) => void;
+  onStart: () => void;
 }) {
   const selected = getFlappySkin(selectedSkinId);
 
   return (
-    <div className="space-y-3">
-      <div
-        className="relative overflow-hidden rounded-2xl border border-white/10 glass-card"
-        style={{
-          background: `linear-gradient(135deg, ${selected.scene.skyTop} 0%, ${selected.scene.skyMid} 55%, ${selected.scene.skyBot} 100%)`,
-        }}
-      >
-        <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.15),transparent_45%)]" />
-        <div className="relative px-4 py-3 flex items-center justify-between border-b border-white/10">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-white/70">
-            Escolher Pokémon
-          </p>
-          {bestScore > 0 && (
-            <span className="text-[10px] font-bold text-amber-300 flex items-center gap-1 tabular-nums">
-              <Trophy className="w-3 h-3" /> Recorde {bestScore}
-            </span>
-          )}
+    <div
+      className="rounded-2xl border border-white/10 glass-card overflow-hidden"
+      style={{
+        background: `linear-gradient(160deg, ${selected.scene.skyTop} 0%, ${selected.scene.skyMid} 45%, rgba(15,22,41,0.95) 100%)`,
+      }}
+    >
+      <div className="relative px-3 py-2.5 flex items-center justify-between gap-2 border-b border-white/10">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 shrink-0">
+          Escolher Pokémon
+        </p>
+        {bestScore > 0 && (
+          <span className="text-[10px] font-bold text-amber-300 flex items-center gap-1 tabular-nums shrink-0">
+            <Trophy className="w-3 h-3" /> Recorde {bestScore}
+          </span>
+        )}
+      </div>
+
+      <div className="relative px-4 py-3 flex items-center gap-3 border-b border-white/10 bg-black/15">
+        <div
+          className="relative w-[4.5rem] h-[4.5rem] shrink-0 rounded-xl border border-white/15 bg-black/25 flex items-center justify-center"
+          style={{ boxShadow: `0 0 24px ${selected.accent}44` }}
+        >
+          <Image
+            src={selected.spriteUrl}
+            alt=""
+            width={56}
+            height={56}
+            className="w-14 h-14 object-contain drop-shadow-lg"
+            unoptimized
+          />
         </div>
-
-        <div className="relative p-4 flex flex-col sm:flex-row gap-4 items-center">
-          <motion.div
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-            className="relative w-28 h-28 shrink-0 rounded-2xl border border-white/15 bg-black/25 flex items-center justify-center shadow-lg"
-            style={{ boxShadow: `0 0 32px ${selected.accent}44` }}
-          >
-            <Image
-              src={selected.spriteUrl}
-              alt=""
-              width={96}
-              height={96}
-              className="w-20 h-20 object-contain drop-shadow-lg"
-              unoptimized
-            />
-          </motion.div>
-
-          <div className="flex-1 text-center sm:text-left min-w-0">
-            <p className="text-[10px] text-white/45 uppercase tracking-wider">
-              #{String(selected.dexNo).padStart(3, "0")}
-            </p>
-            <h3 className="text-xl font-black" style={{ color: selected.accent }}>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-lg font-black truncate" style={{ color: selected.accent }}>
               {selected.label}
             </h3>
-            <p className="text-xs text-white/55 mt-1">{selected.scene.location}</p>
-            <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-white/15 bg-white/5 text-[10px] font-bold text-white/70 uppercase">
-              <Sparkles className="w-3 h-3 text-amber-300" /> Skin ativa
-            </div>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-white/15 bg-white/5 text-[10px] font-bold text-white/70 uppercase shrink-0">
+              <Sparkles className="w-3 h-3 text-amber-300" /> Ativa
+            </span>
           </div>
+          <p className="text-xs text-white/55 mt-0.5">{selected.scene.location}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5">
-        {FLAPPY_SKINS.map((s) => {
-          const unlocked = isFlappySkinUnlocked(s, bestScore, lifetimeCoins, unlockedSkins);
-          const selectedCard = selectedSkinId === s.id;
-          const progress = skinProgress(s, bestScore, lifetimeCoins);
+      <div className="p-4 space-y-3">
+        <div className="grid grid-cols-2 gap-2.5">
+          {FLAPPY_SKINS.map((s) => {
+            const unlocked = isFlappySkinUnlocked(s, bestScore, lifetimeCoins, unlockedSkins);
+            const selectedCard = selectedSkinId === s.id;
+            const progress = skinProgress(s, bestScore, lifetimeCoins);
+            const unlockDetail = skinUnlockDetail(s, bestScore, lifetimeCoins);
 
-          return (
-            <button
-              key={s.id}
-              type="button"
-              disabled={!unlocked}
-              onClick={() => onSelectSkin(s.id)}
-              className={cn(
-                "relative text-left rounded-xl border p-2.5 transition-all duration-200 glass-card",
-                unlocked && !selectedCard && "border-white/10 hover:border-white/25 hover:bg-white/5",
-                selectedCard &&
-                  unlocked &&
-                  "border-indigo-400/50 shadow-[0_0_20px_rgba(99,102,241,0.25)]",
-                !unlocked && "border-white/5 opacity-75 cursor-not-allowed"
-              )}
-            >
-              {selectedCard && unlocked && (
-                <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
-                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                </span>
-              )}
+            return (
+              <button
+                key={s.id}
+                type="button"
+                disabled={!unlocked}
+                onClick={() => onSelectSkin(s.id)}
+                className={cn(
+                  "relative text-left rounded-xl border p-2.5 transition-all duration-200",
+                  unlocked && !selectedCard && "border-white/10 bg-black/20 hover:border-white/25 hover:bg-white/5",
+                  selectedCard &&
+                    unlocked &&
+                    "border-indigo-400/50 bg-indigo-500/10 shadow-[0_0_16px_rgba(99,102,241,0.2)]",
+                  !unlocked && "border-white/5 bg-black/30 cursor-not-allowed"
+                )}
+              >
+                {selectedCard && unlocked && (
+                  <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                    <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                  </span>
+                )}
 
-              <div className="flex items-start gap-2">
-                <div
-                  className={cn(
-                    "relative w-12 h-12 shrink-0 rounded-xl border flex items-center justify-center",
-                    unlocked ? "border-white/15 bg-black/20" : "border-white/5 bg-black/30"
-                  )}
-                  style={unlocked ? { boxShadow: `0 0 12px ${s.accent}33` } : undefined}
-                >
-                  <Image
-                    src={s.spriteUrl}
-                    alt=""
-                    width={40}
-                    height={40}
-                    className={cn("w-9 h-9 object-contain", !unlocked && "brightness-0 opacity-35")}
-                    unoptimized
-                  />
-                  {!unlocked && (
-                    <Lock className="absolute w-4 h-4 text-white/40 drop-shadow" />
-                  )}
-                </div>
-
-                <div className="min-w-0 flex-1 pt-0.5">
-                  <p className="text-[11px] text-white/50 tabular-nums">#{String(s.dexNo).padStart(3, "0")}</p>
-                  <p
+                <div className="flex items-start gap-2.5">
+                  <div
                     className={cn(
-                      "text-xs font-bold truncate",
-                      unlocked ? "text-white" : "text-white/35"
+                      "relative w-12 h-12 shrink-0 rounded-xl border flex items-center justify-center",
+                      unlocked ? "border-white/15 bg-black/25" : "border-white/5 bg-black/40"
                     )}
+                    style={unlocked ? { boxShadow: `0 0 12px ${s.accent}33` } : undefined}
                   >
-                    {s.label}
-                  </p>
-                  {!unlocked && (
-                    <>
-                      <p className="text-[11px] text-white/45 leading-tight mt-0.5 line-clamp-2">
-                        {s.unlockLabel}
-                      </p>
-                      {progress != null && progress > 0 && (
-                        <div className="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden">
-                          <div
-                            className="h-full bg-indigo-400 transition-all"
-                            style={{ width: `${progress * 100}%` }}
-                          />
-                        </div>
+                    <Image
+                      src={s.spriteUrl}
+                      alt=""
+                      width={40}
+                      height={40}
+                      className={cn("w-9 h-9 object-contain", !unlocked && "brightness-0 opacity-35")}
+                      unoptimized
+                    />
+                    {!unlocked && <Lock className="absolute w-3.5 h-3.5 text-white/50" />}
+                  </div>
+
+                  <div className="min-w-0 flex-1 pt-0.5">
+                    <p
+                      className={cn(
+                        "text-sm font-bold truncate leading-tight",
+                        unlocked ? "text-white" : "text-white/40"
                       )}
-                    </>
-                  )}
+                    >
+                      {s.label}
+                    </p>
+
+                    {!unlocked && (
+                      <>
+                        <p className="text-[11px] text-white/50 leading-snug mt-1 line-clamp-2">
+                          {s.unlockLabel}
+                        </p>
+                        {unlockDetail && (
+                          <>
+                            <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                              <div
+                                className="h-full bg-indigo-400 transition-all"
+                                style={{ width: `${(progress ?? 0) * 100}%` }}
+                              />
+                            </div>
+                            <p className="text-[10px] text-white/40 tabular-nums mt-1">
+                              {unlockDetail.current.toLocaleString("pt-BR")} /{" "}
+                              {unlockDetail.target.toLocaleString("pt-BR")}
+                              {s.unlockType === "score" ? " pts" : " moedas"}
+                            </p>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="pt-1 flex flex-col items-center gap-2.5">
+          <p className="text-xs text-white/45 text-center">
+            Espaço ou toque para voar
+          </p>
+          <AnimatedButton
+            variant="primary"
+            size="md"
+            onClick={onStart}
+            icon={<Play className="w-4 h-4 fill-current" />}
+            className="w-full max-w-[240px]"
+          >
+            Decolar
+          </AnimatedButton>
+        </div>
       </div>
     </div>
   );
@@ -398,30 +430,14 @@ export function FlappyZubatGame({
   return (
     <div className="space-y-4">
       {phase === "lobby" && (
-        <>
-          <FlappySkinPicker
-            selectedSkinId={selectedSkinId}
-            unlockedSkins={unlockedSkins}
-            bestScore={bestScore}
-            lifetimeCoins={lifetimeCoins}
-            onSelectSkin={onSelectSkin}
-          />
-
-          <MinigameLobbyCard
-            accent="indigo"
-            icon={<Play className="w-7 h-7 fill-current" />}
-            title="Flappy Zubat"
-            description={
-              <>
-                Voe por <span className="text-white font-semibold">{skin.scene.location}</span>.
-                Toque ou pressione espaço para bater as asas e desviar dos obstáculos.
-              </>
-            }
-            buttonLabel="DECOLAR"
-            buttonIcon={<Play className="w-4 h-4 fill-current" />}
-            onStart={startGame}
-          />
-        </>
+        <FlappySkinPicker
+          selectedSkinId={selectedSkinId}
+          unlockedSkins={unlockedSkins}
+          bestScore={bestScore}
+          lifetimeCoins={lifetimeCoins}
+          onSelectSkin={onSelectSkin}
+          onStart={startGame}
+        />
       )}
 
       {(phase === "playing" || phase === "dead") && (
