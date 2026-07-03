@@ -1,10 +1,5 @@
 import { POKEMON_LIST } from "@/data/pokemon";
-import {
-  getPokemonSpriteUrl,
-  POKEMON_SPRITE_CDN_URL,
-  getPokemonShinySpriteUrl,
-  POKEMON_SHINY_SPRITE_CDN_URL,
-} from "@/data/pokemon-sprites";
+import { getPokemonSpriteUrl, getPokemonShinySpriteUrl } from "@/data/pokemon-sprites";
 import type { SpinResult } from "@/types";
 
 const preloadedIds = new Set<number>();
@@ -20,15 +15,9 @@ function preloadOne(id: number): void {
   const img = new Image();
   img.decoding = "async";
   img.src = getPokemonSpriteUrl(id);
-  img.onerror = () => {
-    preloadedIds.delete(id);
-    const fallback = new Image();
-    fallback.decoding = "async";
-    fallback.src = POKEMON_SPRITE_CDN_URL(id);
-  };
 }
 
-/** Precarrega sprites locais (fallback CDN em erro). */
+/** Precarrega sprites locais em cache do navegador. */
 export function preloadPokemonSprites(ids?: number[]): void {
   const targetIds = ids ?? POKEMON_LIST.map((p) => p.id);
   for (const id of targetIds) {
@@ -63,12 +52,6 @@ function preloadShinySprite(id: number): void {
   const img = new Image();
   img.decoding = "async";
   img.src = getPokemonShinySpriteUrl(id);
-  img.onerror = () => {
-    preloadedShinyIds.delete(id);
-    const fallback = new Image();
-    fallback.decoding = "async";
-    fallback.src = POKEMON_SHINY_SPRITE_CDN_URL(id);
-  };
 }
 
 export function preloadShinySprites(ids: number[]): void {
@@ -95,7 +78,6 @@ function preloadInBatches(ids: number[], startIndex = 0): void {
 
 /**
  * Precarrega em background: time + coleção (+ primeiros IDs do álbum se poucos coletados).
- * Evita baixar os 150 sprites de uma vez.
  */
 export function preloadPrioritySpritesDeferred(
   teamIds: number[],

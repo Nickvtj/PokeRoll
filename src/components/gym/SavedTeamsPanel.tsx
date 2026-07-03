@@ -5,6 +5,7 @@ import { Bookmark, Trash2 } from "lucide-react";
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGymStore } from "@/stores/gym-store";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 
 export function SavedTeamsPanel() {
   const team = useEconomyStore((s) => s.team);
@@ -27,7 +28,7 @@ export function SavedTeamsPanel() {
         <AnimatedButton
           variant="secondary"
           size="sm"
-          disabled={!name.trim() || team.length < 3}
+          disabled={!name.trim() || team.length < BATTLE_TEAM_SIZE}
           onClick={() => {
             saveTeam(name.trim(), team);
             setName("");

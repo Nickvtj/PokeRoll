@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { RARITY_CONFIG, RARITY_ORDER } from "@/data/rarity";
 import { PokemonGymBadges } from "@/components/gym/GymBadge";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
-import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
+import { BATTLE_CLASSIC_THEME, BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { MonotypeSynergyBanner } from "@/components/battle/MonotypeSynergyFx";
 import { getTeamMonotypeSynergy } from "@/lib/team-monotype";
 import { playUiSelect, playUiDeselect, playUiTab } from "@/lib/ui-sounds";
@@ -62,7 +62,7 @@ function getOwnedCount(collection: Record<number, { count?: number }>, id: numbe
   return Math.max(1, entry.count ?? 1);
 }
 
-export function TeamSelector({ maxTeam = 3, className }: TeamSelectorProps) {
+export function TeamSelector({ maxTeam = BATTLE_TEAM_SIZE, className }: TeamSelectorProps) {
   const collection = useGameStore((s) => s.collection);
   const team = useEconomyStore((s) => s.team);
   const setTeam = useEconomyStore((s) => s.setTeam);

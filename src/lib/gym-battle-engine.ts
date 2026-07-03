@@ -1,4 +1,5 @@
 import { getEliteOpponentPortrait, getGymOpponentPortrait } from "@/data/battle-trainers";
+import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { ELITE_FOUR, GYM_MAP, GYM_TRAINER_STAGES } from "@/data/gyms";
 import { POKEMON_MAP } from "@/data/pokemon";
 import { buildTurnOrder, createFighter, performCoinFlip } from "@/lib/battle-engine";
@@ -12,7 +13,7 @@ function log(message: string, type: BattleLogEntry["type"]): BattleLogEntry {
   return { id: `gym-log-${++logId}`, message, type, timestamp: Date.now() };
 }
 
-const TEAM_SIZE = 3;
+const TEAM_SIZE = BATTLE_TEAM_SIZE;
 
 export function getGymDifficultyModifier(
   recommendedLevel: number,

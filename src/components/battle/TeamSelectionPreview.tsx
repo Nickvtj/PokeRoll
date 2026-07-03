@@ -5,7 +5,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { Users, X } from "lucide-react";
 import { POKEMON_MAP } from "@/data/pokemon";
-import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
+import { BATTLE_CLASSIC_THEME, BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { RARITY_CONFIG } from "@/data/rarity";
 import { withDisplayImage } from "@/lib/pokemon-display";
 import { getTeamMonotypeSynergy } from "@/lib/team-monotype";
@@ -108,7 +108,7 @@ function TeamChip({
 }
 
 export function TeamSelectionPreview({
-  maxTeam = 3,
+  maxTeam = BATTLE_TEAM_SIZE,
   variant = "floating",
   className,
   action,

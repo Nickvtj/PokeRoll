@@ -1,10 +1,26 @@
 "use client";
 
+import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
 import type { BattleLogEntry } from "@/types/battle";
 
 function cleanMessage(message: string): string {
   return message.replace(/→/g, " em ").replace(/\[Dano convencional\]/gi, "").trim();
 }
+
+/* Paleta do log sobre a caixa de diálogo clássica (modo dark) */
+const C = BATTLE_CLASSIC_THEME
+  ? {
+      base: "text-[#9aa6b8]",
+      move: "text-[#f8c860] font-bold",
+      moveMiss: "text-[#f8c860]/70",
+      damage: "text-[#f87868] font-bold",
+    }
+  : {
+      base: "text-white/50",
+      move: "text-amber-300",
+      moveMiss: "text-amber-300/70",
+      damage: "text-red-400",
+    };
 
 export function BattleLogLine({ entry }: { entry: BattleLogEntry }) {
   const raw = cleanMessage(entry.message);
@@ -14,9 +30,9 @@ export function BattleLogLine({ entry }: { entry: BattleLogEntry }) {
     if (used) {
       return (
         <span>
-          <span className="text-white/50">{used[1]} usou </span>
-          <span className="text-amber-300">{used[2]}</span>
-          <span className="text-white/50">!</span>
+          <span className={C.base}>{used[1]} usou </span>
+          <span className={C.move}>{used[2]}</span>
+          <span className={C.base}>!</span>
         </span>
       );
     }
@@ -25,9 +41,9 @@ export function BattleLogLine({ entry }: { entry: BattleLogEntry }) {
     if (missed) {
       return (
         <span>
-          <span className="text-white/50">{missed[1]} errou </span>
-          <span className="text-amber-300/70">{missed[2]}</span>
-          <span className="text-white/50">!</span>
+          <span className={C.base}>{missed[1]} errou </span>
+          <span className={C.moveMiss}>{missed[2]}</span>
+          <span className={C.base}>!</span>
         </span>
       );
     }
@@ -41,13 +57,13 @@ export function BattleLogLine({ entry }: { entry: BattleLogEntry }) {
 
       return (
         <span>
-          <span className="text-amber-300">{move}</span>
-          <span className="text-white/50">
+          <span className={C.move}>{move}</span>
+          <span className={C.base}>
             {" "}
             em {target} (
           </span>
-          <span className="text-red-400">-{damage}</span>
-          <span className="text-white/50">
+          <span className={C.damage}>-{damage}</span>
+          <span className={C.base}>
             {extras}){tail}
           </span>
         </span>
@@ -55,5 +71,5 @@ export function BattleLogLine({ entry }: { entry: BattleLogEntry }) {
     }
   }
 
-  return <span className="text-white/50">{raw}</span>;
+  return <span className={C.base}>{raw}</span>;
 }

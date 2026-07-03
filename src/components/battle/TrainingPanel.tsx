@@ -8,6 +8,7 @@ import { TeamSelector } from "@/components/battle/TeamSelector";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
 import { initBattle } from "@/lib/battle-engine";
+import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordBattleToSupabase } from "@/lib/economy-supabase";
 import { useBattleSessionStore } from "@/stores/battle-session-store";
@@ -97,9 +98,9 @@ export function TrainingPanel({
   });
 
   const beginBattle = useCallback(() => {
-    if (team.length < 3) return null;
-    const pokemon = getTeamPokemonForBattle(team);
-    if (pokemon.length < 3) return null;
+    if (team.length < BATTLE_TEAM_SIZE) return null;
+    const pokemon = getTeamPokemonForBattle(team.slice(0, BATTLE_TEAM_SIZE));
+    if (pokemon.length < BATTLE_TEAM_SIZE) return null;
     resetLoop();
     const state = initBattle(pokemon, 1, getPokemonLevelsMap(), pokemonMoveLoadouts);
     setBattleState(state);
@@ -168,11 +169,13 @@ export function TrainingPanel({
           variant="gold"
           size="lg"
           onClick={startBattle}
-          disabled={team.length < 3}
+          disabled={team.length < BATTLE_TEAM_SIZE}
           icon={<Shield className="w-5 h-5" />}
           className="w-full"
         >
-          {team.length < 3 ? "Selecione 3 Pokémon" : "INICIAR TREINO"}
+          {team.length < BATTLE_TEAM_SIZE
+            ? `Selecione ${BATTLE_TEAM_SIZE} Pokémon`
+            : "INICIAR TREINO"}
         </AnimatedButton>
       }
     >

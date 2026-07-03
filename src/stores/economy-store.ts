@@ -23,6 +23,7 @@ import {
   syncAchievementsToSupabase,
 } from "@/lib/achievements-sync";
 import { getTeamPassiveBonuses } from "@/data/pokemon-stats";
+import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import {
   addPokemonXp,
   getXpProgressFromTotal,
@@ -408,7 +409,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
   },
 
   setTeam: (team) => {
-    set({ team: team.slice(0, 3) });
+    set({ team: team.slice(0, BATTLE_TEAM_SIZE) });
     get().sync();
   },
 

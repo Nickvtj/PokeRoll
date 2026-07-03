@@ -22,8 +22,9 @@ import type {
   TacticalPhase,
 } from "@/types/battle";
 import type { Pokemon } from "@/types";
+import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 
-export const TEAM_SIZE = 3;
+export const TEAM_SIZE = BATTLE_TEAM_SIZE;
 
 let logId = 0;
 function log(
@@ -838,49 +839,6 @@ export function finishEnemyTurn(state: BattleState): BattleState {
     tacticalPhase: "player-pick-actor",
     pendingSelection: {},
     enemyActionQueue: [],
-  };
-}
-
-/** @deprecated use finishEnemyTurn */
-export function finishEnemyPhase(state: BattleState): BattleState {
-  return finishEnemyTurn(state);
-}
-
-export function initTacticalBattle(
-  playerPokemon: Pokemon[],
-  wave: number,
-  pokemonLevels: Record<number, number>,
-  enemyTeam: BattleFighter[],
-  startLogs: BattleLogEntry[],
-  mode: BattleState["mode"] = "training",
-  moveLoadouts: Record<string, string[]> = {}
-): BattleState {
-  const attachConfig = { moveLoadouts };
-  const playerTeam = attachMovesToTeam(
-    playerPokemon.map((p, i) => createFighter(p, true, pokemonLevels[p.id] ?? 1, i)),
-    attachConfig
-  );
-  const enemies = attachMovesToTeam(enemyTeam);
-
-  const playerStarts = performCoinFlip();
-
-  return {
-    phase: "faceOff",
-    playerTeam,
-    enemyTeam: enemies,
-    turnOrder: [],
-    currentTurnIndex: 0,
-    wave,
-    maxWaves: 1,
-    log: startLogs,
-    reward: null,
-    levelUps: [],
-    mode,
-    playerDeaths: 0,
-    turnCount: 0,
-    playerStarts,
-    battleEngagement: null,
-    tacticalMode: true,
   };
 }
 

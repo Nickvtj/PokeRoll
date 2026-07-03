@@ -1,6 +1,7 @@
 "use client";
 
 import { ELITE_FOUR, isEliteMemberUnlocked } from "@/data/gyms";
+import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { Lock, Swords, Trophy, Check } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { BattleArena } from "@/components/battle/BattleArena";
@@ -92,9 +93,9 @@ export function EliteFourScreen({
   const startElite = useCallback(
     (eliteId: EliteId) => {
       if (!leagueUnlocked || !isEliteMemberUnlocked(eliteId, eliteProgress)) return;
-      if (team.length < 3) return;
-      const pokemon = getTeamPokemonForBattle(team);
-      if (pokemon.length < 3) return;
+      if (team.length < BATTLE_TEAM_SIZE) return;
+      const pokemon = getTeamPokemonForBattle(team.slice(0, BATTLE_TEAM_SIZE));
+      if (pokemon.length < BATTLE_TEAM_SIZE) return;
       resetLoop();
       setActiveElite(eliteId);
       setBattleState(initEliteBattle(eliteId, pokemon, getPokemonLevelsMap(), pokemonMoveLoadouts));
@@ -188,7 +189,7 @@ export function EliteFourScreen({
         {ELITE_FOUR.map((elite, index) => {
           const cleared = !!eliteProgress[elite.id]?.cleared;
           const memberUnlocked = leagueUnlocked && isEliteMemberUnlocked(elite.id, eliteProgress);
-          const disabled = !memberUnlocked || team.length < 3;
+          const disabled = !memberUnlocked || team.length < BATTLE_TEAM_SIZE;
 
           return (
             <button

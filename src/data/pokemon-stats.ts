@@ -2,6 +2,7 @@ import { getPokedexInfo } from "@/data/pokedex";
 import { getEvolutionStatMult } from "@/data/pokemon-evolution";
 import { POKEMON_MAP } from "@/data/pokemon";
 import { TEAM_MONOTYPE_DAMAGE_BONUS } from "@/data/economy-balance";
+import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import type { Pokemon, Rarity } from "@/types";
 import type { PokemonBattleStats, PokemonAbility } from "@/types/battle";
 
@@ -164,7 +165,7 @@ export function getTeamPassiveBonuses(pokemonIds: number[]) {
     }
   }
 
-  if (pokemonIds.length >= 3) {
+  if (pokemonIds.length >= BATTLE_TEAM_SIZE) {
     const types = pokemonIds
       .map((id) => POKEMON_MAP[id])
       .filter(Boolean)

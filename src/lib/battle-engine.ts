@@ -1,4 +1,5 @@
 import { rollTrainingOpponent } from "@/data/battle-trainers";
+import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { POKEMON_LIST } from "@/data/pokemon";
 import { getPokemonBattleStats } from "@/data/pokemon-stats";
 import { getPokedexInfo } from "@/data/pokedex";
@@ -77,7 +78,7 @@ const RARITY_BY_TIER: Record<number, Rarity[]> = {
   5: ["epic", "legendary"],
 };
 
-const TEAM_SIZE = 3;
+const TEAM_SIZE = BATTLE_TEAM_SIZE;
 
 function analyzePlayerTeam(
   playerPokemon: Pokemon[],

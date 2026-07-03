@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { GYM_MAP, GYMS, isEliteLeagueUnlocked, isGymUnlocked } from "@/data/gyms";
 import { getLevelCap } from "@/data/pokemon-xp-curve";
+import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { getDefaultGymState, loadGymState, persistGymState, saveGymStateImmediate } from "@/lib/gym-storage";
 import { loadGymFromSupabase, syncGymToSupabase } from "@/lib/gym-supabase";
 import { useEconomyStore } from "@/stores/economy-store";
@@ -227,7 +228,7 @@ export const useGymStore = create<GymStore>((set, get) => ({
     const team: SavedTeam = {
       id: `team-${Date.now()}`,
       name,
-      pokemonIds: pokemonIds.slice(0, 3),
+      pokemonIds: pokemonIds.slice(0, BATTLE_TEAM_SIZE),
       createdAt: new Date().toISOString(),
     };
     set((s) => ({ savedTeams: [...s.savedTeams, team].slice(-8) }));

@@ -8,6 +8,7 @@ import { SavedTeamsPanel } from "@/components/gym/SavedTeamsPanel";
 import { BadgeRewardAnimation } from "@/components/gym/BadgeRewardAnimation";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { GYM_MAP } from "@/data/gyms";
+import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { initGymBattle } from "@/lib/gym-battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
@@ -98,9 +99,9 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
 
   const startStage = useCallback(
     (s: number) => {
-      if (team.length < 3) return;
-      const pokemon = getTeamPokemonForBattle(team);
-      if (pokemon.length < 3) return;
+      if (team.length < BATTLE_TEAM_SIZE) return;
+      const pokemon = getTeamPokemonForBattle(team.slice(0, BATTLE_TEAM_SIZE));
+      if (pokemon.length < BATTLE_TEAM_SIZE) return;
       resetLoop();
       setStage(s);
       setBattleState(initGymBattle(gymId, s, pokemon, getPokemonLevelsMap(), pokemonMoveLoadouts));
@@ -214,7 +215,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
             variant="gold"
             className="w-full"
             onClick={() => startStage(1)}
-            disabled={team.length < 3}
+            disabled={team.length < BATTLE_TEAM_SIZE}
           >
             Iniciar Ginásio (5 batalhas)
           </AnimatedButton>

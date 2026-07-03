@@ -1,7 +1,7 @@
 "use client";
 
 import { TeamSelectionPreview } from "@/components/battle/TeamSelectionPreview";
-import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
+import { BATTLE_CLASSIC_THEME, BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { cn } from "@/lib/utils";
 
 interface BattleTeamPrepLayoutProps {
@@ -16,7 +16,7 @@ interface BattleTeamPrepLayoutProps {
 export function BattleTeamPrepLayout({
   children,
   action,
-  maxTeam = 3,
+  maxTeam = BATTLE_TEAM_SIZE,
 }: BattleTeamPrepLayoutProps) {
   return (
     <div className="relative flex flex-col flex-1 min-h-0 h-full">

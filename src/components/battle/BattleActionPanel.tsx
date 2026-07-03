@@ -17,12 +17,19 @@ interface BattleActionPanelProps {
   recentLog?: BattleLogEntry[];
 }
 
-const EFF_BADGE: Record<string, string> = {
-  super: "text-emerald-100 bg-emerald-500/45 ring-emerald-300/50",
-  weak: "text-amber-100 bg-amber-500/35 ring-amber-300/40",
-  immune: "text-slate-200 bg-slate-500/35 ring-slate-300/30",
-  normal: "text-white/50 bg-white/10 ring-white/15",
-};
+const EFF_BADGE: Record<string, string> = BATTLE_CLASSIC_THEME
+  ? {
+      super: "text-emerald-50 bg-emerald-700/90 ring-emerald-900/50",
+      weak: "text-amber-50 bg-amber-700/90 ring-amber-900/50",
+      immune: "text-slate-100 bg-slate-600/90 ring-slate-800/50",
+      normal: "text-[#8c98ac] bg-[#242e40] ring-white/10",
+    }
+  : {
+      super: "text-emerald-100 bg-emerald-500/45 ring-emerald-300/50",
+      weak: "text-amber-100 bg-amber-500/35 ring-amber-300/40",
+      immune: "text-slate-200 bg-slate-500/35 ring-slate-300/30",
+      normal: "text-white/50 bg-white/10 ring-white/15",
+    };
 
 const EFF_LABEL: Record<string, string> = {
   super: "Super efetivo",
@@ -69,10 +76,14 @@ function MoveButton({ preview, onPick }: { preview: MovePreview; onPick: () => v
       whileTap={{ scale: 0.97 }}
       onClick={onPick}
       className={cn(
-        "w-full text-left rounded-xl border p-3 transition-all relative overflow-hidden bg-gradient-to-br",
-        typeStyle,
-        preview.effectiveness === "super" && "ring-2 ring-emerald-400/45",
-        preview.effectiveness === "weak" && "ring-1 ring-amber-400/35"
+        "w-full text-left p-3 transition-all relative overflow-hidden",
+        BATTLE_CLASSIC_THEME
+          ? cn("battle-classic-move-btn border-2", typeStyle)
+          : cn("rounded-xl border bg-gradient-to-br", typeStyle),
+        preview.effectiveness === "super" &&
+          (BATTLE_CLASSIC_THEME ? "ring-2 ring-emerald-600/60" : "ring-2 ring-emerald-400/45"),
+        preview.effectiveness === "weak" &&
+          (BATTLE_CLASSIC_THEME ? "ring-1 ring-amber-600/50" : "ring-1 ring-amber-400/35")
       )}
     >
       {badge && (
@@ -85,12 +96,26 @@ function MoveButton({ preview, onPick }: { preview: MovePreview; onPick: () => v
           {badge}
         </span>
       )}
-      <p className="text-sm font-bold truncate text-white pr-12">{move.name}</p>
-      <p className="text-[10px] text-white/60 mt-0.5">
+      <p
+        className={cn(
+          "font-bold truncate pr-12",
+          BATTLE_CLASSIC_THEME ? "battle-classic-move-name" : "text-sm text-white"
+        )}
+      >
+        {move.name}
+      </p>
+      <p
+        className={cn(
+          "mt-0.5",
+          BATTLE_CLASSIC_THEME ? "battle-classic-move-meta" : "text-[10px] text-white/60"
+        )}
+      >
         {typeLabel}
         {move.category === "damage" ? ` · Poder ${move.power}` : " · Status"}
         {preview.estimatedDamage[1] > 0 && (
-          <span className="text-white/40"> · ~{preview.estimatedDamage[0]}–{preview.estimatedDamage[1]}</span>
+          <span className={BATTLE_CLASSIC_THEME ? "opacity-70" : "text-white/40"}>
+            {" "}· ~{preview.estimatedDamage[0]}–{preview.estimatedDamage[1]}
+          </span>
         )}
       </p>
     </motion.button>
@@ -108,19 +133,20 @@ export function BattleActionPanel({
   const phase = state.tacticalPhase;
   const pending = state.pendingSelection ?? {};
 
+  const c = BATTLE_CLASSIC_THEME;
   const phaseHint = (() => {
     switch (phase) {
       case "player-pick-actor":
-        return { icon: Sparkles, text: "Selecione qual Pokémon vai agir", color: "text-cyan-300" };
+        return { icon: Sparkles, text: "Selecione qual Pokémon vai agir", color: c ? "text-[#7cc4e8]" : "text-cyan-300" };
       case "player-pick-target":
-        return { icon: Target, text: "Escolha o alvo inimigo", color: "text-red-300" };
+        return { icon: Target, text: "Escolha o alvo inimigo", color: c ? "text-[#f08878]" : "text-red-300" };
       case "player-pick-move":
-        return { icon: Crosshair, text: "Escolha o golpe", color: "text-amber-300" };
+        return { icon: Crosshair, text: "Escolha o golpe", color: c ? "text-[#f0c860]" : "text-amber-300" };
       case "executing":
       case "animating":
-        return { icon: Swords, text: "Executando...", color: "text-indigo-300" };
+        return { icon: Swords, text: "Executando...", color: c ? "text-[#a0a8f0]" : "text-indigo-300" };
       case "enemy-turn":
-        return { icon: Swords, text: "Turno do oponente", color: "text-red-400" };
+        return { icon: Swords, text: "Turno do oponente", color: c ? "text-[#f08878]" : "text-red-400" };
       default:
         return null;
     }
@@ -171,17 +197,24 @@ export function BattleActionPanel({
             <phaseHint.icon className={cn("w-4 h-4 shrink-0", phaseHint.color)} />
             <p className={cn("text-xs font-bold flex-1", phaseHint.color)}>{phaseHint.text}</p>
             {state.roundNumber != null && (
-              <span className="text-[10px] text-white/30 tabular-nums">R{state.roundNumber}</span>
+              <span
+                className={cn(
+                  "text-[10px] tabular-nums",
+                  c ? "text-[#8c98ac]/70" : "text-white/30"
+                )}
+              >
+                R{state.roundNumber}
+              </span>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
       {actor && target && phase === "player-pick-move" && (
-        <p className="text-[10px] text-white/45 mb-2 font-medium">
-          <span className="text-cyan-300/90">{actor.pokemon.name}</span>
-          <span className="text-white/25 mx-1">vs</span>
-          <span className="text-red-300/90">{target.pokemon.name}</span>
+        <p className={cn("text-[10px] mb-2 font-medium", c ? "text-[#8c98ac]" : "text-white/45")}>
+          <span className={c ? "text-[#7cc4e8] font-bold" : "text-cyan-300/90"}>{actor.pokemon.name}</span>
+          <span className={cn("mx-1", c ? "text-[#8c98ac]/60" : "text-white/25")}>vs</span>
+          <span className={c ? "text-[#f08878] font-bold" : "text-red-300/90"}>{target.pokemon.name}</span>
         </p>
       )}
 
@@ -201,7 +234,12 @@ export function BattleActionPanel({
         <button
           type="button"
           onClick={onCancel}
-          className="mt-2 flex items-center gap-1.5 text-[10px] text-white/35 hover:text-white/60 transition-colors"
+          className={cn(
+            "mt-2 flex items-center gap-1.5 text-[10px] transition-colors",
+            c
+              ? "text-[#8c98ac] hover:text-[#e8ecf4] font-bold"
+              : "text-white/35 hover:text-white/60"
+          )}
         >
           <ArrowLeft className="w-3 h-3" />
           {phase === "player-pick-move" ? "Trocar alvo" : "Trocar Pokémon"}
@@ -209,13 +247,23 @@ export function BattleActionPanel({
       )}
 
       {phase === "player-pick-actor" && (
-        <p className="text-[10px] text-white/40 leading-relaxed italic">
+        <p
+          className={cn(
+            "leading-relaxed",
+            c ? "battle-classic-dialog-text" : "text-[10px] text-white/40 italic"
+          )}
+        >
           Seu golpe, depois 1 do oponente, depois o seu. Escolha Pokémon, alvo e ataque.
         </p>
       )}
 
       {recentLog.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-indigo-500/15 space-y-1 max-h-[4.5rem] overflow-y-auto">
+        <div
+          className={cn(
+            "mt-2 pt-2 border-t space-y-1 max-h-[4.5rem] overflow-y-auto",
+            c ? "border-white/10" : "border-indigo-500/15"
+          )}
+        >
           <AnimatePresence initial={false}>
             {recentLog.map((entry) => (
               <motion.p
@@ -223,8 +271,10 @@ export function BattleActionPanel({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className={cn(
-                  "text-[10px] leading-snug battle-dialog-line",
-                  BATTLE_CLASSIC_THEME ? "battle-classic-dialog-text" : "text-white/50"
+                  "battle-dialog-line",
+                  BATTLE_CLASSIC_THEME
+                    ? "battle-classic-dialog-text"
+                    : "text-[10px] leading-snug text-white/50"
                 )}
               >
                 <BattleLogLine entry={entry} />

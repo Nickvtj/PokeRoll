@@ -1,5 +1,5 @@
 import { FLAPPY_CHARIZARD_LIFETIME_COINS } from "@/data/economy-balance";
-import { getPokemonRetroSpriteUrl } from "@/data/pokemon-sprites";
+import { getPokemonSpriteUrl } from "@/data/pokemon-sprites";
 
 export type FlappySkinId = "zubat" | "pidgey" | "butterfree" | "charizard";
 
@@ -38,7 +38,7 @@ export const FLAPPY_SKINS: FlappySkinConfig[] = [
     label: "Zubat",
     dexNo: 41,
     pokemonId: 41,
-    spriteUrl: getPokemonRetroSpriteUrl(41),
+    spriteUrl: getPokemonSpriteUrl(41),
     unlockLabel: "Skin inicial",
     unlockType: "default",
     accent: "#a78bfa",
@@ -64,7 +64,7 @@ export const FLAPPY_SKINS: FlappySkinConfig[] = [
     label: "Pidgey",
     dexNo: 16,
     pokemonId: 16,
-    spriteUrl: getPokemonRetroSpriteUrl(16),
+    spriteUrl: getPokemonSpriteUrl(16),
     unlockLabel: "Alcance 15 pontos",
     unlockType: "score",
     unlockValue: 15,
@@ -91,7 +91,7 @@ export const FLAPPY_SKINS: FlappySkinConfig[] = [
     label: "Butterfree",
     dexNo: 12,
     pokemonId: 12,
-    spriteUrl: getPokemonRetroSpriteUrl(12),
+    spriteUrl: getPokemonSpriteUrl(12),
     unlockLabel: "Alcance 50 pontos",
     unlockType: "score",
     unlockValue: 50,
@@ -118,7 +118,7 @@ export const FLAPPY_SKINS: FlappySkinConfig[] = [
     label: "Charizard",
     dexNo: 6,
     pokemonId: 6,
-    spriteUrl: getPokemonRetroSpriteUrl(6),
+    spriteUrl: getPokemonSpriteUrl(6),
     unlockLabel: `Colete ${FLAPPY_CHARIZARD_LIFETIME_COINS.toLocaleString("pt-BR")} moedas no total`,
     unlockType: "lifetime",
     unlockValue: FLAPPY_CHARIZARD_LIFETIME_COINS,
