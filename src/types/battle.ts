@@ -180,4 +180,19 @@ export interface BattleState {
   enemyTurnCursor?: number;
   /** Ação inimiga pendente neste turno (sempre 0 ou 1 item) */
   enemyActionQueue?: Array<{ actorSlot: number; targetSlot: number; moveIndex: number }>;
+  /** Reservas no banco do jogador (entram quando um ativo desmaia) */
+  playerBench?: BattleFighter[];
+  /** Reservas no banco do inimigo */
+  enemyBench?: BattleFighter[];
+  /** Troca pendente: um ativo desmaiou e há reserva para entrar no slot */
+  pendingSwitch?: {
+    side: "player" | "enemy";
+    slot: number;
+    /** o que fazer após a troca do jogador: fechar o turno inimigo ou passar a vez ao jogador */
+    resume?: "finishTurn" | "playerTurn";
+  } | null;
+  /** Contagem de tipos do roster escolhido (para boost de monotipo por tipo) */
+  playerTypeCounts?: Record<string, number>;
+  /** IDs de Pokémon do jogador que entraram em campo (recebem XP cheio) */
+  participatedIds?: number[];
 }

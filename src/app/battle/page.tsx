@@ -1,28 +1,14 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useState, useCallback } from "react";
 import { Swords } from "lucide-react";
 import { BattleTabs, type BattleTabId } from "@/components/battle/BattleTabs";
-import { PanelSkeleton } from "@/components/ui/RouteLoading";
+import { TrainingPanel } from "@/components/battle/TrainingPanel";
+import { GymMap } from "@/components/gym/GymMap";
+import { EliteFourScreen } from "@/components/gym/EliteFourScreen";
 import { useGymStore } from "@/stores/gym-store";
 import { useBattleSessionStore } from "@/stores/battle-session-store";
 import { cn } from "@/lib/utils";
-
-const TrainingPanel = dynamic(
-  () => import("@/components/battle/TrainingPanel").then((m) => ({ default: m.TrainingPanel })),
-  { loading: () => <PanelSkeleton label="Carregando treino..." /> }
-);
-
-const GymMap = dynamic(
-  () => import("@/components/gym/GymMap").then((m) => ({ default: m.GymMap })),
-  { loading: () => <PanelSkeleton label="Carregando ginásios..." /> }
-);
-
-const EliteFourScreen = dynamic(
-  () => import("@/components/gym/EliteFourScreen").then((m) => ({ default: m.EliteFourScreen })),
-  { loading: () => <PanelSkeleton label="Carregando Elite Four..." /> }
-);
 
 export default function BattlePage() {
   const [tab, setTab] = useState<BattleTabId>("training");
@@ -50,7 +36,7 @@ export default function BattlePage() {
       <div
         className={cn(
           "mx-auto px-4",
-          battleActive ? "max-w-2xl py-2" : "max-w-2xl lg:max-w-5xl py-6 space-y-5 lg:flex lg:flex-col lg:min-h-0 lg:h-[calc(100dvh-5.5rem)]"
+          battleActive ? "max-w-4xl py-2" : "max-w-2xl lg:max-w-5xl py-6 space-y-5 lg:flex lg:flex-col lg:min-h-0 lg:h-[calc(100dvh-5.5rem)]"
         )}
       >
         {!battleActive && (

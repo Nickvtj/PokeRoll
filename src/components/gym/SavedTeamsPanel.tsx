@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, Trash2 } from "lucide-react";
+import { Flag, Trash2 } from "lucide-react";
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGymStore } from "@/stores/gym-store";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
@@ -33,7 +33,7 @@ export function SavedTeamsPanel() {
             saveTeam(name.trim(), team);
             setName("");
           }}
-          icon={<Bookmark className="w-3 h-3" />}
+          icon={<Flag className="w-3 h-3" />}
         >
           Salvar
         </AnimatedButton>

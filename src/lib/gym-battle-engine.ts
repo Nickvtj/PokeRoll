@@ -1,7 +1,9 @@
 import { getEliteOpponentPortrait, getGymOpponentPortrait } from "@/data/battle-trainers";
-import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
+import { BATTLE_ROSTER_SIZE, BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { ELITE_FOUR, GYM_MAP, GYM_TRAINER_STAGES } from "@/data/gyms";
-import { POKEMON_MAP } from "@/data/pokemon";
+import { POKEMON_LIST, POKEMON_MAP } from "@/data/pokemon";
+import { getPokemonBattleStats } from "@/data/pokemon-stats";
+import { getRosterTypeCounts } from "@/lib/team-monotype";
 import { buildTurnOrder, createFighter, performCoinFlip } from "@/lib/battle-engine";
 import { attachMovesToTeam } from "@/lib/tactical-battle-engine";
 import type { BattleFighter, BattleLogEntry, BattleState } from "@/types/battle";
@@ -14,6 +16,52 @@ function log(message: string, type: BattleLogEntry["type"]): BattleLogEntry {
 }
 
 const TEAM_SIZE = BATTLE_TEAM_SIZE;
+
+function scaleEnemyFighter(
+  pokemon: Pokemon,
+  recommendedLevel: number,
+  baseDifficulty: number,
+  slot: number
+): BattleFighter {
+  const raw = createFighter(pokemon, false, Math.max(1, recommendedLevel), slot);
+  const variance = 0.97 + Math.random() * 0.06;
+  const scale = baseDifficulty * variance;
+  const hp = Math.max(1, Math.round(raw.maxHp * scale));
+  const attack = Math.max(1, Math.round(raw.stats.attack * scale));
+  const defense = Math.max(1, Math.round(raw.stats.defense * scale));
+  const speed = Math.max(1, Math.round(raw.stats.speed * scale));
+  return {
+    ...raw,
+    stats: { ...raw.stats, hp, attack, defense, speed },
+    maxHp: hp,
+    currentHp: hp,
+  };
+}
+
+/** Reservas do inimigo (ginásio/elite): Pokémon do mesmo tipo, escalados */
+function buildEnemyBench(
+  type: string,
+  count: number,
+  recommendedLevel: number,
+  baseDifficulty: number,
+  usedIds: Set<number>
+): BattleFighter[] {
+  if (count <= 0) return [];
+  const typed = POKEMON_LIST.filter(
+    (p) => getPokemonBattleStats(p).type === type && !usedIds.has(p.id)
+  );
+  const fallback = POKEMON_LIST.filter((p) => !usedIds.has(p.id));
+  const bench: BattleFighter[] = [];
+  for (let i = 0; i < count; i++) {
+    const pool = typed.filter((p) => !usedIds.has(p.id)).length > 0 ? typed : fallback;
+    const available = pool.filter((p) => !usedIds.has(p.id));
+    if (available.length === 0) break;
+    const pokemon = available[Math.floor(Math.random() * available.length)];
+    usedIds.add(pokemon.id);
+    bench.push(scaleEnemyFighter(pokemon, recommendedLevel, baseDifficulty, TEAM_SIZE + i));
+  }
+  return bench;
+}
 
 export function getGymDifficultyModifier(
   recommendedLevel: number,
@@ -35,20 +83,7 @@ function buildEnemyTeamFromIds(
     const id = pokemonIds[slot] ?? pokemonIds[pokemonIds.length - 1];
     const pokemon = POKEMON_MAP[id];
     if (!pokemon) continue;
-    const enemyLevel = Math.max(1, recommendedLevel);
-    const raw = createFighter(pokemon, false, enemyLevel, slot);
-    const variance = 0.97 + Math.random() * 0.06;
-    const scale = baseDifficulty * variance;
-    const hp = Math.max(1, Math.round(raw.maxHp * scale));
-    const attack = Math.max(1, Math.round(raw.stats.attack * scale));
-    const defense = Math.max(1, Math.round(raw.stats.defense * scale));
-    const speed = Math.max(1, Math.round(raw.stats.speed * scale));
-    enemies.push({
-      ...raw,
-      stats: { ...raw.stats, hp, attack, defense, speed },
-      maxHp: hp,
-      currentHp: hp,
-    });
+    enemies.push(scaleEnemyFighter(pokemon, recommendedLevel, baseDifficulty, slot));
   }
 
   return enemies;
@@ -66,10 +101,14 @@ export function initGymBattle(
   if (!stageData) throw new Error(`Stage ${stage} not found for ${gymId}`);
 
   const attachConfig = { moveLoadouts };
-  const playerTeam = attachMovesToTeam(
-    playerPokemon.map((p, i) => createFighter(p, true, pokemonLevels[p.id] ?? 1, i)),
+  const roster = playerPokemon.slice(0, BATTLE_ROSTER_SIZE);
+  const benchCount = Math.max(0, roster.length - TEAM_SIZE);
+  const playerFighters = attachMovesToTeam(
+    roster.map((p, i) => createFighter(p, true, pokemonLevels[p.id] ?? 1, i)),
     attachConfig
   );
+  const playerTeam = playerFighters.slice(0, TEAM_SIZE);
+  const playerBench = playerFighters.slice(TEAM_SIZE);
 
   const avgLevel =
     playerPokemon.reduce((s, p) => s + (pokemonLevels[p.id] ?? 1), 0) /
@@ -78,11 +117,17 @@ export function initGymBattle(
   const levelGapMod = getGymDifficultyModifier(gym.recommendedLevel, avgLevel);
   const baseDifficulty = stageData.difficultyScale * levelGapMod;
 
+  const activeEnemyIds = stageData.pokemonIds.slice(0, TEAM_SIZE);
   const enemyTeam = attachMovesToTeam(
-    buildEnemyTeamFromIds(
-      stageData.pokemonIds.slice(0, TEAM_SIZE),
+    buildEnemyTeamFromIds(activeEnemyIds, gym.recommendedLevel, baseDifficulty)
+  );
+  const enemyBench = attachMovesToTeam(
+    buildEnemyBench(
+      gym.type,
+      benchCount,
       gym.recommendedLevel,
-      baseDifficulty
+      baseDifficulty,
+      new Set(activeEnemyIds)
     )
   );
 
@@ -110,6 +155,11 @@ export function initGymBattle(
     phase: "faceOff",
     playerTeam,
     enemyTeam,
+    playerBench,
+    enemyBench,
+    pendingSwitch: null,
+    playerTypeCounts: getRosterTypeCounts(roster.map((p) => p.id)),
+    participatedIds: playerTeam.map((f) => f.pokemon.id),
     turnOrder: buildTurnOrder(playerStarts),
     currentTurnIndex: 0,
     wave: stage,
@@ -142,25 +192,35 @@ export function initEliteBattle(
   if (!elite) throw new Error(`Elite ${eliteId} not found`);
 
   const attachConfig = { moveLoadouts };
-  const playerTeam = attachMovesToTeam(
-    playerPokemon.map((p, i) => createFighter(p, true, pokemonLevels[p.id] ?? 1, i)),
+  const roster = playerPokemon.slice(0, BATTLE_ROSTER_SIZE);
+  const benchCount = Math.max(0, roster.length - TEAM_SIZE);
+  const playerFighters = attachMovesToTeam(
+    roster.map((p, i) => createFighter(p, true, pokemonLevels[p.id] ?? 1, i)),
     attachConfig
   );
+  const playerTeam = playerFighters.slice(0, TEAM_SIZE);
+  const playerBench = playerFighters.slice(TEAM_SIZE);
 
   const avgLevel =
     playerPokemon.reduce((s, p) => s + (pokemonLevels[p.id] ?? 1), 0) /
     playerPokemon.length;
 
   const levelGapMod = getGymDifficultyModifier(elite.recommendedLevel, avgLevel);
+  const baseDifficulty = elite.difficultyScale * levelGapMod;
   const ids = elite.isChampion
     ? elite.pokemonIds.slice(-TEAM_SIZE)
     : elite.pokemonIds.slice(0, TEAM_SIZE);
 
   const enemyTeam = attachMovesToTeam(
-    buildEnemyTeamFromIds(
-      ids,
+    buildEnemyTeamFromIds(ids, elite.recommendedLevel, baseDifficulty)
+  );
+  const enemyBench = attachMovesToTeam(
+    buildEnemyBench(
+      elite.type === "mixed" ? "normal" : elite.type,
+      benchCount,
       elite.recommendedLevel,
-      elite.difficultyScale * levelGapMod
+      baseDifficulty,
+      new Set(ids)
     )
   );
 
@@ -182,6 +242,11 @@ export function initEliteBattle(
     phase: "faceOff",
     playerTeam,
     enemyTeam,
+    playerBench,
+    enemyBench,
+    pendingSwitch: null,
+    playerTypeCounts: getRosterTypeCounts(roster.map((p) => p.id)),
+    participatedIds: playerTeam.map((f) => f.pokemon.id),
     turnOrder: buildTurnOrder(playerStarts),
     currentTurnIndex: 0,
     wave: 1,

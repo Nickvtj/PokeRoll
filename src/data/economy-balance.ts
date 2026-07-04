@@ -96,11 +96,18 @@ export const BATTLE_FACE_OFF_MS = 3000;
 export const BATTLE_COIN_FLIP_MS = 3200;
 export const BATTLE_COIN_REVEAL_MS = 2600;
 export const BATTLE_POST_COIN_PAUSE_MS = 1100;
+/** Respiro após as pokébolas caírem (entrada da fase de luta) antes do 1º ataque */
+export const BATTLE_INTRO_SETTLE_MS = 2000;
 
-/** Boost de dano quando os 3 Pokémon do time compartilham o mesmo tipo */
+/** Boost de dano por tipo: 2+ Pokémon do mesmo tipo no roster */
 export const TEAM_MONOTYPE_DAMAGE_BONUS = 0.12;
+/** Boost maior quando os 4 escolhidos compartilham o mesmo tipo */
+export const TEAM_QUAD_MONOTYPE_DAMAGE_BONUS = 0.25;
 export const XP_PER_LEVEL = 260;
 export const MAX_LEVEL = 50;
+
+/** Reservas que não entraram em campo ganham só uma fração do XP */
+export const BATTLE_RESERVE_XP_FRACTION = 0.25;
 
 /** Lucky Egg: dobro de XP por 5 min (ativar manualmente no header) */
 export const LUCKY_EGG_DURATION_MS = 300_000;

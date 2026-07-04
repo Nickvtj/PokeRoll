@@ -37,6 +37,8 @@ export function EggIcon({ className, variant = "5km" }: EggIconProps) {
       width={24}
       height={24}
       className={cn("shrink-0 object-contain", className)}
+      style={{ imageRendering: "pixelated" }}
+      unoptimized
       aria-hidden
     />
   );

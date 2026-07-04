@@ -336,8 +336,8 @@ body {
 
   .battle-classic-dialog-text {
     font-family: var(--font-pixel-body);
-    font-size: 1.05rem;
-    line-height: 1.2;
+    font-size: 0.85rem;
+    line-height: 1.25;
     color: #a8b4c4;
   }
 
@@ -377,109 +377,190 @@ body {
   /* === Cena de batalha clássica (campo + sprites + caixas de status) === */
   .battle-scene {
     @apply relative w-full overflow-hidden;
-    aspect-ratio: 3 / 2;
+    aspect-ratio: 5 / 4;
     border-radius: 6px;
-    /* Floresta pixel art; gradiente verde de fallback enquanto a imagem não existir */
     background:
       url("/backgrounds/battle-forest.png") center bottom / cover no-repeat,
       linear-gradient(180deg, #26382c 0%, #3f6a45 45%, #6cb066 78%, #8ed07e 100%);
     image-rendering: pixelated;
   }
 
+  /* Arena de ginásio — piso interno azulejado + brilho do tipo do líder */
+  .battle-scene-gym {
+    background:
+      radial-gradient(120% 60% at 50% 108%, rgba(0, 0, 0, 0.5) 0%, transparent 55%),
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 40px),
+      radial-gradient(140% 78% at 50% -8%, color-mix(in srgb, var(--gym-accent, #6366f1) 62%, transparent) 0%, transparent 58%),
+      linear-gradient(
+        180deg,
+        #0e1119 0%,
+        #1a2030 38%,
+        color-mix(in srgb, var(--gym-accent, #6366f1) 16%, #202637) 60%,
+        #10141d 100%
+      );
+    image-rendering: auto;
+  }
+
   @media (max-width: 640px) {
     .battle-scene {
-      aspect-ratio: 6 / 5;
+      aspect-ratio: 4 / 5;
     }
   }
 
   .battle-scene-enemy-boxes {
     @apply absolute flex flex-col z-30;
-    top: 2.5%;
-    left: 2%;
-    gap: 3px;
-    width: min(46%, 232px);
+    top: 3.5%;
+    left: 3%;
+    gap: 6px;
+    width: min(37%, 186px);
   }
 
   .battle-scene-player-boxes {
     @apply absolute flex flex-col z-30;
-    bottom: 2.5%;
-    right: 2%;
-    gap: 3px;
-    width: min(48%, 244px);
+    bottom: 3.5%;
+    right: 3%;
+    gap: 6px;
+    width: min(39%, 196px);
   }
 
   .battle-scene-enemy-field {
     @apply absolute flex items-end justify-evenly z-10;
-    top: 9%;
-    right: 2%;
-    width: 52%;
-    height: 38%;
+    top: 4%;
+    right: 1%;
+    width: 56%;
+    height: 46%;
   }
 
   .battle-scene-player-field {
     @apply absolute flex items-end justify-evenly z-10;
-    bottom: 8%;
-    left: 2%;
-    width: 55%;
-    height: 44%;
+    bottom: 0;
+    left: 0;
+    width: 60%;
+    height: 54%;
+    padding-bottom: 0;
   }
 
   .battle-scene-slot {
-    @apply relative flex flex-col items-center justify-end;
-    width: 46%;
+    @apply relative flex flex-col items-center;
+    justify-content: flex-end;
+    width: 49%;
     height: 100%;
+    container-type: size;
+    margin-bottom: 0;
   }
 
   .battle-scene-platform {
     position: absolute;
-    bottom: -2%;
+    bottom: 6%;
     left: 50%;
     transform: translateX(-50%);
-    width: 110%;
-    height: 26%;
+    width: 118%;
+    height: 18%;
     border-radius: 50%;
-    background: radial-gradient(ellipse at center, rgba(20, 32, 16, 0.38) 0%, rgba(20, 32, 16, 0.18) 55%, transparent 72%);
+    background: radial-gradient(ellipse at center, rgba(20, 32, 16, 0.38) 0%, rgba(20, 32, 16, 0.16) 55%, transparent 72%);
     pointer-events: none;
+    z-index: 0;
   }
 
   .battle-scene-sprite {
+    display: block;
     image-rendering: pixelated;
-    filter: drop-shadow(1px 2px 0 rgba(16, 24, 12, 0.3));
+    filter: drop-shadow(0 1px 0 rgba(16, 24, 12, 0.2));
   }
 
-  /* Seta de seleção clássica (vermelha, quicando) — colada no topo do sprite */
-  .battle-scene-arrow {
-    position: absolute;
-    top: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 40;
-    font-size: 15px;
-    line-height: 1;
-    color: var(--gba-arrow);
-    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45), 0 0 2px rgba(255, 255, 255, 0.5);
-    animation: battle-arrow-bounce 0.55s steps(2) infinite;
-    pointer-events: none;
+  /* Frente (inimigo) — sprite grande, apoiado na plataforma */
+  .battle-scene-sprite-front {
+    height: 82cqh;
+    width: auto;
+    max-width: 98cqw;
+    object-fit: contain;
+    object-position: bottom center;
+    vertical-align: bottom;
+    transform: translateY(4px);
+    margin-bottom: -4px;
   }
 
-  .battle-scene-arrow-locked {
-    animation: none;
-    color: #f8b800;
+  /* Costas (jogador) — apoiado na borda inferior da cena */
+  .battle-scene-sprite-wrap-back {
+    @apply relative items-end justify-center;
+    display: inline-flex;
+    margin-bottom: 0;
+    padding-bottom: 0;
   }
 
-  @keyframes battle-arrow-bounce {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(4px); }
+  .battle-scene-sprite-back {
+    height: 96cqh;
+    width: auto;
+    max-width: 108cqw;
+    object-fit: contain;
+    object-position: bottom center;
+    vertical-align: bottom;
+    display: block;
+    transform: translateY(8px);
+    margin-bottom: -8px;
   }
 
-  /* Caixa de status GBA: creme, borda dupla */
+  .battle-scene-sprite-wrap-front {
+    @apply relative items-end justify-center;
+    display: inline-flex;
+    margin-bottom: 0;
+  }
+
+  /* Seleção por pulso — o Pokémon clicável "pulsa"; o escolhido fica com brilho fixo */
+  .battle-scene-clickable {
+    animation: battle-clickable-pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes battle-clickable-pulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0)) brightness(1);
+    }
+    50% {
+      filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.9)) brightness(1.18);
+    }
+  }
+
+  .battle-scene-picked-actor {
+    filter: drop-shadow(0 0 8px #f8b800) brightness(1.14);
+  }
+
+  .battle-scene-picked-target {
+    filter: drop-shadow(0 0 8px #f83808) brightness(1.14);
+  }
+
+  /* Caixa de status GBA (FRLG): creme, borda arredondada, ponta lateral */
   .battle-scene-box {
     @apply relative w-full text-left;
-    border-radius: 5px;
-    background: var(--gba-cream);
-    border: 2px solid var(--gba-frame);
-    box-shadow: inset 0 0 0 2px #fffff0, 0 2px 0 rgba(20, 16, 12, 0.4);
-    padding: 3px 6px 4px;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #f8f8e8 0%, #e8e0c0 100%);
+    border: 2px solid #383838;
+    box-shadow: inset 0 0 0 1.5px #fffff0, inset 0 -2px 0 rgba(120, 108, 80, 0.25), 0 2px 0 rgba(20, 16, 12, 0.4);
+    padding: 7px 11px 8px;
+  }
+
+  .battle-scene-enemy-boxes .battle-scene-box::after {
+    content: "";
+    position: absolute;
+    right: -6px;
+    bottom: 7px;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 6px solid #383838;
+  }
+
+  .battle-scene-player-boxes .battle-scene-box::after {
+    content: "";
+    position: absolute;
+    left: -6px;
+    bottom: 7px;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 6px solid #383838;
   }
 
   .battle-scene-box-selectable {
@@ -502,12 +583,24 @@ body {
   }
 
   .battle-scene-box-name-row {
-    @apply flex items-baseline justify-between gap-1;
+    @apply flex items-center justify-between gap-1.5;
     font-family: var(--font-pixel);
-    font-size: clamp(6px, 1.9vw, 8px);
-    line-height: 1.6;
+    font-size: clamp(8px, 2.2vw, 11px);
+    line-height: 1.4;
     color: var(--gba-ink);
     text-transform: uppercase;
+  }
+
+  .battle-scene-gender-male {
+    color: #3068c8;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .battle-scene-gender-female {
+    color: #e05888;
+    font-weight: 700;
+    flex-shrink: 0;
   }
 
   .battle-scene-box-level {
@@ -517,35 +610,36 @@ body {
 
   .battle-scene-hp-row {
     @apply flex items-center;
-    gap: 3px;
-    margin-top: 1px;
+    gap: 6px;
+    margin-top: 5px;
   }
 
   .battle-scene-hp-tag {
     font-family: var(--font-pixel);
-    font-size: 6px;
+    font-size: clamp(7px, 1.8vw, 9px);
     line-height: 1;
-    color: #f8b050;
-    background: #585048;
-    border-radius: 2px;
-    padding: 2px 3px;
+    color: #f8d038;
+    font-style: italic;
+    font-weight: 800;
     flex-shrink: 0;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 0 rgba(80, 72, 48, 0.6);
   }
 
   .battle-scene-hp-track {
     @apply flex-1 overflow-hidden;
-    height: 6px;
-    border-radius: 3px;
-    background: #585048;
-    box-shadow: inset 0 0 0 1px #383430;
+    height: 7px;
+    border-radius: 999px;
+    background: #383838;
+    box-shadow: inset 0 0 0 1px #202020, inset 0 1px 1px rgba(0, 0, 0, 0.5);
+    border: 1px solid #585048;
   }
 
   .battle-scene-hp-fill {
     height: 100%;
-    border-radius: 2px;
-    transition: width 0.35s steps(8);
-    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    transition: width 0.4s steps(10), background 0.3s;
+    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.5), inset 0 -1.5px 0 rgba(0, 0, 0, 0.2);
   }
 
   .battle-scene-hp-numbers {
@@ -581,7 +675,123 @@ body {
     color: #e0e0e8;
   }
 
-  /* Menu de golpes estilo FIGHT do GBA — dark */
+  /* Menu de golpes estilo FRLG — nome em cima, tipo embaixo */
+  .battle-gba-move-grid {
+    @apply grid grid-cols-2 gap-2;
+  }
+
+  .battle-gba-move-btn {
+    @apply relative w-full text-left overflow-hidden;
+    border-radius: 6px;
+    border: 2px solid #383838;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+    padding: 0;
+    background: #f8f8f8;
+  }
+
+  .battle-gba-move-btn:hover,
+  .battle-gba-move-btn:focus-visible {
+    border-color: #d89818;
+    box-shadow: 0 0 0 2px rgba(248, 184, 0, 0.45), 0 3px 0 rgba(0, 0, 0, 0.35);
+  }
+
+  .battle-gba-move-btn-super {
+    border-color: #2c6c3c;
+  }
+
+  .battle-gba-move-btn-weak {
+    border-color: #8c5c14;
+  }
+
+  .battle-gba-move-top {
+    font-family: var(--font-pixel);
+    font-size: clamp(12px, 3.4vw, 15px);
+    line-height: 1.5;
+    color: #282828;
+    text-transform: uppercase;
+    padding: 8px 10px 6px;
+    background: #f8f8f8;
+    min-height: 2rem;
+  }
+
+  .battle-gba-move-bottom {
+    @apply flex items-center justify-between gap-1.5;
+    font-family: var(--font-pixel);
+    font-size: clamp(9px, 2.4vw, 11px);
+    line-height: 1.3;
+    padding: 6px 9px 7px;
+    color: #f8f8f8;
+    text-transform: uppercase;
+    border-top: 2px solid rgba(0, 0, 0, 0.18);
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+
+  .battle-gba-move-type {
+    border-radius: 3px;
+    padding: 2px 7px;
+    background: rgba(0, 0, 0, 0.28);
+    letter-spacing: 0.4px;
+    font-weight: 700;
+  }
+
+  .battle-gba-move-pp {
+    opacity: 0.95;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .battle-fight-reveal-text {
+    font-family: var(--font-pixel);
+    letter-spacing: 0.08em;
+  }
+
+  /* Pokébola de entrada (soltar o Pokémon estilo GBA) */
+  .battle-pokeball {
+    position: absolute;
+    left: 50%;
+    bottom: 6px;
+    width: 24px;
+    height: 24px;
+    margin-left: -12px;
+    z-index: 36;
+    border-radius: 50%;
+    background: linear-gradient(#f83828 0 calc(50% - 1.5px), #202020 calc(50% - 1.5px) calc(50% + 1.5px), #f4f4f4 calc(50% + 1.5px) 100%);
+    border: 2px solid #202020;
+    box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.18), inset 2px 2px 0 rgba(255, 255, 255, 0.35), 0 3px 4px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+    image-rendering: pixelated;
+  }
+
+  .battle-pokeball::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f4f4f4;
+    border: 2px solid #202020;
+    transform: translate(-50%, -50%);
+  }
+
+  .battle-pokeball-flash {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    width: 40px;
+    height: 40px;
+    margin-left: -20px;
+    z-index: 35;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffffff 0%, #d8fff0 38%, rgba(180, 248, 255, 0) 70%);
+    pointer-events: none;
+  }
+
+  .battle-fight-reveal-sub {
+    font-family: var(--font-pixel);
+    letter-spacing: 0.04em;
+  }
+
   .battle-classic-move-btn {
     border-radius: 4px;
     background: #1a2230;
@@ -909,6 +1119,112 @@ body {
 
   .battle-status-badge {
     @apply inline-flex items-center gap-0.5 text-[8px] font-bold uppercase tracking-wide rounded-md px-1 py-0.5 border;
+  }
+
+  /* Compacto — cabe entre nome e level na caixa de status GBA e continua legível */
+  .battle-status-badge-compact {
+    @apply gap-0.5 rounded px-1 py-px leading-none;
+    font-family: var(--font-pixel);
+    font-size: clamp(6px, 1.6vw, 8px);
+    letter-spacing: 0.2px;
+  }
+
+  /* === Modal de troca (mochila) — reserva entra quando um ativo desmaia === */
+  .battle-switch-overlay {
+    @apply absolute inset-0 z-50 flex items-center justify-center p-3;
+    background: rgba(8, 10, 16, 0.72);
+    backdrop-filter: blur(3px);
+    border-radius: inherit;
+  }
+
+  .battle-switch-panel {
+    width: min(100%, 22rem);
+    border-radius: 10px;
+    background: linear-gradient(180deg, #f8f8e8 0%, #e8e0c0 100%);
+    border: 3px solid #383838;
+    box-shadow: inset 0 0 0 2px #fffff0, 0 8px 24px rgba(0, 0, 0, 0.55);
+    padding: 12px;
+  }
+
+  .battle-switch-header {
+    @apply flex items-center gap-1.5 mb-2;
+    font-family: var(--font-pixel);
+    font-size: clamp(8px, 2.1vw, 10px);
+    line-height: 1.4;
+    color: var(--gba-ink);
+    text-transform: uppercase;
+  }
+
+  .battle-switch-grid {
+    @apply grid grid-cols-1 gap-2;
+  }
+
+  @media (min-width: 380px) {
+    .battle-switch-grid {
+      @apply grid-cols-2;
+    }
+  }
+
+  .battle-switch-card {
+    @apply flex items-center gap-2 text-left rounded-lg p-2 transition-all;
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid #585048;
+    cursor: pointer;
+  }
+
+  .battle-switch-card:not(.battle-switch-card-ko):hover {
+    border-color: #d89818;
+    box-shadow: 0 0 0 2px rgba(248, 184, 0, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .battle-switch-card-ko {
+    opacity: 0.45;
+    filter: saturate(0.3);
+    cursor: not-allowed;
+  }
+
+  .battle-switch-sprite {
+    @apply w-12 h-12 object-contain shrink-0;
+    image-rendering: pixelated;
+  }
+
+  .battle-switch-info {
+    @apply flex-1 min-w-0;
+  }
+
+  .battle-switch-name-row {
+    @apply flex items-center justify-between gap-1;
+    font-family: var(--font-pixel);
+    font-size: clamp(7px, 1.9vw, 9px);
+    color: var(--gba-ink);
+    text-transform: uppercase;
+  }
+
+  .battle-switch-level {
+    @apply shrink-0;
+    color: var(--gba-ink);
+  }
+
+  .battle-switch-hp-track {
+    @apply w-full overflow-hidden mt-1;
+    height: 6px;
+    border-radius: 999px;
+    background: #383838;
+    border: 1px solid #585048;
+  }
+
+  .battle-switch-hp-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s;
+  }
+
+  .battle-switch-hp-text {
+    @apply block mt-0.5;
+    font-family: var(--font-pixel);
+    font-size: clamp(6px, 1.6vw, 8px);
+    color: #6a6250;
   }
 
   .battle-status-burn {

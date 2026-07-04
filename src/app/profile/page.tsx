@@ -127,8 +127,10 @@ export default function ProfilePage() {
 
         <main
           className={cn(
-            "flex-1 min-w-0 lg:pb-2",
-            activeTab === "conquistas" && "flex flex-col min-h-0 lg:overflow-hidden"
+            "flex-1 min-w-0 lg:min-h-0 lg:pb-2",
+            activeTab === "conquistas"
+              ? "flex flex-col lg:overflow-hidden"
+              : "lg:overflow-y-auto lg:pr-1 profile-scroll-area overscroll-contain"
           )}
         >
           <ProfileTabContent tab={activeTab} />

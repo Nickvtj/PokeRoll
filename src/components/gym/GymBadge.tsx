@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import { getBadgeImage } from "@/data/gym-badges";
 import { GYM_MAP } from "@/data/gyms";
@@ -49,7 +48,8 @@ export function GymBadge({ gymId, name, earned, color, size = "sm" }: GymBadgePr
         width={s.img}
         height={s.img}
         className="object-contain drop-shadow-md"
-        unoptimized={!isLocalAsset(getBadgeImage(gymId))}
+        style={{ imageRendering: "pixelated" }}
+        unoptimized
       />
     </div>
   );

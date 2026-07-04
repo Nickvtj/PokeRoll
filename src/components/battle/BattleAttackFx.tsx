@@ -327,20 +327,31 @@ function DefaultParticles({ color }: { color: string }) {
   );
 }
 
-export function BattleStatusBadge({ effect }: { effect: StatusEffect }) {
-  const config: Record<StatusEffect, { Icon: LucideIcon; label: string; className: string }> = {
-    burn: { Icon: Flame, label: "Queimado", className: "battle-status-burn" },
-    paralyze: { Icon: Zap, label: "Paralisado", className: "battle-status-paralyze" },
-    poison: { Icon: Skull, label: "Envenenado", className: "battle-status-poison" },
-    sleep: { Icon: Moon, label: "Dormindo", className: "battle-status-sleep" },
+export function BattleStatusBadge({
+  effect,
+  compact = false,
+}: {
+  effect: StatusEffect;
+  compact?: boolean;
+}) {
+  const config: Record<
+    StatusEffect,
+    { Icon: LucideIcon; label: string; short: string; className: string }
+  > = {
+    burn: { Icon: Flame, label: "Queimado", short: "QUE", className: "battle-status-burn" },
+    paralyze: { Icon: Zap, label: "Paralisado", short: "PAR", className: "battle-status-paralyze" },
+    poison: { Icon: Skull, label: "Envenenado", short: "ENV", className: "battle-status-poison" },
+    sleep: { Icon: Moon, label: "Dormindo", short: "SON", className: "battle-status-sleep" },
   };
 
   const c = config[effect];
   const Icon = c.Icon;
   return (
-    <span className={cn("battle-status-badge", c.className)}>
-      <Icon className="w-3 h-3 shrink-0" aria-hidden />
-      {c.label}
+    <span
+      className={cn("battle-status-badge", c.className, compact && "battle-status-badge-compact")}
+    >
+      <Icon className={cn("shrink-0", compact ? "w-2.5 h-2.5" : "w-3 h-3")} aria-hidden />
+      {compact ? c.short : c.label}
     </span>
   );
 }

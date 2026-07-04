@@ -2,8 +2,8 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   BattleSleepOverlay,
@@ -18,6 +18,7 @@ import {
 } from "@/lib/battle-matchup";
 import { TEAM_SIZE } from "@/lib/tactical-battle-engine";
 import { useGameStore } from "@/stores/game-store";
+import { playUiSelect, playUiConfirm } from "@/lib/ui-sounds";
 import { shouldShowShiny } from "@/lib/pokemon-display";
 import type { BattleCombatHighlight } from "@/hooks/use-tactical-battle";
 import type { BattleFighter, BattleState } from "@/types/battle";
@@ -92,7 +93,11 @@ function GbaSprite({
       src={getPokemonGbaSpriteUrl(pokemonId, { back, shiny })}
       alt={name}
       draggable={false}
-      className={cn("battle-scene-sprite object-contain select-none", className)}
+      className={cn(
+        "battle-scene-sprite select-none",
+        back ? "battle-scene-sprite-back" : "battle-scene-sprite-front",
+        className
+      )}
     />
   );
 }
@@ -103,6 +108,15 @@ function hpFillColor(pct: number): string {
   return "var(--gba-hp-low)";
 }
 
+function genderSymbol(id: number): { char: string; className: string } | null {
+  // Cosmético estilo GBA — determinístico por id (jogo não rastreia gênero)
+  const genderless = new Set([81, 82, 100, 101, 120, 121, 132, 137, 144, 145, 146, 150, 151]);
+  if (genderless.has(id)) return null;
+  return id % 2 === 0
+    ? { char: "♂", className: "battle-scene-gender-male" }
+    : { char: "♀", className: "battle-scene-gender-female" };
+}
+
 function ClassicStatusBox({
   view,
   onSelect,
@@ -110,9 +124,10 @@ function ClassicStatusBox({
   view: FighterView;
   onSelect?: () => void;
 }) {
-  const { fighter, isKo, selectable, isSelectedActor, isSelectedTarget, matchup } = view;
+  const { fighter, isKo, selectable, isSelectedActor, isSelectedTarget } = view;
   const hpPercent = Math.max(0, (fighter.currentHp / fighter.maxHp) * 100);
   const clickable = selectable && !isKo && onSelect;
+  const gender = genderSymbol(fighter.pokemon.id);
 
   return (
     <button
@@ -129,10 +144,18 @@ function ClassicStatusBox({
       )}
     >
       <div className="battle-scene-box-name-row">
-        <span className="truncate">{fighter.pokemon.name}</span>
-        {fighter.battleLevel != null && fighter.battleLevel > 0 && (
-          <span className="battle-scene-box-level">Lv{fighter.battleLevel}</span>
-        )}
+        <span className="flex items-center gap-1 min-w-0">
+          <span className="truncate">{fighter.pokemon.name}</span>
+          {gender && <span className={gender.className}>{gender.char}</span>}
+        </span>
+        <span className="flex items-center gap-1.5 shrink-0">
+          {fighter.status && !isKo && (
+            <BattleStatusBadge effect={fighter.status.effect} compact />
+          )}
+          {fighter.battleLevel != null && fighter.battleLevel > 0 && (
+            <span className="battle-scene-box-level">Lv{fighter.battleLevel}</span>
+          )}
+        </span>
       </div>
       <div className="battle-scene-hp-row">
         <span className="battle-scene-hp-tag">HP</span>
@@ -142,44 +165,50 @@ function ClassicStatusBox({
             style={{ width: `${hpPercent}%`, background: hpFillColor(hpPercent) }}
           />
         </div>
-        {matchup && matchup.kind !== "normal" && !isKo && (
-          <span
-            className={cn(
-              "battle-scene-matchup",
-              matchup.kind === "super"
-                ? "battle-scene-matchup-super"
-                : matchup.kind === "weak"
-                  ? "battle-scene-matchup-weak"
-                  : "battle-scene-matchup-immune"
-            )}
-          >
-            {matchup.label}
-          </span>
-        )}
-        {fighter.status && !isKo && (
-          <span className="relative z-10 scale-90 origin-right">
-            <BattleStatusBadge effect={fighter.status.effect} />
-          </span>
-        )}
-      </div>
-      <div className="battle-scene-hp-numbers">
-        {Math.max(0, fighter.currentHp)}/{fighter.maxHp}
       </div>
     </button>
+  );
+}
+
+function PokeballRelease({ delay }: { delay: number }) {
+  return (
+    <>
+      <motion.span
+        className="battle-pokeball"
+        aria-hidden
+        initial={{ y: -100, opacity: 0, rotate: -35 }}
+        animate={{
+          y: [-100, 0, -18, 0],
+          opacity: [0, 1, 1, 1],
+          rotate: [-35, 12, 6, 10],
+        }}
+        transition={{ delay, duration: 0.52, ease: "easeIn", times: [0, 0.58, 0.8, 1] }}
+      />
+      <motion.span
+        className="battle-pokeball-flash"
+        aria-hidden
+        initial={{ opacity: 0, scale: 0.2 }}
+        animate={{ opacity: [0, 0, 0.95, 0], scale: [0.2, 0.2, 2.2, 3] }}
+        transition={{ delay: delay + 0.44, duration: 0.38, ease: "easeOut" }}
+      />
+    </>
   );
 }
 
 function ClassicFighterSprite({
   view,
   side,
+  introGen,
   onSelect,
 }: {
   view: FighterView;
   side: Side;
+  introGen: number;
   onSelect?: () => void;
 }) {
   const {
     fighter,
+    slot,
     isKo,
     isStriking,
     isFlashing,
@@ -194,12 +223,25 @@ function ClassicFighterSprite({
   const isSleeping = fighter.status?.effect === "sleep" && !isKo;
   const clickable = selectable && !isKo && onSelect;
 
-  // Direção do "avanço" no ataque: jogador (embaixo/esq.) avança p/ cima-direita;
-  // inimigo (topo/dir.) avança p/ baixo-esquerda — como nos jogos de GBA.
+  const introDelay = (side === "enemy" ? 0 : 0.12) + slot * 0.16;
+  const runIntro = introGen > 0;
+  const [introDone, setIntroDone] = useState(!runIntro);
+
+  useEffect(() => {
+    if (!runIntro) {
+      setIntroDone(true);
+      return;
+    }
+    setIntroDone(false);
+    const t = setTimeout(() => setIntroDone(true), (introDelay + 0.65) * 1000);
+    return () => clearTimeout(t);
+  }, [introGen, introDelay, runIntro]);
+
+  const showBall = runIntro && !introDone;
+  const showSprite = !runIntro || introDone;
+
   const lungeX = side === "player" ? [0, 26, 0] : [0, -26, 0];
   const lungeY = side === "player" ? [0, -18, 0] : [0, 18, 0];
-
-  // Brilho colorido do impacto aplicado direto no sprite (sem halo quadrado)
   const flashColor = TYPE_FLASH_COLORS[moveType ?? "normal"] ?? TYPE_FLASH_COLORS.normal;
 
   return (
@@ -217,7 +259,6 @@ function ClassicFighterSprite({
             }
           : undefined
       }
-      key={isFlashing ? `flash-${moveType}` : isStriking ? "strike" : "idle"}
       animate={
         isKo
           ? { opacity: 0.35, y: 6, x: 0, filter: "grayscale(1) brightness(0.9)" }
@@ -230,7 +271,6 @@ function ClassicFighterSprite({
             : isFlashing
               ? {
                   x: [0, -6, 6, -4, 4, 0],
-                  // piscada clássica de dano dos jogos GBA + brilho da cor do golpe
                   opacity: [1, 0.15, 1, 0.15, 1],
                   filter: [
                     `drop-shadow(0 0 0px ${flashColor})`,
@@ -252,45 +292,56 @@ function ClassicFighterSprite({
       className={cn(
         "battle-scene-slot",
         isStriking && "z-30",
-        clickable && "cursor-pointer"
+        clickable && "cursor-pointer",
+        isSelectedActor && "battle-scene-slot-actor",
+        isSelectedTarget && "battle-scene-slot-target",
+        selectable && !isKo && !isSelectedActor && !isSelectedTarget && "battle-scene-slot-hover"
       )}
     >
       <div className="battle-scene-platform" aria-hidden />
 
+      <AnimatePresence>
+        {showBall && <PokeballRelease key={`ball-${introGen}-${slot}`} delay={introDelay} />}
+      </AnimatePresence>
+
       <div
         className={cn(
-          "relative flex items-end justify-center",
-          side === "player" ? "w-[90%] max-w-[9rem]" : "w-[82%] max-w-[7.5rem]",
-          "aspect-square"
+          "relative items-end justify-center",
+          side === "player"
+            ? "battle-scene-sprite-wrap-back"
+            : "battle-scene-sprite-wrap-front",
+          !isKo && showSprite && clickable && !isSelectedActor && !isSelectedTarget && "battle-scene-clickable",
+          !isKo && showSprite && isSelectedActor && "battle-scene-picked-actor",
+          !isKo && showSprite && isSelectedTarget && "battle-scene-picked-target"
         )}
       >
-        {(clickable || isSelectedActor || isSelectedTarget) && !isKo && (
-          <span
-            className={cn(
-              "battle-scene-arrow",
-              (isSelectedActor || isSelectedTarget) && "battle-scene-arrow-locked"
-            )}
-            aria-hidden
-          >
-            ▼
-          </span>
-        )}
         {statusApplied === "sleep" && isFlashing && (
           <span className="absolute -top-2 left-1/2 -translate-x-1/2 z-30 font-black text-indigo-200 drop-shadow-md">
             Zzz
           </span>
         )}
-        {isSleeping && <BattleSleepOverlay />}
-        <GbaSprite
-          pokemonId={fighter.pokemon.id}
-          name={fighter.pokemon.name}
-          side={side}
-          shiny={isShiny}
-          className={cn(
-            "w-full h-full relative z-[2]",
-            isSleeping && "opacity-60 saturate-50"
+        {isSleeping && showSprite && <BattleSleepOverlay />}
+
+        <AnimatePresence>
+          {showSprite && (
+            <motion.span
+              key={`sprite-${introGen}-${slot}`}
+              className="inline-flex items-end justify-center"
+              style={{ transformOrigin: "bottom center" }}
+              initial={runIntro ? { opacity: 0, scale: 0.2, filter: "brightness(3)" } : false}
+              animate={{ opacity: 1, scale: 1, filter: "brightness(1)" }}
+              transition={{ duration: 0.28, ease: "backOut" }}
+            >
+              <GbaSprite
+                pokemonId={fighter.pokemon.id}
+                name={fighter.pokemon.name}
+                side={side}
+                shiny={isShiny}
+                className={cn(isSleeping && "opacity-60 saturate-50")}
+              />
+            </motion.span>
           )}
-        />
+        </AnimatePresence>
       </div>
     </motion.div>
   );
@@ -307,6 +358,15 @@ export function ClassicBattleScene({
   const tactical = state.tacticalMode && state.phase === "fighting";
   const phase = state.tacticalPhase;
   const pending = state.pendingSelection ?? {};
+
+  const [introGen, setIntroGen] = useState(0);
+  const prevPhaseRef = useRef(state.phase);
+  useEffect(() => {
+    if (prevPhaseRef.current !== "fighting" && state.phase === "fighting") {
+      setIntroGen((g) => g + 1);
+    }
+    prevPhaseRef.current = state.phase;
+  }, [state.phase]);
 
   // Sons estilo Game Boy sincronizados com as fases do golpe
   useEffect(() => {
@@ -326,6 +386,16 @@ export function ClassicBattleScene({
     pending.actorSlot != null
       ? state.playerTeam.find((f) => f.slotIndex === pending.actorSlot)
       : null;
+
+  const handlePickActor = (slot: number) => {
+    playUiSelect();
+    onPickActor?.(slot);
+  };
+
+  const handlePickTarget = (slot: number) => {
+    playUiConfirm();
+    onPickTarget?.(slot);
+  };
 
   const buildView = (fighter: BattleFighter, i: number, side: Side): FighterView => {
     const slot = fighter.slotIndex ?? i;
@@ -394,15 +464,20 @@ export function ClassicBattleScene({
   const enemyViews = state.enemyTeam.map((f, i) => buildView(f, i, "enemy"));
   const playerViews = state.playerTeam.map((f, i) => buildView(f, i, "player"));
 
+  const gymAccent = state.gymMeta?.themeColor;
+
   return (
-    <div className="battle-scene">
+    <div
+      className={cn("battle-scene", gymAccent && "battle-scene-gym")}
+      style={gymAccent ? ({ "--gym-accent": gymAccent } as React.CSSProperties) : undefined}
+    >
       {/* Caixas de status inimigas — canto superior esquerdo (estilo FRLG) */}
       <div className="battle-scene-enemy-boxes">
         {enemyViews.map((view) => (
           <ClassicStatusBox
             key={`ebox-${view.fighter.pokemon.id}-${view.slot}`}
             view={view}
-            onSelect={() => onPickTarget?.(view.slot)}
+            onSelect={() => handlePickTarget(view.slot)}
           />
         ))}
       </div>
@@ -414,7 +489,8 @@ export function ClassicBattleScene({
             key={`espr-${view.fighter.pokemon.id}-${view.slot}`}
             view={view}
             side="enemy"
-            onSelect={() => onPickTarget?.(view.slot)}
+            introGen={introGen}
+            onSelect={() => handlePickTarget(view.slot)}
           />
         ))}
       </div>
@@ -426,7 +502,8 @@ export function ClassicBattleScene({
             key={`pspr-${view.fighter.pokemon.id}-${view.slot}`}
             view={view}
             side="player"
-            onSelect={() => onPickActor?.(view.slot)}
+            introGen={introGen}
+            onSelect={() => handlePickActor(view.slot)}
           />
         ))}
       </div>
@@ -437,7 +514,7 @@ export function ClassicBattleScene({
           <ClassicStatusBox
             key={`pbox-${view.fighter.pokemon.id}-${view.slot}`}
             view={view}
-            onSelect={() => onPickActor?.(view.slot)}
+            onSelect={() => handlePickActor(view.slot)}
           />
         ))}
       </div>

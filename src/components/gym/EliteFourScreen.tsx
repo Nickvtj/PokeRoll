@@ -1,7 +1,7 @@
 "use client";
 
 import { ELITE_FOUR, isEliteMemberUnlocked } from "@/data/gyms";
-import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
+import { BATTLE_ROSTER_SIZE, BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { Lock, Swords, Trophy, Check } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { BattleArena } from "@/components/battle/BattleArena";
@@ -48,7 +48,9 @@ export function EliteFourScreen({
 
       setFighting(false);
       const won = state.phase === "victory";
-      const levelUps = grantPokemonBattleXp(team, won, "elite");
+      const participated = new Set(state.participatedIds ?? team.slice(0, BATTLE_TEAM_SIZE));
+      const reserveIds = team.filter((id) => !participated.has(id));
+      const levelUps = grantPokemonBattleXp(team, won, "elite", reserveIds);
 
       if (won && activeElite) {
         const avgLevel =
@@ -74,6 +76,7 @@ export function EliteFourScreen({
     pickActor,
     pickTarget,
     pickMove,
+    pickSwitch,
     cancelSelection,
     resetLoop,
   } = useTacticalBattle({
@@ -94,7 +97,7 @@ export function EliteFourScreen({
     (eliteId: EliteId) => {
       if (!leagueUnlocked || !isEliteMemberUnlocked(eliteId, eliteProgress)) return;
       if (team.length < BATTLE_TEAM_SIZE) return;
-      const pokemon = getTeamPokemonForBattle(team.slice(0, BATTLE_TEAM_SIZE));
+      const pokemon = getTeamPokemonForBattle(team.slice(0, BATTLE_ROSTER_SIZE));
       if (pokemon.length < BATTLE_TEAM_SIZE) return;
       resetLoop();
       setActiveElite(eliteId);
@@ -140,6 +143,7 @@ export function EliteFourScreen({
         onPickActor={pickActor}
         onPickTarget={pickTarget}
         onPickMove={pickMove}
+        onPickSwitch={pickSwitch}
         onCancelSelection={cancelSelection}
         onContinue={() => {
           resetBattle();
@@ -181,7 +185,7 @@ export function EliteFourScreen({
       {leagueUnlocked && (
         <>
           <SavedTeamsPanel />
-          <TeamSelector />
+          <TeamSelector maxTeam={BATTLE_ROSTER_SIZE} />
         </>
       )}
 

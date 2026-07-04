@@ -45,7 +45,9 @@ export function EggVisual({
           width={s.img}
           height={s.img}
           className="object-contain w-full h-full"
+          style={{ imageRendering: "pixelated" }}
           priority={size === "lg"}
+          unoptimized
         />
       </motion.div>
 

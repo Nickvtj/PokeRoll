@@ -8,7 +8,7 @@ import { SavedTeamsPanel } from "@/components/gym/SavedTeamsPanel";
 import { BadgeRewardAnimation } from "@/components/gym/BadgeRewardAnimation";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { GYM_MAP } from "@/data/gyms";
-import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
+import { BATTLE_ROSTER_SIZE, BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { initGymBattle } from "@/lib/gym-battle-engine";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { calcPerfectRun, useGymStore } from "@/stores/gym-store";
@@ -51,7 +51,9 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
 
       setFighting(false);
       const won = state.phase === "victory";
-      const levelUps = grantPokemonBattleXp(team, won, "gym");
+      const participated = new Set(state.participatedIds ?? team.slice(0, BATTLE_TEAM_SIZE));
+      const reserveIds = team.filter((id) => !participated.has(id));
+      const levelUps = grantPokemonBattleXp(team, won, "gym", reserveIds);
       const finalState: BattleState = { ...state, levelUps };
 
       if (won && state.gymMeta) {
@@ -81,6 +83,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
     pickActor,
     pickTarget,
     pickMove,
+    pickSwitch,
     cancelSelection,
     resetLoop,
   } = useTacticalBattle({
@@ -100,7 +103,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
   const startStage = useCallback(
     (s: number) => {
       if (team.length < BATTLE_TEAM_SIZE) return;
-      const pokemon = getTeamPokemonForBattle(team.slice(0, BATTLE_TEAM_SIZE));
+      const pokemon = getTeamPokemonForBattle(team.slice(0, BATTLE_ROSTER_SIZE));
       if (pokemon.length < BATTLE_TEAM_SIZE) return;
       resetLoop();
       setStage(s);
@@ -166,6 +169,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
           onPickActor={pickActor}
           onPickTarget={pickTarget}
           onPickMove={pickMove}
+          onPickSwitch={pickSwitch}
           onCancelSelection={cancelSelection}
           onContinue={handleContinue}
           onPlayAgain={
@@ -210,6 +214,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
       <div className="flex-1 min-h-0 flex flex-col">
       <BattleTeamPrepLayout
         previewLayout="bar-only"
+        maxTeam={BATTLE_ROSTER_SIZE}
         action={
           <AnimatedButton
             variant="gold"
@@ -222,7 +227,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
         }
       >
         <SavedTeamsPanel />
-        <TeamSelector className="flex-1 min-h-0" />
+        <TeamSelector maxTeam={BATTLE_ROSTER_SIZE} className="flex-1 min-h-0" />
       </BattleTeamPrepLayout>
       </div>
 

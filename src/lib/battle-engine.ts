@@ -1,5 +1,6 @@
 import { rollTrainingOpponent } from "@/data/battle-trainers";
-import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
+import { BATTLE_ROSTER_SIZE, BATTLE_TEAM_SIZE } from "@/data/battle-theme";
+import { getRosterTypeCounts } from "@/lib/team-monotype";
 import { POKEMON_LIST } from "@/data/pokemon";
 import { getPokemonBattleStats } from "@/data/pokemon-stats";
 import { getPokedexInfo } from "@/data/pokedex";
@@ -171,7 +172,8 @@ function pickRandomPokemon(pool: Pokemon[], usedIds: Set<number>): Pokemon | nul
 export function generateEnemyTeam(
   playerPokemon: Pokemon[],
   wave: number,
-  pokemonLevels: Record<number, number>
+  pokemonLevels: Record<number, number>,
+  count: number = TEAM_SIZE
 ): BattleFighter[] {
   const { avgRarityTier, types, fighters, avgPokemonLevel } = analyzePlayerTeam(
     playerPokemon,
@@ -188,7 +190,7 @@ export function generateEnemyTeam(
   const usedIds = new Set<number>();
   const enemies: BattleFighter[] = [];
 
-  for (let slot = 0; slot < TEAM_SIZE; slot++) {
+  for (let slot = 0; slot < count; slot++) {
     const rarity = pickEnemyRarity(targetTier + slot * 0.1);
     let pool = POKEMON_LIST.filter((p) => p.rarity === rarity);
 
@@ -281,13 +283,24 @@ export function initBattle(
   moveLoadouts: Record<string, string[]> = {}
 ): BattleState {
   const attachConfig = { moveLoadouts };
-  const playerTeam = attachMovesToTeam(
-    playerPokemon.map((p, i) => createFighter(p, true, pokemonLevels[p.id] ?? 1, i)),
+  const roster = playerPokemon.slice(0, BATTLE_ROSTER_SIZE);
+  const rosterCount = Math.max(TEAM_SIZE, roster.length);
+
+  const playerFighters = attachMovesToTeam(
+    roster.map((p, i) => createFighter(p, true, pokemonLevels[p.id] ?? 1, i)),
     attachConfig
   );
-  const enemyTeam = attachMovesToTeam(generateEnemyTeam(playerPokemon, wave, pokemonLevels));
+  const playerTeam = playerFighters.slice(0, TEAM_SIZE);
+  const playerBench = playerFighters.slice(TEAM_SIZE);
+
+  const allEnemies = attachMovesToTeam(
+    generateEnemyTeam(roster, wave, pokemonLevels, rosterCount)
+  );
+  const enemyTeam = allEnemies.slice(0, TEAM_SIZE);
+  const enemyBench = allEnemies.slice(TEAM_SIZE);
 
   const { monotype, sharedType } = analyzePlayerTeam(playerPokemon, pokemonLevels);
+  const playerTypeCounts = getRosterTypeCounts(roster.map((p) => p.id));
 
   const playerStarts = performCoinFlip();
 
@@ -309,6 +322,11 @@ export function initBattle(
     phase: "faceOff",
     playerTeam,
     enemyTeam,
+    playerBench,
+    enemyBench,
+    pendingSwitch: null,
+    playerTypeCounts,
+    participatedIds: playerTeam.map((f) => f.pokemon.id),
     turnOrder: buildTurnOrder(playerStarts),
     currentTurnIndex: 0,
     wave,

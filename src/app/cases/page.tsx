@@ -64,9 +64,10 @@ export default function CasesPage() {
 
   useEffect(() => {
     scheduleIdle(() => {
-      void import("@/components/cases/EggPreviewView");
-      void import("@/components/cases/EggOpeningView");
-      void import("@/components/cases/EggResultView");
+      // Prefetch best-effort: uma falha de chunk (build desatualizado) não deve quebrar a página
+      void import("@/components/cases/EggPreviewView").catch(() => {});
+      void import("@/components/cases/EggOpeningView").catch(() => {});
+      void import("@/components/cases/EggResultView").catch(() => {});
     }, 2000);
   }, []);
 

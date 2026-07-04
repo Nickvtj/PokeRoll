@@ -1,18 +1,15 @@
 import type { GymId } from "@/types/gym";
 
-const BADGE_CDN =
-  "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges";
-
-/** Insígnias de Kanto (PokeAPI/sprites — mesmo CDN dos Pokémon) */
+/** Insígnias de Kanto no estilo GBA (FireRed/LeafGreen) — sprites locais em /public */
 export const GYM_BADGE_IMAGES: Record<GymId, string> = {
-  brock: `${BADGE_CDN}/1.png`,
-  misty: `${BADGE_CDN}/2.png`,
-  surge: `${BADGE_CDN}/3.png`,
-  erika: `${BADGE_CDN}/4.png`,
-  koga: `${BADGE_CDN}/5.png`,
-  sabrina: `${BADGE_CDN}/6.png`,
-  blaine: `${BADGE_CDN}/7.png`,
-  giovanni: `${BADGE_CDN}/8.png`,
+  brock: "/sprites/badges/brock.png",
+  misty: "/sprites/badges/misty.png",
+  surge: "/sprites/badges/surge.png",
+  erika: "/sprites/badges/erika.png",
+  koga: "/sprites/badges/koga.png",
+  sabrina: "/sprites/badges/sabrina.png",
+  blaine: "/sprites/badges/blaine.png",
+  giovanni: "/sprites/badges/giovanni.png",
 };
 
 export const GYM_LEADER_COIN_REWARD = 15;

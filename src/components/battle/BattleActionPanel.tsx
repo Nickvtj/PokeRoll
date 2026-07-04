@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Crosshair, Sparkles, Swords, Target } from "lucide-react";
-import { previewMove, getEffectivenessText, TYPE_LABELS_PT } from "@/lib/tactical-battle-engine";
+import { previewMove, TYPE_LABELS_PT } from "@/lib/tactical-battle-engine";
 import { cn } from "@/lib/utils";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
 import { BattleLogLine } from "@/components/battle/BattleLogLine";
@@ -17,107 +17,78 @@ interface BattleActionPanelProps {
   recentLog?: BattleLogEntry[];
 }
 
-const EFF_BADGE: Record<string, string> = BATTLE_CLASSIC_THEME
-  ? {
-      super: "text-emerald-50 bg-emerald-700/90 ring-emerald-900/50",
-      weak: "text-amber-50 bg-amber-700/90 ring-amber-900/50",
-      immune: "text-slate-100 bg-slate-600/90 ring-slate-800/50",
-      normal: "text-[#8c98ac] bg-[#242e40] ring-white/10",
-    }
-  : {
-      super: "text-emerald-100 bg-emerald-500/45 ring-emerald-300/50",
-      weak: "text-amber-100 bg-amber-500/35 ring-amber-300/40",
-      immune: "text-slate-200 bg-slate-500/35 ring-slate-300/30",
-      normal: "text-white/50 bg-white/10 ring-white/15",
-    };
-
 const EFF_LABEL: Record<string, string> = {
   super: "Super efetivo",
   weak: "Pouco efetivo",
   immune: "Sem efeito",
 };
 
-const TYPE_COLORS: Record<string, string> = {
-  fire: "from-orange-600/20 to-orange-900/40 border-orange-500/50",
-  water: "from-blue-600/20 to-blue-900/40 border-blue-500/50",
-  grass: "from-green-600/20 to-green-900/40 border-green-500/50",
-  electric: "from-yellow-400/20 to-yellow-700/40 border-yellow-400/50",
-  ice: "from-cyan-400/20 to-cyan-700/40 border-cyan-400/50",
-  fighting: "from-red-600/20 to-red-900/40 border-red-500/50",
-  poison: "from-purple-600/20 to-purple-900/40 border-purple-500/50",
-  ground: "from-amber-700/20 to-amber-900/40 border-amber-600/50",
-  flying: "from-indigo-400/20 to-indigo-700/40 border-indigo-400/50",
-  psychic: "from-pink-500/20 to-pink-800/40 border-pink-400/50",
-  bug: "from-lime-600/20 to-lime-900/40 border-lime-500/50",
-  rock: "from-stone-600/20 to-stone-900/40 border-stone-500/50",
-  ghost: "from-violet-700/20 to-violet-900/40 border-violet-600/50",
-  dragon: "from-indigo-700/20 to-indigo-900/40 border-indigo-600/50",
-  dark: "from-slate-800/40 to-black/60 border-slate-700/50",
-  steel: "from-gray-500/20 to-gray-700/40 border-gray-400/50",
-  fairy: "from-pink-300/20 to-pink-500/40 border-pink-300/50",
-  normal: "from-slate-500/20 to-slate-700/40 border-slate-400/50",
-};
-
 function shortEffLabel(preview: MovePreview): string | null {
   return EFF_LABEL[preview.effectiveness] ?? null;
 }
 
+const TYPE_BOTTOM_COLORS: Record<string, string> = {
+  fire: "#e87850",
+  water: "#6890f0",
+  grass: "#78c850",
+  electric: "#f8d030",
+  ice: "#98d8d8",
+  fighting: "#c03028",
+  poison: "#a040a0",
+  ground: "#e0c068",
+  flying: "#a890f0",
+  psychic: "#f85888",
+  bug: "#a8b820",
+  rock: "#b8a038",
+  ghost: "#705898",
+  dragon: "#7038f8",
+  dark: "#705848",
+  steel: "#b8b8d0",
+  fairy: "#ee99ac",
+  normal: "#a8a878",
+};
+
+const EFF_BADGE: Record<string, string> = {
+  super: "bg-emerald-600 text-white border-emerald-800",
+  weak: "bg-amber-600 text-white border-amber-800",
+  immune: "bg-slate-600 text-white border-slate-800",
+};
+
 function MoveButton({ preview, onPick }: { preview: MovePreview; onPick: () => void }) {
   const { move } = preview;
   const typeLabel = TYPE_LABELS_PT[move.type] ?? move.type;
-  const typeStyle = TYPE_COLORS[move.type] || TYPE_COLORS.normal;
+  const typeBg = TYPE_BOTTOM_COLORS[move.type] ?? TYPE_BOTTOM_COLORS.normal;
   const badge = shortEffLabel(preview);
-  const badgeClass = EFF_BADGE[preview.effectiveness] ?? EFF_BADGE.normal;
 
   return (
     <motion.button
       type="button"
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onPick}
       className={cn(
-        "w-full text-left p-3 transition-all relative overflow-hidden",
-        BATTLE_CLASSIC_THEME
-          ? cn("battle-classic-move-btn border-2", typeStyle)
-          : cn("rounded-xl border bg-gradient-to-br", typeStyle),
-        preview.effectiveness === "super" &&
-          (BATTLE_CLASSIC_THEME ? "ring-2 ring-emerald-600/60" : "ring-2 ring-emerald-400/45"),
-        preview.effectiveness === "weak" &&
-          (BATTLE_CLASSIC_THEME ? "ring-1 ring-amber-600/50" : "ring-1 ring-amber-400/35")
+        "battle-gba-move-btn",
+        preview.effectiveness === "super" && "battle-gba-move-btn-super",
+        preview.effectiveness === "weak" && "battle-gba-move-btn-weak"
       )}
     >
-      {badge && (
+      <div className="battle-gba-move-top">{move.name}</div>
+      <div className="battle-gba-move-bottom" style={{ background: typeBg }}>
+        <span className="battle-gba-move-type">{typeLabel}</span>
+        <span className="battle-gba-move-pp">
+          {move.category === "damage" ? `Poder ${move.power}` : "Status"}
+        </span>
+      </div>
+      {badge && preview.effectiveness !== "normal" && (
         <span
           className={cn(
-            "absolute top-2 right-2 text-[9px] font-bold px-2 py-1 rounded-md ring-1 uppercase tracking-wide",
-            badgeClass
+            "absolute top-1 right-1 text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase leading-none",
+            EFF_BADGE[preview.effectiveness] ?? EFF_BADGE.weak
           )}
         >
           {badge}
         </span>
       )}
-      <p
-        className={cn(
-          "font-bold truncate pr-12",
-          BATTLE_CLASSIC_THEME ? "battle-classic-move-name" : "text-sm text-white"
-        )}
-      >
-        {move.name}
-      </p>
-      <p
-        className={cn(
-          "mt-0.5",
-          BATTLE_CLASSIC_THEME ? "battle-classic-move-meta" : "text-[10px] text-white/60"
-        )}
-      >
-        {typeLabel}
-        {move.category === "damage" ? ` · Poder ${move.power}` : " · Status"}
-        {preview.estimatedDamage[1] > 0 && (
-          <span className={BATTLE_CLASSIC_THEME ? "opacity-70" : "text-white/40"}>
-            {" "}· ~{preview.estimatedDamage[0]}–{preview.estimatedDamage[1]}
-          </span>
-        )}
-      </p>
     </motion.button>
   );
 }
@@ -219,7 +190,7 @@ export function BattleActionPanel({
       )}
 
       {phase === "player-pick-move" && movePreviews.length > 0 && (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="battle-gba-move-grid">
           {movePreviews.map((preview) => (
             <MoveButton
               key={preview.move.id}

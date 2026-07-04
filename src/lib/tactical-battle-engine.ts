@@ -1,4 +1,5 @@
 import { TEAM_MONOTYPE_DAMAGE_BONUS } from "@/data/economy-balance";
+import { monotypeBonusForType } from "@/lib/team-monotype";
 import { getDefaultEquippedMoves, resolveBattleMoves } from "@/data/pokemon-moves";
 import { getDualTypeEffectiveness, getDefenderTypes, TYPE_LABELS_PT } from "@/data/type-chart";
 import {
@@ -305,10 +306,15 @@ function tickStatusAtRoundEnd(state: BattleState): { state: BattleState; logs: B
 }
 
 function checkBattleEnd(state: BattleState): BattleStepResult | null {
-  const livingPlayers = getLivingFighters(state.playerTeam);
-  const livingEnemies = getLivingFighters(state.enemyTeam);
+  // Um lado só perde quando ativos E reservas estão todos desmaiados
+  const playerAlive =
+    getLivingFighters(state.playerTeam).length +
+    getLivingFighters(state.playerBench ?? []).length;
+  const enemyAlive =
+    getLivingFighters(state.enemyTeam).length +
+    getLivingFighters(state.enemyBench ?? []).length;
 
-  if (livingEnemies.length === 0) {
+  if (enemyAlive === 0) {
     const isTraining = !state.mode || state.mode === "training";
     return {
       state: {
@@ -319,22 +325,123 @@ function checkBattleEnd(state: BattleState): BattleStepResult | null {
           : null,
         log: [...state.log, log("Vitória!", "info")],
         tacticalPhase: undefined,
+        pendingSwitch: null,
       },
       done: true,
     };
   }
-  if (livingPlayers.length === 0) {
+  if (playerAlive === 0) {
     return {
       state: {
         ...state,
         phase: "defeat",
         log: [...state.log, log("Derrota...", "ko")],
         tacticalPhase: undefined,
+        pendingSwitch: null,
       },
       done: true,
     };
   }
   return null;
+}
+
+/** Coloca uma reserva no slot de um ativo desmaiado, mantendo o slotIndex do campo. */
+function switchInFighter(
+  fighter: BattleFighter,
+  slot: number
+): BattleFighter {
+  return { ...fighter, slotIndex: slot, status: null };
+}
+
+/** Troca automática do inimigo: qualquer ativo desmaiado é substituído por uma reserva viva. */
+function autoSwitchEnemy(state: BattleState): BattleState {
+  let enemyTeam = state.enemyTeam;
+  let bench = [...(state.enemyBench ?? [])];
+  const logs: BattleLogEntry[] = [];
+  let changed = false;
+
+  enemyTeam = enemyTeam.map((f) => {
+    if (f.currentHp > 0) return f;
+    const idx = bench.findIndex((b) => b.currentHp > 0);
+    if (idx === -1) return f;
+    const incoming = bench[idx];
+    bench = bench.filter((_, i) => i !== idx);
+    changed = true;
+    logs.push(log(`O oponente enviou ${incoming.pokemon.name}!`, "info"));
+    return switchInFighter(incoming, f.slotIndex ?? 0);
+  });
+
+  if (!changed) return state;
+  return { ...state, enemyTeam, enemyBench: bench, log: [...state.log, ...logs] };
+}
+
+/** Coloca a reserva escolhida (ou a única viva) no slot desmaiado do jogador. */
+export function applyPlayerSwitch(
+  state: BattleState,
+  benchIndex: number
+): BattleState {
+  const pending = state.pendingSwitch;
+  if (!pending || pending.side !== "player") return state;
+
+  const bench = [...(state.playerBench ?? [])];
+  const incoming = bench[benchIndex];
+  if (!incoming || incoming.currentHp <= 0) return state;
+
+  const slot = pending.slot;
+  const newBench = bench.filter((_, i) => i !== benchIndex);
+  const playerTeam = state.playerTeam.map((f) =>
+    (f.slotIndex ?? 0) === slot ? switchInFighter(incoming, slot) : f
+  );
+
+  const participated = new Set(state.participatedIds ?? []);
+  participated.add(incoming.pokemon.id);
+
+  return {
+    ...state,
+    playerTeam,
+    playerBench: newBench,
+    pendingSwitch: null,
+    participatedIds: [...participated],
+    log: [...state.log, log(`Vai, ${incoming.pokemon.name}!`, "info")],
+  };
+}
+
+/**
+ * Após qualquer ação/DOT: troca o inimigo automaticamente, detecta fim real e,
+ * se um ativo do jogador desmaiou e há reserva, resolve a troca.
+ * Com 1 reserva viva a troca é automática; com 2+ marca `pendingSwitch` (abre modal).
+ */
+export function resolvePostAction(state: BattleState): {
+  state: BattleState;
+  ended: boolean;
+  needsPlayerSwitch: boolean;
+} {
+  let s = autoSwitchEnemy(state);
+
+  const end = checkBattleEnd(s);
+  if (end) return { state: end.state, ended: true, needsPlayerSwitch: false };
+
+  const faintedActive = s.playerTeam.find((f) => f.currentHp <= 0);
+  const liveBench = (s.playerBench ?? []).filter((b) => b.currentHp > 0);
+
+  if (faintedActive && liveBench.length > 0) {
+    if (liveBench.length === 1) {
+      const benchIndex = (s.playerBench ?? []).findIndex((b) => b.currentHp > 0);
+      const switched = applyPlayerSwitch(
+        { ...s, pendingSwitch: { side: "player", slot: faintedActive.slotIndex ?? 0 } },
+        benchIndex
+      );
+      // Pode haver outro ativo desmaiado — resolve em cadeia
+      return resolvePostAction(switched);
+    }
+    return {
+      state: { ...s, pendingSwitch: { side: "player", slot: faintedActive.slotIndex ?? 0 } },
+      ended: false,
+      needsPlayerSwitch: true,
+    };
+  }
+
+  return { state: s, ended: false, needsPlayerSwitch: false };
 }
 
 /** Verifica vitória/derrota após DOT, KO em cadeia, etc. */
@@ -408,7 +515,11 @@ export function resolveAction(
     log(`${actor.pokemon.name} usou ${move.name}!`, "attack", buildMoveHitSound(move))
   );
 
-  let damageMult = 1 + bonuses.battleDamage + monotypeBonus;
+  // Boost de monotipo é por-tipo (baseado no roster de 4 escolhidos)
+  const effectiveMonotype = actorIsPlayer
+    ? monotypeBonusForType(state.playerTypeCounts, actor.stats.type)
+    : monotypeBonus;
+  let damageMult = 1 + bonuses.battleDamage + effectiveMonotype;
   if (actorIsPlayer && actor.status?.effect === "burn") {
     damageMult *= 0.85;
   }
@@ -742,13 +853,13 @@ export function executePlayerAction(
     return { result: null, nextPhase: "player-pick-actor" };
   }
 
-  const end = checkBattleEnd(resolved.state);
-  if (end) {
-    return { result: { ...resolved, state: end.state }, nextPhase: "player-pick-actor" };
+  const post = resolvePostAction(resolved.state);
+  if (post.ended) {
+    return { result: { ...resolved, state: post.state }, nextPhase: "player-pick-actor" };
   }
 
   return {
-    result: resolved,
+    result: { ...resolved, state: post.state },
     nextPhase: "enemy-turn",
   };
 }
@@ -807,17 +918,26 @@ export function executeEnemyAction(
     enemyTurnCursor: advanceEnemyCursor(resolved.state, action.actorSlot),
   };
 
-  const end = checkBattleEnd(afterAction);
-  if (end) {
+  const post = resolvePostAction(afterAction);
+  if (post.ended) {
     return {
-      result: { ...resolved, state: end.state },
+      result: { ...resolved, state: post.state },
       done: true,
       actedSlot: action.actorSlot,
     };
   }
 
+  // Se o golpe inimigo derrubou um ativo do jogador (e há 2+ reservas),
+  // marca a troca para o modal e retoma fechando o turno inimigo.
+  const nextState = post.needsPlayerSwitch
+    ? {
+        ...post.state,
+        pendingSwitch: { ...post.state.pendingSwitch!, resume: "finishTurn" as const },
+      }
+    : post.state;
+
   return {
-    result: { ...resolved, state: afterAction },
+    result: { ...resolved, state: nextState },
     done: false,
     actedSlot: action.actorSlot,
   };
@@ -830,12 +950,21 @@ export function finishEnemyTurn(state: BattleState): BattleState {
     log: [...ticked.log, ...logs],
   };
 
-  const { state: resolved, ended } = resolveBattleIfOver(afterTick);
-  if (ended) return resolved;
+  const post = resolvePostAction(afterTick);
+  if (post.ended) return post.state;
+
+  // DOT derrubou um ativo do jogador com 2+ reservas → pausa para o modal;
+  // após a troca, a vez passa direto ao jogador (o round já terminou).
+  if (post.needsPlayerSwitch) {
+    return {
+      ...post.state,
+      pendingSwitch: { ...post.state.pendingSwitch!, resume: "playerTurn" as const },
+    };
+  }
 
   return {
-    ...resolved,
-    roundNumber: (resolved.roundNumber ?? 1) + 1,
+    ...post.state,
+    roundNumber: (post.state.roundNumber ?? 1) + 1,
     tacticalPhase: "player-pick-actor",
     pendingSelection: {},
     enemyActionQueue: [],

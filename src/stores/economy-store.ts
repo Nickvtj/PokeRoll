@@ -13,6 +13,7 @@ import {
   LUCKY_EGG_DURATION_MS,
   LUCKY_EGG_XP_MULTIPLIER,
   LUCKY_EGG_PER_MILESTONE,
+  BATTLE_RESERVE_XP_FRACTION,
   RARE_CANDY_PER_MILESTONE,
   TRAINER_LEVEL_MILESTONE,
 } from "@/data/economy-balance";
@@ -23,7 +24,7 @@ import {
   syncAchievementsToSupabase,
 } from "@/lib/achievements-sync";
 import { getTeamPassiveBonuses } from "@/data/pokemon-stats";
-import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
+import { BATTLE_ROSTER_SIZE } from "@/data/battle-theme";
 import {
   addPokemonXp,
   getXpProgressFromTotal,
@@ -78,7 +79,12 @@ interface EconomyStore extends EconomyState {
   isFavoritePokemon: (id: number) => boolean;
   getPokemonProgress: (id: number) => { level: number; xp: number; xpInLevel: number; xpPct: number };
   getPokemonLevelsMap: () => Record<number, number>;
-  grantPokemonBattleXp: (pokemonIds: number[], won: boolean, mode?: BattleMode) => PokemonLevelUpResult[];
+  grantPokemonBattleXp: (
+    pokemonIds: number[],
+    won: boolean,
+    mode?: BattleMode,
+    reserveIds?: number[]
+  ) => PokemonLevelUpResult[];
   grantPokemonXp: (pokemonId: number, amount: number) => PokemonLevelUpResult | null;
   getLevelCap: () => number;
   recordBattleWin: () => void;
@@ -257,7 +263,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
     return result;
   },
 
-  grantPokemonBattleXp: (pokemonIds, won, mode = "training") => {
+  grantPokemonBattleXp: (pokemonIds, won, mode = "training", reserveIds = []) => {
     let amount =
       mode === "elite"
         ? won
@@ -277,6 +283,9 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
       amount = Math.round(amount * LUCKY_EGG_XP_MULTIPLIER);
     }
 
+    const reserveSet = new Set(reserveIds);
+    const reserveAmount = Math.max(1, Math.round(amount * BATTLE_RESERVE_XP_FRACTION));
+
     const levelCap = get().getLevelCap();
     const results: PokemonLevelUpResult[] = [];
 
@@ -289,9 +298,10 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
         const pokemon = POKEMON_MAP[id];
         if (!pokemon) continue;
 
+        const gained = reserveSet.has(id) ? reserveAmount : amount;
         const current = pokemonBattleXp[key] ?? { level: 1, xp: 0 };
         const prevProgress = getXpProgressFromTotal(current.xp);
-        const { progress, leveledUp, previousLevel } = addPokemonXp(current, amount, levelCap);
+        const { progress, leveledUp, previousLevel } = addPokemonXp(current, gained, levelCap);
         pokemonBattleXp[key] = progress;
         const newProgress = getXpProgressFromTotal(progress.xp);
 
@@ -301,7 +311,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
           image: pokemon.image,
           previousLevel,
           newLevel: progress.level,
-          xpGained: amount,
+          xpGained: gained,
           previousXpInLevel: prevProgress.xpInLevel,
           newXpInLevel: newProgress.xpInLevel,
           xpPct: newProgress.pct,
@@ -409,7 +419,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
   },
 
   setTeam: (team) => {
-    set({ team: team.slice(0, BATTLE_TEAM_SIZE) });
+    set({ team: team.slice(0, BATTLE_ROSTER_SIZE) });
     get().sync();
   },
 

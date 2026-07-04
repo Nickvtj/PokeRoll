@@ -8,7 +8,7 @@ import { TeamSelector } from "@/components/battle/TeamSelector";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { getTeamPokemonForBattle } from "@/lib/team-pokemon";
 import { initBattle } from "@/lib/battle-engine";
-import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
+import { BATTLE_ROSTER_SIZE, BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { getEconomyBonuses, useEconomyStore } from "@/stores/economy-store";
 import { recordBattleToSupabase } from "@/lib/economy-supabase";
 import { useBattleSessionStore } from "@/stores/battle-session-store";
@@ -41,7 +41,9 @@ export function TrainingPanel({
 
       setFighting(false);
       const won = state.phase === "victory";
-      const levelUps = grantPokemonBattleXp(team, won, "training");
+      const participated = new Set(state.participatedIds ?? team.slice(0, BATTLE_TEAM_SIZE));
+      const reserveIds = team.filter((id) => !participated.has(id));
+      const levelUps = grantPokemonBattleXp(team, won, "training", reserveIds);
       let finalState: BattleState = { ...state, levelUps };
       const bonuses = getEconomyBonuses(team);
 
@@ -81,6 +83,7 @@ export function TrainingPanel({
     pickActor,
     pickTarget,
     pickMove,
+    pickSwitch,
     cancelSelection,
     resetLoop,
   } = useTacticalBattle({
@@ -99,7 +102,7 @@ export function TrainingPanel({
 
   const beginBattle = useCallback(() => {
     if (team.length < BATTLE_TEAM_SIZE) return null;
-    const pokemon = getTeamPokemonForBattle(team.slice(0, BATTLE_TEAM_SIZE));
+    const pokemon = getTeamPokemonForBattle(team.slice(0, BATTLE_ROSTER_SIZE));
     if (pokemon.length < BATTLE_TEAM_SIZE) return null;
     resetLoop();
     const state = initBattle(pokemon, 1, getPokemonLevelsMap(), pokemonMoveLoadouts);
@@ -147,6 +150,7 @@ export function TrainingPanel({
         onPickActor={pickActor}
         onPickTarget={pickTarget}
         onPickMove={pickMove}
+        onPickSwitch={pickSwitch}
         onCancelSelection={cancelSelection}
         onContinue={resetBattle}
         onPlayAgain={() => {
@@ -164,6 +168,7 @@ export function TrainingPanel({
   return (
     <div className="flex-1 min-h-0 flex flex-col">
     <BattleTeamPrepLayout
+      maxTeam={BATTLE_ROSTER_SIZE}
       action={
         <AnimatedButton
           variant="gold"
@@ -174,12 +179,12 @@ export function TrainingPanel({
           className="w-full"
         >
           {team.length < BATTLE_TEAM_SIZE
-            ? `Selecione ${BATTLE_TEAM_SIZE} Pokémon`
+            ? `Selecione ao menos ${BATTLE_TEAM_SIZE} Pokémon`
             : "INICIAR TREINO"}
         </AnimatedButton>
       }
     >
-      <TeamSelector className="flex-1 min-h-0" />
+      <TeamSelector maxTeam={BATTLE_ROSTER_SIZE} className="flex-1 min-h-0" />
     </BattleTeamPrepLayout>
     </div>
   );

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BATTLE_FLASH_MS,
+  BATTLE_INTRO_SETTLE_MS,
   BATTLE_STRIKE_MS,
 } from "@/data/economy-balance";
 import { getBattleCeremonyTimings } from "@/lib/battle-ceremony";
@@ -18,6 +19,8 @@ import {
   deselectActor,
   deselectTarget,
   resolveBattleIfOver,
+  resolvePostAction,
+  applyPlayerSwitch,
   selectActor,
   selectMove,
   selectTarget,
@@ -88,6 +91,11 @@ export function useTacticalBattle({
   const soundsStartedRef = useRef(false);
   const lastCeremonySkipTokenRef = useRef(0);
   const ceremonySkipToken = usePreferencesStore((s) => s.ceremonySkipToken);
+
+  // Respiro inicial: após as pokébolas caírem, segura o 1º ataque por um instante
+  const introSettleRef = useRef(false);
+  const introSettleTimerRef = useRef<number | null>(null);
+  const prevFightingPhaseRef = useRef<string | undefined>(battleState?.phase);
 
   fightingRef.current = fighting;
   stateRef.current = battleState;
@@ -320,6 +328,8 @@ export function useTacticalBattle({
 
     playCombatBeat(prev, result.state, done, result, () => {
       if (done) return;
+      // Golpe inimigo derrubou um ativo do jogador → aguarda a escolha no modal
+      if (result.state.pendingSwitch?.side === "player") return;
       const finished = finishEnemyTurn(result.state);
       stateRef.current = finished;
       syncBattleState(finished);
@@ -408,6 +418,28 @@ export function useTacticalBattle({
     scheduleEnemyChain,
   ]);
 
+  // Ao entrar na luta (pokébolas caindo), abre uma janela de "respiro" antes do 1º ataque
+  useEffect(() => {
+    const phase = battleState?.phase;
+    const was = prevFightingPhaseRef.current;
+    prevFightingPhaseRef.current = phase;
+    if (!fighting) return;
+    if (phase === "fighting" && was !== "fighting") {
+      if (getBattleCeremonyTimings().skipSounds) {
+        introSettleRef.current = false;
+        return;
+      }
+      introSettleRef.current = true;
+      if (introSettleTimerRef.current != null) {
+        window.clearTimeout(introSettleTimerRef.current);
+      }
+      introSettleTimerRef.current = window.setTimeout(() => {
+        introSettleRef.current = false;
+        introSettleTimerRef.current = null;
+      }, BATTLE_INTRO_SETTLE_MS);
+    }
+  }, [battleState?.phase, fighting]);
+
   useEffect(() => {
     const phase = battleState?.tacticalPhase;
     if (
@@ -423,7 +455,8 @@ export function useTacticalBattle({
     }
 
     autoBattleScheduledRef.current = true;
-    const delay = 500 / battleSpeed;
+    // Primeira ação automática também respeita o respiro inicial
+    const delay = (introSettleRef.current ? BATTLE_INTRO_SETTLE_MS : 500) / battleSpeed;
     autoTimerRef.current = window.setTimeout(() => {
       autoBattleScheduledRef.current = false;
       autoTimerRef.current = null;
@@ -460,6 +493,11 @@ export function useTacticalBattle({
       clearAutoTimer();
       clearCombatTimers();
       soundsStartedRef.current = false;
+      introSettleRef.current = false;
+      if (introSettleTimerRef.current != null) {
+        window.clearTimeout(introSettleTimerRef.current);
+        introSettleTimerRef.current = null;
+      }
       return undefined;
     }
 
@@ -533,7 +571,8 @@ export function useTacticalBattle({
       stateRef.current = resolved;
       syncBattleState(resolved);
       if (resolved.tacticalPhase === "enemy-turn") {
-        scheduleEnemyChain(timings.postCoinPauseMs);
+        // Espera as pokébolas assentarem antes do 1º golpe do oponente
+        scheduleEnemyChain(timings.skipSounds ? timings.postCoinPauseMs : BATTLE_INTRO_SETTLE_MS);
       }
     }, timings.fightRevealMs);
 
@@ -660,6 +699,57 @@ export function useTacticalBattle({
     setBattleState(next);
   }, [setBattleState]);
 
+  const pickSwitch = useCallback(
+    (benchIndex: number) => {
+      if (animatingRef.current) return;
+      const prev = stateRef.current;
+      if (!prev?.pendingSwitch || prev.pendingSwitch.side !== "player") return;
+
+      const resume = prev.pendingSwitch.resume ?? "playerTurn";
+      const switched = applyPlayerSwitch(prev, benchIndex);
+      if (switched === prev) return; // escolha inválida (reserva desmaiada)
+
+      // Trata KO em cadeia (ex.: dois ativos caem por veneno)
+      const post = resolvePostAction(switched);
+      if (post.ended) {
+        stateRef.current = post.state;
+        syncBattleState(post.state);
+        finishTurnRef.current(post.state, true);
+        return;
+      }
+      if (post.needsPlayerSwitch) {
+        const again: BattleState = {
+          ...post.state,
+          pendingSwitch: { ...post.state.pendingSwitch!, resume },
+        };
+        stateRef.current = again;
+        syncBattleState(again);
+        return;
+      }
+
+      if (resume === "finishTurn") {
+        const finished = finishEnemyTurn(post.state);
+        stateRef.current = finished;
+        syncBattleState(finished);
+        if (finished.phase === "victory" || finished.phase === "defeat") {
+          finishTurnRef.current(finished, true);
+        }
+        return;
+      }
+
+      const resumed: BattleState = {
+        ...post.state,
+        roundNumber: (post.state.roundNumber ?? 1) + 1,
+        tacticalPhase: "player-pick-actor",
+        pendingSelection: {},
+        enemyActionQueue: [],
+      };
+      stateRef.current = resumed;
+      syncBattleState(resumed);
+    },
+    [syncBattleState]
+  );
+
   const resetLoop = useCallback(() => {
     fightingRef.current = false;
     animatingRef.current = false;
@@ -680,6 +770,7 @@ export function useTacticalBattle({
     pickActor,
     pickTarget,
     pickMove,
+    pickSwitch,
     cancelSelection,
     resetLoop,
     isAnimating: animatingRef.current,
