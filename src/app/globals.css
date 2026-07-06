@@ -1118,7 +1118,8 @@ body {
   }
 
   .battle-status-badge {
-    @apply inline-flex items-center gap-0.5 text-[8px] font-bold uppercase tracking-wide rounded-md px-1 py-0.5 border;
+    @apply inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide rounded-md px-1.5 py-0.5 border shadow-[0_2px_6px_rgba(0,0,0,0.45)];
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
   }
 
   /* Compacto — cabe entre nome e level na caixa de status GBA e continua legível */
@@ -1228,20 +1229,21 @@ body {
   }
 
   .battle-status-burn {
-    @apply bg-orange-500/20 border-orange-400/40 text-orange-200;
+    @apply bg-orange-500/95 border-orange-200 text-white;
   }
 
   .battle-status-paralyze {
-    @apply bg-yellow-500/20 border-yellow-400/40 text-yellow-200;
+    @apply bg-yellow-400/95 border-yellow-100 text-slate-900;
+    text-shadow: none;
     animation: battle-paralyze-pulse 0.8s ease-in-out infinite;
   }
 
   .battle-status-poison {
-    @apply bg-purple-500/20 border-purple-400/40 text-purple-200;
+    @apply bg-fuchsia-600/95 border-fuchsia-200 text-white;
   }
 
   .battle-status-sleep {
-    @apply bg-indigo-500/20 border-indigo-400/40 text-indigo-200;
+    @apply bg-indigo-500/95 border-indigo-200 text-white;
   }
 
   .battle-sleep-overlay {

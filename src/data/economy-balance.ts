@@ -98,6 +98,12 @@ export const BATTLE_COIN_REVEAL_MS = 2600;
 export const BATTLE_POST_COIN_PAUSE_MS = 1100;
 /** Respiro após as pokébolas caírem (entrada da fase de luta) antes do 1º ataque */
 export const BATTLE_INTRO_SETTLE_MS = 2000;
+/**
+ * Duração da animação de entrada dos sprites (pokébola caindo + revelação) na
+ * cena de batalha. O 1º turno (auto ou inimigo) sempre aguarda pelo menos isto,
+ * mesmo com a introdução acelerada, para não atacar antes da bola assentar.
+ */
+export const BATTLE_SPRITE_INTRO_MS = 1050;
 
 /** Boost de dano por tipo: 2+ Pokémon do mesmo tipo no roster */
 export const TEAM_MONOTYPE_DAMAGE_BONUS = 0.12;

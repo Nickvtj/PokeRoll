@@ -180,7 +180,7 @@ export function TrainingPanel({
         >
           {team.length < BATTLE_TEAM_SIZE
             ? `Selecione ao menos ${BATTLE_TEAM_SIZE} Pokémon`
-            : "INICIAR TREINO"}
+            : "Começar"}
         </AnimatedButton>
       }
     >

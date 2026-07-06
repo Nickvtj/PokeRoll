@@ -75,7 +75,7 @@ export function MonotypeSynergyAura({
     >
       <span className="monotype-synergy-shimmer" aria-hidden />
       <span className="monotype-synergy-sparks" aria-hidden />
-      <div className="relative z-[2]">{children}</div>
+      <div className="relative z-[2] h-full">{children}</div>
     </motion.div>
   );
 }

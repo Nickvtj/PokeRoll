@@ -22,6 +22,18 @@ export function getPokemonSpriteUrl(id: number): string {
   return getPokemonGbaSpriteUrl(id);
 }
 
+/**
+ * Sprite GBA normalizado (public/sprites/gba/norm) — recortado e recentralizado
+ * para que todos os Pokémon ocupem o mesmo tamanho no álbum/seleção de time.
+ * Gerado por scripts/normalize-gba-sprites.ps1.
+ */
+export function getPokemonNormalizedSpriteUrl(
+  id: number,
+  { shiny = false }: { shiny?: boolean } = {}
+): string {
+  return `/sprites/gba/norm/${shiny ? "shiny/" : ""}${id}.png`;
+}
+
 /** Sprite shiny padrão do jogo — pixel art GBA. */
 export function getPokemonShinySpriteUrl(id: number): string {
   return getPokemonGbaSpriteUrl(id, { shiny: true });

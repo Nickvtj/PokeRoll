@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BATTLE_FLASH_MS,
   BATTLE_INTRO_SETTLE_MS,
+  BATTLE_SPRITE_INTRO_MS,
   BATTLE_STRIKE_MS,
 } from "@/data/economy-balance";
 import { getBattleCeremonyTimings } from "@/lib/battle-ceremony";
@@ -94,6 +95,7 @@ export function useTacticalBattle({
 
   // Respiro inicial: após as pokébolas caírem, segura o 1º ataque por um instante
   const introSettleRef = useRef(false);
+  const introSettleMsRef = useRef(BATTLE_INTRO_SETTLE_MS);
   const introSettleTimerRef = useRef<number | null>(null);
   const prevFightingPhaseRef = useRef<string | undefined>(battleState?.phase);
 
@@ -425,18 +427,19 @@ export function useTacticalBattle({
     prevFightingPhaseRef.current = phase;
     if (!fighting) return;
     if (phase === "fighting" && was !== "fighting") {
-      if (getBattleCeremonyTimings().skipSounds) {
-        introSettleRef.current = false;
-        return;
-      }
+      // Mesmo com introdução acelerada, aguarda a pokébola cair (BATTLE_SPRITE_INTRO_MS).
+      const settleMs = getBattleCeremonyTimings().skipSounds
+        ? BATTLE_SPRITE_INTRO_MS
+        : BATTLE_INTRO_SETTLE_MS;
       introSettleRef.current = true;
+      introSettleMsRef.current = settleMs;
       if (introSettleTimerRef.current != null) {
         window.clearTimeout(introSettleTimerRef.current);
       }
       introSettleTimerRef.current = window.setTimeout(() => {
         introSettleRef.current = false;
         introSettleTimerRef.current = null;
-      }, BATTLE_INTRO_SETTLE_MS);
+      }, settleMs);
     }
   }, [battleState?.phase, fighting]);
 
@@ -455,8 +458,8 @@ export function useTacticalBattle({
     }
 
     autoBattleScheduledRef.current = true;
-    // Primeira ação automática também respeita o respiro inicial
-    const delay = (introSettleRef.current ? BATTLE_INTRO_SETTLE_MS : 500) / battleSpeed;
+    // Primeira ação automática também respeita o respiro inicial (entrada da pokébola)
+    const delay = (introSettleRef.current ? introSettleMsRef.current : 500) / battleSpeed;
     autoTimerRef.current = window.setTimeout(() => {
       autoBattleScheduledRef.current = false;
       autoTimerRef.current = null;
@@ -531,7 +534,8 @@ export function useTacticalBattle({
         stateRef.current = resolved;
         syncBattleState(resolved);
         if (resolved.tacticalPhase === "enemy-turn") {
-          scheduleEnemyChain(timings.postCoinPauseMs);
+          // Aguarda a entrada da pokébola antes do 1º golpe inimigo, mesmo acelerado.
+          scheduleEnemyChain(Math.max(timings.postCoinPauseMs, BATTLE_SPRITE_INTRO_MS));
         }
         return;
       }

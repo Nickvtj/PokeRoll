@@ -1,4 +1,7 @@
-import { getPokemonSpriteUrl } from "@/data/pokemon-sprites";
+import {
+  getPokemonSpriteUrl,
+  getPokemonNormalizedSpriteUrl,
+} from "@/data/pokemon-sprites";
 
 /** Avatares desbloqueados a cada 5 níveis da conta (+ Pokémon da coleção) */
 
@@ -22,70 +25,70 @@ export const TRAINER_AVATARS: TrainerAvatarDef[] = [
     kind: "trainer",
     unlockLevel: 5,
     label: "Jovem Treinador",
-    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png",
+    image: getPokemonNormalizedSpriteUrl(25),
   },
   {
     id: "trainer-hiker",
     kind: "trainer",
     unlockLevel: 10,
     label: "Montanhista",
-    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/95.png",
+    image: getPokemonNormalizedSpriteUrl(95),
   },
   {
     id: "trainer-swimmer",
     kind: "trainer",
     unlockLevel: 15,
     label: "Nadador",
-    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/121.png",
+    image: getPokemonNormalizedSpriteUrl(121),
   },
   {
     id: "trainer-ace",
     kind: "trainer",
     unlockLevel: 20,
     label: "Áss Ace",
-    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/65.png",
+    image: getPokemonNormalizedSpriteUrl(65),
   },
   {
     id: "trainer-psychic",
     kind: "trainer",
     unlockLevel: 25,
     label: "Psíquico",
-    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png",
+    image: getPokemonNormalizedSpriteUrl(94),
   },
   {
     id: "trainer-dragon",
     kind: "trainer",
     unlockLevel: 30,
     label: "Domador",
-    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/149.png",
+    image: getPokemonNormalizedSpriteUrl(149),
   },
   {
     id: "trainer-veteran",
     kind: "trainer",
     unlockLevel: 35,
     label: "Veterano",
-    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/130.png",
+    image: getPokemonNormalizedSpriteUrl(130),
   },
   {
     id: "trainer-elite",
     kind: "trainer",
     unlockLevel: 40,
     label: "Elite",
-    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png",
+    image: getPokemonNormalizedSpriteUrl(6),
   },
   {
     id: "trainer-champion",
     kind: "trainer",
     unlockLevel: 45,
     label: "Campeão",
-    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png",
+    image: getPokemonNormalizedSpriteUrl(150),
   },
   {
     id: "trainer-master",
     kind: "trainer",
     unlockLevel: 50,
     label: "Mestre",
-    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/144.png",
+    image: getPokemonNormalizedSpriteUrl(144),
   },
 ];
 

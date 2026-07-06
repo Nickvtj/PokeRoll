@@ -38,6 +38,11 @@ export function BattleTrainerChip({
       : "ring-rose-400/45 border-rose-500/30";
 
   const handleError = () => {
+    // Avatar de perfil (jogador) nunca vira sprite de treinador: cai para a inicial.
+    if (avatarStyle || side === "player") {
+      setShowLetter(true);
+      return;
+    }
     if (imgSrc && imgSrc !== FALLBACK_TRAINER_SPRITE) {
       setImgSrc(FALLBACK_TRAINER_SPRITE);
       return;

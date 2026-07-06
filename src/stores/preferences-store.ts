@@ -15,6 +15,7 @@ interface PreferencesStore extends PlayerPreferences {
   setSkipBattleIntro: (skip: boolean) => void;
   setVisualQualityMode: (mode: VisualQualityMode) => void;
   setCustomCursorEnabled: (enabled: boolean) => void;
+  setAvatarBgColor: (color: string) => void;
   requestCeremonySkip: () => void;
   resolveEffectiveVisualQuality: () => VisualQuality;
 }
@@ -61,6 +62,11 @@ export const usePreferencesStore = create<PreferencesStore>((set, get) => ({
   setCustomCursorEnabled: (enabled) => {
     persist({ customCursorEnabled: enabled });
     set({ customCursorEnabled: enabled });
+  },
+
+  setAvatarBgColor: (color) => {
+    persist({ avatarBgColor: color });
+    set({ avatarBgColor: color });
   },
 
   requestCeremonySkip: () => {

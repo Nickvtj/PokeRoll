@@ -60,7 +60,8 @@ export function GymCard({ gym, unlocked, hasBadge, onChallenge }: GymCardProps) 
     >
       <div className={cn("relative p-4 bg-gradient-to-br", gym.themeGradient)}>
         <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_30%_20%,white,transparent_50%)]" />
-        <div className="relative flex items-start gap-3">
+
+        <div className="relative flex items-center gap-3">
           <GymBadge
             gymId={gym.id}
             name={gym.badgeName}
@@ -70,43 +71,55 @@ export function GymCard({ gym, unlocked, hasBadge, onChallenge }: GymCardProps) 
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-sm">{gym.leaderName}</h3>
-              {!unlocked && <Lock className="w-3.5 h-3.5 text-white/40" />}
-              {hasBadge && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
-                  <Check className="w-2.5 h-2.5" />
-                  {gym.badgeName}
-                </span>
-              )}
+              <h3 className="font-black text-base truncate">{gym.leaderName}</h3>
+              {!unlocked && <Lock className="w-3.5 h-3.5 text-white/40 shrink-0" />}
             </div>
-            <p className="text-[10px] text-white/50">
-              {gym.arenaName} · Recomendado Nv. {gym.recommendedLevel}+
-            </p>
-            {!unlocked && previousGym && (
-              <p className="text-[10px] text-amber-400/90 mt-1">
-                Derrote {previousGym.leaderName} primeiro
-              </p>
-            )}
-            {unlocked && !teamReadiness.teamComplete && (
-              <p className="text-[10px] text-orange-400/90 mt-1">Toque em Desafiar para montar seu time</p>
-            )}
-            {unlocked && teamReadiness.teamComplete && teamReadiness.underleveled && (
-              <p className="text-[10px] text-orange-400/90 mt-1">
-                Time médio Nv. {teamReadiness.avgLevel} · recomendado Nv. {gym.recommendedLevel}+ (pode tentar mesmo assim)
-              </p>
-            )}
-            <p className="text-[10px] text-white/40 mt-1 line-clamp-2">{gym.description}</p>
+            <p className="text-[11px] text-white/60 truncate">{gym.arenaName}</p>
           </div>
-        </div>
-
-        <div className="relative mt-3 flex items-center justify-between gap-2">
-          <span className="text-[10px] text-white/50">
-            Hall of Fame: {hofCount}/{TOTAL_POKEMON}
-          </span>
-          {bestStars > 0 && (
-            <span className="text-[10px] text-amber-400">{"★".repeat(bestStars)}</span>
+          {hasBadge ? (
+            <span className="shrink-0 text-[10px] px-2 py-1 rounded-full bg-amber-500/25 text-amber-200 border border-amber-400/40 flex items-center gap-1 font-bold">
+              <Check className="w-3 h-3" />
+              Conquistada
+            </span>
+          ) : (
+            bestStars > 0 && (
+              <span className="shrink-0 text-xs text-amber-300 tracking-tight">{"★".repeat(bestStars)}</span>
+            )
           )}
         </div>
+
+        {/* Chips organizados de meta */}
+        <div className="relative mt-3 flex flex-wrap items-center gap-1.5">
+          <span
+            className="text-[10px] font-bold px-2 py-1 rounded-lg border text-white/85"
+            style={{ borderColor: `${gym.themeColor}55`, backgroundColor: `${gym.themeColor}20` }}
+          >
+            Nv. recomendado {gym.recommendedLevel}+
+          </span>
+          <span className="text-[10px] font-semibold px-2 py-1 rounded-lg bg-black/25 border border-white/10 text-white/60">
+            Hall of Fame {hofCount}/{TOTAL_POKEMON}
+          </span>
+        </div>
+
+        <p className="relative text-[11px] text-white/55 mt-2.5 leading-snug line-clamp-2">
+          {gym.description}
+        </p>
+
+        {/* Aviso de estado (organizado numa pílula sutil) */}
+        {!unlocked && previousGym ? (
+          <p className="relative mt-2.5 text-[10px] text-amber-300/90 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-400/20">
+            <Lock className="w-3 h-3" />
+            Derrote {previousGym.leaderName} primeiro
+          </p>
+        ) : unlocked && !teamReadiness.teamComplete ? (
+          <p className="relative mt-2.5 text-[10px] text-white/50">
+            Toque em Desafiar para montar seu time
+          </p>
+        ) : unlocked && teamReadiness.teamComplete && teamReadiness.underleveled ? (
+          <p className="relative mt-2.5 text-[10px] text-orange-300/90 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10 border border-orange-400/20">
+            Time Nv. {teamReadiness.avgLevel} · abaixo do recomendado (pode tentar)
+          </p>
+        ) : null}
       </div>
 
       <div className="p-3 flex gap-2">

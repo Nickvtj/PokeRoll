@@ -8,7 +8,7 @@ import { playUiTab } from "@/lib/ui-sounds";
 export type BattleTabId = "training" | "gyms" | "elite";
 
 const TABS: { id: BattleTabId; label: string; icon: typeof Dumbbell }[] = [
-  { id: "training", label: "Treino", icon: Dumbbell },
+  { id: "training", label: "Casual", icon: Dumbbell },
   { id: "gyms", label: "Ginásios", icon: Map },
   { id: "elite", label: "Liga Elite", icon: Crown },
 ];

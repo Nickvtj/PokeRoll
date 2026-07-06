@@ -17,15 +17,15 @@ export function AvatarPicker() {
   const unlockedTrainers = getUnlockedTrainerAvatars(level);
 
   return (
-    <div className="glass-card p-5 space-y-4">
-      <div>
+    <div className="glass-card p-5 flex flex-col min-h-0 lg:h-full gap-4">
+      <div className="shrink-0">
         <h3 className="font-bold text-sm">Avatares de treinador</h3>
         <p className="text-[11px] text-white/40 mt-1 leading-relaxed">
           Desbloqueie novos treinadores conforme sobe de nível da conta. Um a cada 5 níveis.
         </p>
       </div>
 
-      <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+      <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 flex-1 min-h-0 overflow-y-auto profile-scroll-area overscroll-contain content-start pr-1 -mr-1">
         {TRAINER_AVATARS.map((avatar) => {
           const unlocked = level >= avatar.unlockLevel;
           const id = buildTrainerAvatarId(avatar.id);
@@ -66,7 +66,7 @@ export function AvatarPicker() {
         })}
       </div>
 
-      <p className="text-[10px] text-indigo-300/80">
+      <p className="text-[10px] text-indigo-300/80 shrink-0">
         {unlockedTrainers.length}/{TRAINER_AVATARS.length} desbloqueados
       </p>
     </div>

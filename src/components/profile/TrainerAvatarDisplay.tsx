@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { getPokemonSpriteUrl } from "@/data/pokemon-sprites";
+import { getPokemonNormalizedSpriteUrl } from "@/data/pokemon-sprites";
 import { parseAvatarId, TRAINER_AVATARS } from "@/data/trainer-avatars";
+import { usePreferencesStore } from "@/stores/preferences-store";
+import { getAvatarBgOption } from "@/data/avatar-backgrounds";
 
 interface TrainerAvatarDisplayProps {
   avatarId: string;
@@ -27,6 +29,8 @@ export function TrainerAvatarDisplay({
 }: TrainerAvatarDisplayProps) {
   const sizes = sizeMap[size];
   const parsed = parseAvatarId(avatarId);
+  const bgColor = usePreferencesStore((s) => s.avatarBgColor);
+  const bgOption = getAvatarBgOption(bgColor);
 
   if (parsed.kind === "pokemon") {
     const pokemonId = Number(parsed.ref);
@@ -34,13 +38,14 @@ export function TrainerAvatarDisplay({
       return (
         <div
           className={cn(
-            "rounded-full overflow-hidden bg-gradient-to-br from-indigo-500/30 to-purple-600/30 border border-indigo-400/40 shrink-0",
+            "rounded-full overflow-hidden border border-indigo-400/40 shrink-0",
+            bgOption.bgClass,
             sizes.box,
             className
           )}
         >
           <Image
-            src={getPokemonSpriteUrl(pokemonId)}
+            src={getPokemonNormalizedSpriteUrl(pokemonId)}
             alt={`Pokémon ${pokemonId}`}
             width={sizes.image}
             height={sizes.image}
@@ -58,7 +63,8 @@ export function TrainerAvatarDisplay({
       return (
         <div
           className={cn(
-            "rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 border border-indigo-400/40 shrink-0",
+            "rounded-full overflow-hidden border border-indigo-400/40 shrink-0",
+            bgOption.bgClass,
             sizes.box,
             className
           )}

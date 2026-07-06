@@ -35,36 +35,6 @@ const TYPE_LABELS: Record<string, string> = {
   normal: "Normal",
 };
 
-function PokeballIcon({ filled, active }: { filled: boolean; active: boolean }) {
-  const top = filled ? (active ? "#ef4444" : "#f59e0b") : "#3f3f46";
-  const bottom = filled ? "#f1f5f9" : "#52525b";
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden className="shrink-0">
-      <circle cx="12" cy="12" r="11" fill="#0b0d12" />
-      <path d="M2 12a10 10 0 0 1 20 0Z" fill={top} />
-      <path d="M2 12a10 10 0 0 0 20 0Z" fill={bottom} />
-      <rect x="2" y="11" width="20" height="2" fill="#0b0d12" />
-      <circle cx="12" cy="12" r="3.4" fill="#0b0d12" />
-      <circle cx="12" cy="12" r="2" fill={filled ? "#f1f5f9" : "#3f3f46"} />
-    </svg>
-  );
-}
-
-/** 4 pokébolas sob o avatar: quantos Pokémon o time tem (2 lutam, resto reserva) */
-function TeamBalls({ count }: { count: number }) {
-  const reserve = Math.max(0, count - 2);
-  return (
-    <div
-      className="flex items-center gap-1"
-      title={`Time: ${count}/4 — 2 em campo, ${reserve} de reserva`}
-    >
-      {[0, 1, 2, 3].map((i) => (
-        <PokeballIcon key={i} filled={i < count} active={i < 2} />
-      ))}
-    </div>
-  );
-}
-
 function getDominantTeamType(teamIds: number[]): string | null {
   const counts: Record<string, number> = {};
   for (const id of teamIds) {
@@ -136,7 +106,6 @@ export function ProfileIdentityCard() {
                 <Star className="w-3 h-3 fill-white" />
               </div>
             </div>
-            <TeamBalls count={team.length} />
             <div className="px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-200 text-[10px] font-black tracking-wider ring-1 ring-inset ring-indigo-400/20">
               NÍVEL {level}
             </div>

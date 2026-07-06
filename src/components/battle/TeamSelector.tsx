@@ -12,7 +12,7 @@ import {
   type LevelFilterId,
 } from "@/data/pokemon-battle-level";
 import { useGameStore } from "@/stores/game-store";
-import { withDisplayImage, shouldShowShiny } from "@/lib/pokemon-display";
+import { withGridImage, shouldShowShiny } from "@/lib/pokemon-display";
 import { useEconomyStore } from "@/stores/economy-store";
 import { useGymStore } from "@/stores/gym-store";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,6 @@ import { RARITY_CONFIG, RARITY_ORDER } from "@/data/rarity";
 import { PokemonGymBadges } from "@/components/gym/GymBadge";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { BATTLE_CLASSIC_THEME, BATTLE_TEAM_SIZE } from "@/data/battle-theme";
-import { MonotypeSynergyBanner } from "@/components/battle/MonotypeSynergyFx";
 import { getTeamMonotypeSynergy } from "@/lib/team-monotype";
 import { playUiSelect, playUiDeselect, playUiTab } from "@/lib/ui-sounds";
 import { PokemonSelectorItem } from "./PokemonSelectorItem";
@@ -300,8 +299,6 @@ export function TeamSelector({ maxTeam = BATTLE_TEAM_SIZE, className }: TeamSele
         </select>
       </div>
 
-      <MonotypeSynergyBanner synergy={monotypeSynergy} className="shrink-0" />
-
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 auto-rows-min flex-1 min-h-0 overflow-y-auto overscroll-contain p-1 pb-4 pr-2">
         {filtered.map((pokemon) => {
           const countInTeam = team.filter((t) => t === pokemon.id).length;
@@ -310,7 +307,7 @@ export function TeamSelector({ maxTeam = BATTLE_TEAM_SIZE, className }: TeamSele
           const canAddMore = countInTeam < owned && team.length < maxTeam;
           const disabled = !selected && !canAddMore;
           const type = getPrimaryType(pokemon.id, pokemon.name);
-          const displayPokemon = withDisplayImage(pokemon, collection[pokemon.id]);
+          const displayPokemon = withGridImage(pokemon, collection[pokemon.id]);
 
           return (
             <PokemonSelectorItem

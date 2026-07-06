@@ -111,6 +111,11 @@ function FaceOffPortrait({
             height={88}
             decoding="async"
             onError={() => {
+              // Avatar de perfil nunca vira sprite de treinador: cai para a inicial.
+              if (isAvatar) {
+                setShowLetter(true);
+                return;
+              }
               if (src !== FALLBACK_TRAINER_SPRITE) {
                 setSrc(FALLBACK_TRAINER_SPRITE);
                 return;
@@ -121,7 +126,7 @@ function FaceOffPortrait({
               "relative z-10 w-full h-full bg-slate-900",
               isAvatar
                 ? "object-contain p-1.5"
-                : "object-cover object-[center_12%] scale-[1.35]"
+                : "object-contain object-bottom p-1"
             )}
           />
         ) : (

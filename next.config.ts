@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Permite acesso ao dev server via IP de LAN (ex.: http://192.168.0.12:3000)
+  // sem avisos de cross-origin e com HMR/chunks funcionando corretamente.
+  allowedDevOrigins: ["192.168.0.12", "localhost", "127.0.0.1"],
   images: {
     remotePatterns: [
       {

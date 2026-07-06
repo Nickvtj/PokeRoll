@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
 import { RARITY_CONFIG } from "@/data/rarity";
 import { BATTLE_CLASSIC_THEME } from "@/data/battle-theme";
 import { MonotypeSynergyAura } from "@/components/battle/MonotypeSynergyFx";
-import { PokemonGymBadges } from "@/components/gym/GymBadge";
+import { GymBadge } from "@/components/gym/GymBadge";
+import { GYM_MAP } from "@/data/gyms";
+import type { GymId } from "@/types/gym";
 import type { Pokemon } from "@/types";
 import type { TeamMonotypeSynergy } from "@/lib/team-monotype";
 
@@ -131,14 +133,18 @@ export const PokemonSelectorItem = memo(function PokemonSelectorItem({
               ×{owned}
             </div>
           )}
-          <Image
-            src={displayImage}
-            alt={pokemonName}
-            width={48}
-            height={48}
-            className="object-contain mx-auto mt-2"
-            unoptimized={!isLocalAsset(displayImage)}
-          />
+          <SideBadges gymIds={gymBadges} />
+
+          <div className="relative mx-auto mt-1 h-[68px] w-[68px]">
+            <Image
+              src={displayImage}
+              alt={pokemonName}
+              fill
+              sizes="68px"
+              className="object-contain"
+              unoptimized={!isLocalAsset(displayImage)}
+            />
+          </div>
           <p
             className="text-[10px] font-semibold truncate mt-1"
             style={BATTLE_CLASSIC_THEME ? { color: config.color } : undefined}
@@ -146,13 +152,47 @@ export const PokemonSelectorItem = memo(function PokemonSelectorItem({
             {pokemonName}
           </p>
           <p className="text-[9px] text-white/40 capitalize">{type}</p>
-          {gymBadges.length > 0 && (
-            <div className="mt-1">
-              <PokemonGymBadges gymIds={gymBadges} size="xs" max={3} />
-            </div>
-          )}
         </motion.div>
       </MonotypeSynergyAura>
     </div>
   );
 });
+
+/** Insígnias do Hall da Fama nas laterais do card (até 4 por lado), sem alterar a altura */
+function SideBadges({ gymIds }: { gymIds: string[] }) {
+  if (gymIds.length === 0) return null;
+  const left = gymIds.slice(0, 4) as GymId[];
+  const right = gymIds.slice(4, 8) as GymId[];
+
+  const strip = (ids: GymId[], side: "left" | "right") =>
+    ids.length === 0 ? null : (
+      <div
+        className={cn(
+          "absolute top-1/2 -translate-y-1/2 z-20 flex flex-col gap-0.5 pointer-events-none",
+          side === "left" ? "left-1" : "right-1"
+        )}
+      >
+        {ids.map((id) => {
+          const gym = GYM_MAP[id];
+          if (!gym) return null;
+          return (
+            <GymBadge
+              key={id}
+              gymId={id}
+              name={gym.badgeName}
+              earned
+              color={gym.themeColor}
+              size="2xs"
+            />
+          );
+        })}
+      </div>
+    );
+
+  return (
+    <>
+      {strip(left, "left")}
+      {strip(right, "right")}
+    </>
+  );
+}

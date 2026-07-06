@@ -99,7 +99,7 @@ function DuelPortrait({
               "relative z-10 w-full h-full bg-slate-900",
               isAvatar
                 ? "object-contain p-1.5"
-                : "object-cover object-[center_12%] scale-[1.35]"
+                : "object-contain object-bottom p-1"
             )}
           />
         ) : (

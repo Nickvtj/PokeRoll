@@ -86,81 +86,62 @@ export function MissionsPanel() {
         </div>
       </div>
 
-      <div className="relative px-5 py-4 border-b border-white/[0.06] bg-amber-500/[0.04]">
+      <div className="relative px-5 py-4 border-b border-white/[0.06]">
         <div className="flex items-center justify-between gap-2 mb-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-amber-200/80">
+          <p className="text-xs font-bold uppercase tracking-wider text-white/50">
             Sequência de login
           </p>
-          <p className="text-[11px] text-white/45 tabular-nums">
-            Próximo bônus:{" "}
-            <span className="text-amber-300 font-semibold">
-              {DAILY_LOGIN_COINS[Math.min(dailyStreak, DAILY_LOGIN_COINS.length - 1)]} moedas
-            </span>
+          <p className="text-[11px]">
+            {claimedToday ? (
+              <span className="inline-flex items-center gap-1 text-emerald-400/90 font-medium">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Hoje registrado
+              </span>
+            ) : (
+              <span className="text-white/40">Entre hoje para avançar</span>
+            )}
           </p>
         </div>
 
-        <div className="flex items-center gap-1">
-          {DAILY_LOGIN_COINS.map((coins, i) => {
+        <div className="flex items-stretch justify-between gap-1.5 sm:gap-2">
+          {Array.from({ length: 7 }).map((_, i) => {
             const dayNum = i + 1;
-            const isPast = dailyStreak >= dayNum;
-            const isToday = claimedToday && dailyStreak === dayNum;
+            const reached =
+              dailyStreak >= dayNum || (claimedToday && dailyStreak === dayNum);
             const isCurrent = !claimedToday && dailyStreak + 1 === dayNum;
+            const coins = DAILY_LOGIN_COINS[Math.min(i, DAILY_LOGIN_COINS.length - 1)];
 
             return (
-              <div key={dayNum} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
-                <div className="w-full flex items-center">
-                  {i > 0 && (
-                    <div
-                      className={cn(
-                        "h-0.5 flex-1 rounded-full",
-                        dailyStreak >= i ? "bg-amber-400/50" : "bg-white/10"
-                      )}
-                    />
+              <div
+                key={dayNum}
+                className="flex flex-col items-center gap-1 flex-1 min-w-0"
+                title={`Dia ${dayNum} · ${coins} moedas`}
+              >
+                <div
+                  className={cn(
+                    "w-full aspect-square max-w-[2.5rem] rounded-full border-2 flex items-center justify-center text-[11px] font-black transition-all",
+                    reached
+                      ? "border-amber-400 bg-amber-500/25 text-amber-100 shadow-[0_0_12px_rgba(251,191,36,0.25)]"
+                      : isCurrent
+                        ? "border-indigo-400 bg-indigo-500/15 text-indigo-200 ring-2 ring-indigo-400/30"
+                        : "border-white/12 bg-white/[0.03] text-white/30"
                   )}
-                  <div
-                    className={cn(
-                      "w-7 h-7 shrink-0 rounded-full border-2 flex items-center justify-center text-[10px] font-black transition-all",
-                      isPast || isToday
-                        ? "border-amber-400 bg-amber-500/25 text-amber-100"
-                        : isCurrent
-                          ? "border-indigo-400 bg-indigo-500/20 text-indigo-200 ring-2 ring-indigo-400/25"
-                          : "border-white/15 bg-white/[0.03] text-white/30"
-                    )}
-                  >
-                    {isPast || isToday ? <CheckCircle className="w-3.5 h-3.5" /> : dayNum}
-                  </div>
-                  {i < DAILY_LOGIN_COINS.length - 1 && (
-                    <div
-                      className={cn(
-                        "h-0.5 flex-1 rounded-full",
-                        dailyStreak > dayNum ? "bg-amber-400/50" : "bg-white/10"
-                      )}
-                    />
-                  )}
+                >
+                  {reached ? <Flame className="w-4 h-4" /> : dayNum}
                 </div>
                 <span
                   className={cn(
-                    "text-[9px] font-semibold tabular-nums",
-                    isPast || isToday ? "text-amber-300/90" : "text-white/30"
+                    "inline-flex items-center gap-0.5 text-[9px] tabular-nums font-semibold",
+                    reached ? "text-amber-300/85" : isCurrent ? "text-indigo-300/80" : "text-white/25"
                   )}
                 >
+                  <Coins className="w-2.5 h-2.5" />
                   {coins}
                 </span>
               </div>
             );
           })}
         </div>
-
-        <p className="text-[11px] text-center mt-3">
-          {claimedToday ? (
-            <span className="inline-flex items-center gap-1.5 text-emerald-400/90">
-              <CheckCircle className="w-3.5 h-3.5" />
-              Login de hoje registrado — volte amanhã!
-            </span>
-          ) : (
-            <span className="text-white/40">Entre hoje para avançar na sequência.</span>
-          )}
-        </p>
       </div>
 
       <div className="relative p-5 sm:p-6 grid gap-3 sm:grid-cols-2">

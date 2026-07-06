@@ -1,6 +1,7 @@
 "use client";
 
 import { Award, Trophy } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { GYMS } from "@/data/gyms";
 import { useGymStore } from "@/stores/gym-store";
 import { GymBadge } from "@/components/gym/GymBadge";
@@ -37,7 +38,7 @@ export function ProfileBadgesPanel() {
       )}
 
       {missing.length > 0 && (
-        <div className="space-y-3">
+        <div className={cn("space-y-3", earned.length > 0 && "mt-8 pt-6 border-t border-white/10")}>
           <p className="text-xs text-white/45 uppercase tracking-wider font-semibold">
             Faltam conquistar
           </p>

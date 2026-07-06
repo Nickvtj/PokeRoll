@@ -11,10 +11,11 @@ interface GymBadgeProps {
   name: string;
   earned: boolean;
   color: string;
-  size?: "xs" | "sm" | "md" | "lg";
+  size?: "2xs" | "xs" | "sm" | "md" | "lg";
 }
 
 const sizeMap = {
+  "2xs": { box: "w-4 h-4", img: 14 },
   xs: { box: "w-6 h-6", img: 20 },
   sm: { box: "w-10 h-10", img: 32 },
   md: { box: "w-14 h-14", img: 44 },
@@ -48,7 +49,6 @@ export function GymBadge({ gymId, name, earned, color, size = "sm" }: GymBadgePr
         width={s.img}
         height={s.img}
         className="object-contain drop-shadow-md"
-        style={{ imageRendering: "pixelated" }}
         unoptimized
       />
     </div>

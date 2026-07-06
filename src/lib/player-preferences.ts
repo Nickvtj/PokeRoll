@@ -7,6 +7,8 @@ export interface PlayerPreferences {
   skipBattleIntro: boolean;
   visualQualityMode: VisualQualityMode;
   customCursorEnabled: boolean;
+  /** Id do fundo do avatar (ver src/data/avatar-backgrounds.ts) */
+  avatarBgColor: string;
 }
 
 const STORAGE_KEY = "pokeroll_preferences";
@@ -16,6 +18,7 @@ const DEFAULTS: PlayerPreferences = {
   skipBattleIntro: false,
   visualQualityMode: "auto",
   customCursorEnabled: true,
+  avatarBgColor: "purple",
 };
 
 let cache: PlayerPreferences | null = null;
@@ -29,6 +32,7 @@ function parseStored(raw: string | null): PlayerPreferences {
       skipBattleIntro: parsed.skipBattleIntro ?? DEFAULTS.skipBattleIntro,
       visualQualityMode: parsed.visualQualityMode ?? DEFAULTS.visualQualityMode,
       customCursorEnabled: parsed.customCursorEnabled ?? DEFAULTS.customCursorEnabled,
+      avatarBgColor: parsed.avatarBgColor ?? DEFAULTS.avatarBgColor,
     };
   } catch {
     return { ...DEFAULTS };

@@ -19,9 +19,9 @@ interface PokemonCardProps {
 }
 
 const sizeConfig = {
-  sm: { card: "p-2", image: 84, imageBox: "h-[7.5rem]", text: "text-xs", lock: "w-6 h-6" },
-  md: { card: "p-3", image: 96, imageBox: "h-28", text: "text-sm", lock: "w-7 h-7" },
-  lg: { card: "p-4", image: 128, imageBox: "h-36", text: "text-base", lock: "w-9 h-9" },
+  sm: { card: "p-2", image: 104, imageBox: "h-[7.5rem]", text: "text-xs", lock: "w-6 h-6" },
+  md: { card: "p-3", image: 116, imageBox: "h-28", text: "text-sm", lock: "w-7 h-7" },
+  lg: { card: "p-4", image: 140, imageBox: "h-36", text: "text-base", lock: "w-9 h-9" },
 };
 
 export const PokemonCard = memo(function PokemonCard({

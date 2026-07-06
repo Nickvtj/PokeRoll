@@ -222,7 +222,7 @@ export function GymBattleScreen({ gymId, onExit, onBattleActiveChange }: GymBatt
             onClick={() => startStage(1)}
             disabled={team.length < BATTLE_TEAM_SIZE}
           >
-            Iniciar Ginásio (5 batalhas)
+            Começar
           </AnimatedButton>
         }
       >

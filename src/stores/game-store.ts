@@ -165,9 +165,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   initialize: async () => {
-    const collection = loadLocalCollection();
-    const profile = loadLocalProfile();
-    set({ collection, profile, isLoading: false });
+    try {
+      const collection = loadLocalCollection();
+      const profile = loadLocalProfile();
+      set({ collection, profile, isLoading: false });
+    } catch (err) {
+      console.error("[PokéRoll] Falha ao carregar dados locais:", err);
+      set({ isLoading: false });
+      return;
+    }
 
     void Promise.all([fetchRemoteCollection(), fetchRemoteProfile()]).then(
       ([remoteCollection, remoteProfile]) => {
