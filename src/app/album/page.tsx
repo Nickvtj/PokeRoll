@@ -15,10 +15,10 @@ export default function AlbumPage() {
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
           <BookOpen className="w-8 h-8 text-cyan-400" />
-          Álbum de Figurinhas
+          Pokédex
         </h1>
         <p className="text-white/50 text-sm">
-          Colete todos os 151 Pokémon da 1ª geração!
+          Registre todos os 151 Pokémon da 1ª geração!
         </p>
       </div>
 

@@ -416,7 +416,7 @@ export function resolvePostAction(state: BattleState): {
   ended: boolean;
   needsPlayerSwitch: boolean;
 } {
-  let s = autoSwitchEnemy(state);
+  const s = autoSwitchEnemy(state);
 
   const end = checkBattleEnd(s);
   if (end) return { state: end.state, ended: true, needsPlayerSwitch: false };
@@ -431,7 +431,7 @@ export function resolvePostAction(state: BattleState): {
         { ...s, pendingSwitch: { side: "player", slot: faintedActive.slotIndex ?? 0 } },
         benchIndex
       );
-      // Pode haver outro ativo desmaiado — resolve em cadeia
+      // Pode haver outro ativo desmaiado, resolve em cadeia
       return resolvePostAction(switched);
     }
     return {
@@ -483,7 +483,7 @@ export function resolveAction(
 
   const actCheck = canAct(actor);
   let next = state;
-  let logs = [...state.log];
+  const logs = [...state.log];
 
   if (!actCheck.can) {
     if (actCheck.reason) logs.push(log(actCheck.reason, "info"));
@@ -548,7 +548,7 @@ export function resolveAction(
   } else if (damage > 0) {
     newTargetHp = Math.max(0, target.currentHp - damage);
     const effText = effectivenessLabel(typeMult, typeLabel);
-    const typeSuffix = typeLabel ? ` · ${typeLabel}!` : "";
+    const typeSuffix = typeLabel ? `, ${typeLabel}!` : "";
     logs.push(
       log(
         `${move.name} em ${target.pokemon.name} (-${damage}${isCrit ? " CRÍTICO!" : ""}${typeSuffix}) [${effText}]`,
@@ -1019,17 +1019,17 @@ export function completeAutoPlayerSelection(state: BattleState): BattleState | n
   if (phase === "player-pick-actor") {
     const sel = buildAutoPlayerAction(state);
     if (!sel) return null;
-    let s = selectActor(state, sel.actorSlot);
-    s = selectTarget(s, sel.targetSlot);
-    return selectMove(s, sel.moveIndex);
+    const afterActor = selectActor(state, sel.actorSlot);
+    const afterTarget = selectTarget(afterActor, sel.targetSlot);
+    return selectMove(afterTarget, sel.moveIndex);
   }
   if (phase === "player-pick-target" && state.pendingSelection?.actorSlot != null) {
     const actor = findFighter(state.playerTeam, state.pendingSelection.actorSlot, true);
     if (!actor) return null;
     const pick = pickBestActionForActor(actor, getLivingFighters(state.enemyTeam), actor.slotIndex ?? 0);
     if (!pick) return null;
-    let s = selectTarget(state, pick.targetSlot);
-    return selectMove(s, pick.moveIndex);
+    const afterTarget = selectTarget(state, pick.targetSlot);
+    return selectMove(afterTarget, pick.moveIndex);
   }
   if (
     phase === "player-pick-move" &&

@@ -58,7 +58,7 @@ export function ProfileCard() {
                 </p>
               </div>
               <p className="text-xs text-white/45 text-right">
-                {unique}/{TOTAL_POKEMON} · faltam {TOTAL_POKEMON - unique}
+                {unique}/{TOTAL_POKEMON}, faltam {TOTAL_POKEMON - unique}
               </p>
             </div>
             <div className="progress-bar">

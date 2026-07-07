@@ -12,7 +12,7 @@ export const FLAPPY_BIRD_X_RATIO = 0.22;
 /** Proporção da altura onde começa o chão (render + colisão usam o mesmo valor) */
 export const FLAPPY_GROUND_RATIO = 0.84;
 
-/** Linha do chão em pixels — fonte única de verdade para render e colisão */
+/** Linha do chão em pixels, fonte única de verdade para render e colisão */
 export function getFlappyGroundY(canvasHeight: number): number {
   return Math.floor(canvasHeight * FLAPPY_GROUND_RATIO);
 }
@@ -66,7 +66,7 @@ export function tickFlappyPipes(
 ): { pipes: FlappyPipe[]; nextId: number; lastSpawn: number; scoreDelta: number } {
   let scoreDelta = 0;
   const speed = FLAPPY_PIPE_SPEED * (dt / 16.67);
-  let updated = pipes
+  const updated = pipes
     .map((p) => ({ ...p, x: p.x - speed }))
     .filter((p) => p.x > -FLAPPY_PIPE_WIDTH - 20);
 

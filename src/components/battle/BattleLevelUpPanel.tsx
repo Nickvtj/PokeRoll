@@ -114,7 +114,7 @@ export function BattleLevelUpPanel({ levelUps }: BattleLevelUpPanelProps) {
               </div>
               <div className="flex justify-between text-[10px] text-white/40 mt-1">
                 <span className={cn(luckyEggBoosted && "text-amber-300 font-semibold")}>
-                  +{entry.xpGained} XP{luckyEggBoosted ? " · 2× Lucky Egg" : ""}
+                  +{entry.xpGained} XP{luckyEggBoosted ? ", 2× Lucky Egg" : ""}
                 </span>
                 <span>
                   {entry.newXpInLevel}/{needed}

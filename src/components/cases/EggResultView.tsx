@@ -3,7 +3,9 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Coins, Sparkles, BookOpen } from "lucide-react";
+import { Coins, Sparkles, BookOpen, Candy, Gem } from "lucide-react";
+import { EVO_ITEM_LABEL } from "@/data/evo-item-labels";
+import type { EvoItemId } from "@/types/instance";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { RarityBadge } from "@/components/ui/RarityBadge";
 import { StickerBadge } from "@/components/ui/StickerBadge";
@@ -31,7 +33,8 @@ export function EggResultView({
   onContinue,
   onPlaySounds,
 }: EggResultViewProps) {
-  const { pokemon, isShiny, isNew, isDuplicate, isNewShinyUnlock } = result;
+  const { pokemon, isShiny, isNew, isDuplicate, isNewShinyUnlock, hatchFamilyCandy, bonusEvoItem } =
+    result;
   const meta = RARITY_CONFIG[pokemon.rarity];
   const sellPrice = getCapsuleSellPrice(pokemon.rarity, isShiny);
   const showDuplicateActions = isDuplicate && !isNew && !isNewShinyUnlock;
@@ -164,6 +167,18 @@ export function EggResultView({
           {showDuplicateActions && (
             <p className="text-xs text-orange-200/80 mt-1">
               Você já tem este Pokémon. O que deseja fazer?
+            </p>
+          )}
+          {(hatchFamilyCandy ?? 0) > 0 && (
+            <p className="text-xs text-pink-300/90 mt-2 flex items-center justify-center gap-1">
+              <Candy className="w-3.5 h-3.5" />
+              +{hatchFamilyCandy} Doces da Família (bônus do ovo)
+            </p>
+          )}
+          {bonusEvoItem && (
+            <p className="text-xs text-violet-300/90 mt-1 flex items-center justify-center gap-1">
+              <Gem className="w-3.5 h-3.5" />
+              Bônus: {EVO_ITEM_LABEL[bonusEvoItem as EvoItemId]}
             </p>
           )}
         </div>

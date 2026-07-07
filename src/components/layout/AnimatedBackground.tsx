@@ -9,7 +9,7 @@ function seededUnit(index: number, salt: number) {
   return x - Math.floor(x);
 }
 
-/** Orbs grandes com gradiente radial — bordas suaves sem parecer “bolas sólidas” */
+/** Orbs grandes com gradiente radial, bordas suaves sem parecer “bolas sólidas” */
 const ORBS = [
   { rgb: "99, 102, 241", size: 560, x: "5%", y: "12%", duration: 14, delay: 0 },
   { rgb: "34, 211, 238", size: 480, x: "62%", y: "55%", duration: 16, delay: 2 },

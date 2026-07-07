@@ -1,16 +1,18 @@
 
 /** Nível máximo permitido com base em insígnias */
+// v2 (Opção 1): cap inicial 18 permite evoluir estágio 1 (nível 16) com grind;
+// o doce da família é o freio real do ritmo. Cresce até 50 no Campeão.
 export const LEVEL_CAP_BY_BADGE_COUNT: number[] = [
-  10, // 0 badges
-  15, // 1
-  20, // 2
-  22, // 3
-  24, // 4
-  26, // 5
-  28, // 6
-  30, // 7
-  35, // 8 (todas insígnias Kanto)
-  40, // Elite Four completo
+  18, // 0 badges
+  22, // 1
+  26, // 2
+  29, // 3
+  32, // 4
+  35, // 5
+  38, // 6
+  41, // 7
+  44, // 8 (todas insígnias Kanto)
+  47, // Elite Four completo
   50, // Campeão
 ];
 
@@ -19,7 +21,7 @@ export const MAX_POKEMON_BATTLE_LEVEL = 50;
 export function getLevelCap(badgeCount: number, championDefeated: boolean): number {
   if (championDefeated) return MAX_POKEMON_BATTLE_LEVEL;
   const idx = Math.min(badgeCount, LEVEL_CAP_BY_BADGE_COUNT.length - 2);
-  return LEVEL_CAP_BY_BADGE_COUNT[idx] ?? 10;
+  return LEVEL_CAP_BY_BADGE_COUNT[idx] ?? 18;
 }
 
 export function getLevelCapLabel(badgeCount: number, championDefeated: boolean): string {
@@ -100,9 +102,9 @@ export const ELITE_BATTLE_XP_WIN = 68;
 
 export const LEVEL_FILTER_OPTIONS = [
   { id: "all", label: "Todos níveis" },
-  { id: "1-5", label: "Nv. 1–5", min: 1, max: 5 },
-  { id: "6-10", label: "Nv. 6–10", min: 6, max: 10 },
-  { id: "11-20", label: "Nv. 11–20", min: 11, max: 20 },
+  { id: "1-5", label: "Nv. 1 a 5", min: 1, max: 5 },
+  { id: "6-10", label: "Nv. 6 a 10", min: 6, max: 10 },
+  { id: "11-20", label: "Nv. 11 a 20", min: 11, max: 20 },
   { id: "21+", label: "Nv. 21+", min: 21, max: 99 },
 ] as const;
 

@@ -10,7 +10,7 @@ interface RarityBadgeProps {
   size?: "sm" | "md" | "lg";
   showChance?: boolean;
   subtle?: boolean;
-  /** Sem glow — ideal para grids compactos (ex.: roleta) */
+  /** Sem glow, ideal para grids compactos (ex.: roleta) */
   compact?: boolean;
   className?: string;
 }

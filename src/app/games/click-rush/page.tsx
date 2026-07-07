@@ -40,8 +40,8 @@ export default function ClickRushGamePage() {
         coins,
         xp,
         message: isNewRecord
-          ? `NOVO RECORDE! ${score} pts · combo ${maxCombo} · +${coins} moedas`
-          : `Click Rush: ${score} pts · combo ${maxCombo} (${rewardParts.join(" · ")}) · +${coins} moedas`,
+          ? `NOVO RECORDE! ${score} pts, combo ${maxCombo}, +${coins} moedas`
+          : `Click Rush: ${score} pts, combo ${maxCombo} (${rewardParts.join(", ")}), +${coins} moedas`,
         isNewRecord,
         onClosePath: "/games",
         closeLabel: "Voltar",
@@ -53,7 +53,7 @@ export default function ClickRushGamePage() {
   return (
     <GamePageShell
       title="Click Rush"
-      subtitle={`${CLICK_GAME_DURATION_SEC}s de cliques rápidos · ${CLICK_BASE_COINS_MIN}~${CLICK_BASE_COINS_MAX} moedas por desempenho`}
+      subtitle={`${CLICK_GAME_DURATION_SEC}s de cliques rápidos, ${CLICK_BASE_COINS_MIN}~${CLICK_BASE_COINS_MAX} moedas por desempenho`}
       icon={<MousePointerClick className="w-7 h-7 text-cyan-400 shrink-0" />}
     >
       <ClickMinigame

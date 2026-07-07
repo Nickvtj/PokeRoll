@@ -58,12 +58,10 @@ export function preloadShinySprites(ids: number[]): void {
   for (const id of ids) preloadShinySprite(id);
 }
 
-function scheduleIdle(work: () => void, timeout = 3000): void {
-  if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(work, { timeout });
-  } else {
-    setTimeout(work, 400);
-  }
+import { scheduleIdle } from "@/lib/schedule-idle";
+
+function scheduleSpriteIdle(work: () => void, timeout = 3000): void {
+  scheduleIdle(work, timeout, 400);
 }
 
 function preloadInBatches(ids: number[], startIndex = 0): void {
@@ -72,7 +70,7 @@ function preloadInBatches(ids: number[], startIndex = 0): void {
 
   const next = startIndex + BATCH_SIZE;
   if (next < ids.length) {
-    scheduleIdle(() => preloadInBatches(ids, next), 4000);
+    scheduleSpriteIdle(() => preloadInBatches(ids, next), 4000);
   }
 }
 

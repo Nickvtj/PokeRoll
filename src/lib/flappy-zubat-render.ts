@@ -221,7 +221,7 @@ function drawPixelPipes(
     drawPipeBody(ctx, x, 0, gapTop - capH, scene);
     drawPipeCap(ctx, x, gapTop - capH, scene);
 
-    // Cano inferior (boca apontada para cima) — para no chão
+    // Cano inferior (boca apontada para cima), para no chão
     drawPipeCap(ctx, x, gapBottom, scene);
     drawPipeBody(ctx, x, gapBottom + capH, groundY - (gapBottom + capH), scene);
   }

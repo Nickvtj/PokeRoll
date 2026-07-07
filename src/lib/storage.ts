@@ -73,7 +73,7 @@ export function flushLocalCollection(): void {
   collectionPersist.flush();
 }
 
-/** @deprecated Prefer persistLocalCollection — mantido para compatibilidade interna. */
+/** @deprecated Prefer persistLocalCollection, mantido para compatibilidade interna. */
 export function saveLocalCollection(
   collection: Record<number, CollectedPokemon>
 ): void {

@@ -10,6 +10,8 @@ import { StickerBadge } from "@/components/ui/StickerBadge";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { DuplicateSadEffect } from "@/components/spin/DuplicateSadEffect";
 import { RARITY_CONFIG } from "@/data/rarity";
+import { getDuplicateReward } from "@/data/duplicate-rewards";
+import { EVO_ITEM_LABEL } from "@/data/evo-item-labels";
 import type { SpinResult } from "@/types";
 import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
@@ -356,7 +358,7 @@ export function RevealAnimation({
                     {result.pokemon.name}
                   </h2>
                   <p className="text-white/50 mt-1">
-                    #{String(result.pokemon.id).padStart(3, "0")} · Gen{" "}
+                    #{String(result.pokemon.id).padStart(3, "0")}, Gen{" "}
                     {result.pokemon.generation}
                   </p>
                   {isShinyUnlock && (
@@ -380,7 +382,33 @@ export function RevealAnimation({
                       transition={{ delay: 0.5 }}
                       className="text-slate-400 text-sm mt-2 italic"
                     >
-                      Duplicata! +XP para fortalecer este Pokémon
+                      {(() => {
+                        const reward = getDuplicateReward(result.pokemon);
+                        if (reward.type === "family-candy") {
+                          return `Duplicata! +${reward.amount} Doces da Família`;
+                        }
+                        return "Duplicata!";
+                      })()}
+                    </motion.p>
+                  )}
+                  {result.jackpot?.evoItem && (
+                    <motion.p
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.6 }}
+                      className="text-violet-300 text-sm mt-2 font-bold"
+                    >
+                      Jackpot! {EVO_ITEM_LABEL[result.jackpot.evoItem as keyof typeof EVO_ITEM_LABEL]}
+                    </motion.p>
+                  )}
+                  {result.jackpot?.wildCandy && (
+                    <motion.p
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.65 }}
+                      className="text-pink-300 text-sm mt-1 font-bold"
+                    >
+                      Jackpot! +{result.jackpot.wildCandy} Doces Coringa
                     </motion.p>
                   )}
                 </div>
@@ -401,7 +429,7 @@ export function RevealAnimation({
                 <div className="text-center space-y-1">
                   <h2 className="text-xl font-bold">Resultados do Spin!</h2>
                   <p className="text-sm text-white/50">
-                    {results.filter((r) => r.isNew).length} novo(s) ·{" "}
+                    {results.filter((r) => r.isNew).length} novo(s),{" "}
                     {results.filter((r) => r.isDuplicate).length} repetido(s)
                     {results.some((r) => r.isShiny) && (
                       <span className="text-amber-300 inline-flex items-center gap-0.5">

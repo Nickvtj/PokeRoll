@@ -224,7 +224,7 @@ export async function playBattleStrike(): Promise<void> {
   }
 }
 
-/** Som curto ao piscar (dano recebido) — estilo Game Boy */
+/** Som curto ao piscar (dano recebido), estilo Game Boy */
 export async function playBattleDamage(sound: BattleHitSound): Promise<void> {
   if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();

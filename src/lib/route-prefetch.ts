@@ -1,9 +1,14 @@
+import { scheduleIdle } from "@/lib/schedule-idle";
+
+export { scheduleIdle };
+
 export const MAIN_NAV_ROUTES = [
   "/battle",
   "/games",
   "/spin",
   "/cases",
   "/album",
+  "/mochila",
   "/profile",
 ] as const;
 
@@ -24,16 +29,6 @@ const MINIGAME_CHUNK_LOADERS = [
   () => import("@/components/minigame/HunterCaveGame"),
   () => import("@/components/minigame/FlappyZubatGame"),
 ] as const;
-
-export function scheduleIdle(work: () => void, timeout = 2500): void {
-  if (typeof window === "undefined") return;
-
-  if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(work, { timeout });
-  } else {
-    window.setTimeout(work, 300);
-  }
-}
 
 export function prefetchRoutes(
   router: { prefetch: (href: string) => void },

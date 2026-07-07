@@ -50,7 +50,7 @@ export function playTacticalCombatSounds(
   }, strikeMs);
 }
 
-/** Golpe primeiro, dano ao piscar — estilo Pokémon clássico */
+/** Golpe primeiro, dano ao piscar, estilo Pokémon clássico */
 export function playBattleCombatSounds(
   log: BattleLogEntry[],
   fromIndex: number,

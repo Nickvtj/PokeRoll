@@ -188,7 +188,7 @@ export const ELITE_FOUR: EliteDefinition[] = [
   {
     id: "lorelei",
     name: "Lorelei",
-    title: "Elite Four · Gelo",
+    title: "Elite Four, Gelo",
     type: "ice",
     recommendedLevel: 35,
     themeColor: "#67e8f9",
@@ -198,7 +198,7 @@ export const ELITE_FOUR: EliteDefinition[] = [
   {
     id: "bruno",
     name: "Bruno",
-    title: "Elite Four · Lutador",
+    title: "Elite Four, Lutador",
     type: "fighting",
     recommendedLevel: 38,
     themeColor: "#ef4444",
@@ -208,7 +208,7 @@ export const ELITE_FOUR: EliteDefinition[] = [
   {
     id: "agatha",
     name: "Agatha",
-    title: "Elite Four · Fantasma",
+    title: "Elite Four, Fantasma",
     type: "ghost",
     recommendedLevel: 40,
     themeColor: "#a78bfa",
@@ -218,7 +218,7 @@ export const ELITE_FOUR: EliteDefinition[] = [
   {
     id: "lance",
     name: "Lance",
-    title: "Elite Four · Dragão",
+    title: "Elite Four, Dragão",
     type: "dragon",
     recommendedLevel: 42,
     themeColor: "#6366f1",
@@ -307,8 +307,8 @@ export function getKantoLeagueLabel(
     for (const eliteId of ELITE_ORDER) {
       if (!eliteProgress[eliteId]?.cleared) {
         const elite = ELITE_FOUR.find((e) => e.id === eliteId);
-        if (elite?.isChampion) return "Liga Indigo · Campeão";
-        return elite ? `Liga Elite · ${elite.name}` : "Liga Elite";
+        if (elite?.isChampion) return "Liga Indigo, Campeão";
+        return elite ? `Liga Elite, ${elite.name}` : "Liga Elite";
       }
     }
     return "Liga Elite";

@@ -19,6 +19,9 @@ import {
   syncCollectionUseShiny,
 } from "@/lib/storage";
 import { queueSpinPersistence } from "@/lib/game-sync-scheduler";
+import { ensureStorageVersion } from "@/lib/storage-version";
+import { rollSpinJackpot } from "@/data/spin-jackpot";
+import type { ItemId } from "@/types/instance";
 import { preloadSpinSprites } from "@/lib/sprite-preload";
 import type {
   AlbumFilter,
@@ -65,6 +68,8 @@ interface GameState {
   toggleUseShiny: (pokemonId: number) => void;
   /** Adiciona Pokémon obtido em cápsula ao álbum */
   commitCapsuleCatch: (pokemonId: number, isShiny: boolean) => void;
+  /** Marca uma espécie como vista no Pokédex (ex.: ao evoluir), sem posse/doce. */
+  markPokedexSeen: (pokemonId: number, isShiny: boolean) => void;
 }
 
 function applyCollectionEntry(
@@ -166,6 +171,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   initialize: async () => {
     try {
+      ensureStorageVersion();
       const collection = loadLocalCollection();
       const profile = loadLocalProfile();
       set({ collection, profile, isLoading: false });
@@ -220,21 +226,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     for (let i = 0; i < spinMultiplier; i++) {
       const pokemon = executeSpin({ mewUnlocked });
       const isShiny = rollShiny();
+      const jackpot = rollSpinJackpot();
       const collectedIds = new Set(Object.keys(collection).map(Number));
       const existing = collection[pokemon.id];
       const result = processSpinResult(
         pokemon,
         collectedIds,
         isShiny,
-        existing?.hasShiny ?? false
+        existing?.hasShiny ?? false,
+        jackpot
       );
       results.push(result);
       sequences.push(generateSpinSequence(result.pokemon));
       collection = applyCollectionEntry(collection, pokemon.id, isShiny);
-
-      if (result.isDuplicate) {
-        const { getDuplicateXp } = await import("@/data/duplicate-xp");
-        economy.grantPokemonXp(pokemon.id, getDuplicateXp(pokemon.rarity));
+      economy.catchSpecies(pokemon.id, isShiny);
+      if (jackpot?.evoItem) {
+        economy.addItem(jackpot.evoItem as ItemId);
+      }
+      if (jackpot?.wildCandy) {
+        economy.addWildCandy(jackpot.wildCandy);
       }
     }
 
@@ -293,22 +303,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   grantDuplicateRewards: () => {
-    const { lastSpinResults, duplicateRewardsGranted } = get();
-    if (duplicateRewardsGranted || lastSpinResults.length === 0) return;
-
-    const duplicates = lastSpinResults.filter((r) => r.isDuplicate);
+    // Doce/Rare Candy de duplicata são concedidos no momento da captura
+    // (economy.catchSpecies), por espécie possuída. Aqui só marcamos a flag.
+    if (get().duplicateRewardsGranted) return;
     set({ duplicateRewardsGranted: true });
-
-    if (duplicates.length === 0) return;
-
-    void import("@/stores/economy-store").then(({ useEconomyStore }) => {
-      void import("@/data/duplicate-xp").then(({ getDuplicateCoins }) => {
-        const economy = useEconomyStore.getState();
-        for (const result of duplicates) {
-          economy.addCoins(getDuplicateCoins(result.rarity));
-        }
-      });
-    });
   },
 
   closeReveal: () => {
@@ -453,11 +451,30 @@ export const useGameStore = create<GameState>((set, get) => ({
       spins: [{ pokemonId, isDuplicate: !wasNew }],
     });
 
-    if (wasNew) {
-      void import("@/stores/economy-store").then(({ useEconomyStore }) => {
-        useEconomyStore.getState().incrementMission("new_pokemon");
-      });
-    }
+    void import("@/stores/economy-store").then(({ useEconomyStore }) => {
+      const economy = useEconomyStore.getState();
+      // Posse + doce/rare candy por espécie possuída
+      economy.catchSpecies(pokemonId, isShiny);
+      if (wasNew) economy.incrementMission("new_pokemon");
+    });
+  },
+
+  markPokedexSeen: (pokemonId, isShiny) => {
+    const prev = get().collection;
+    const existing = prev[pokemonId];
+    const entry: CollectedPokemon = existing
+      ? { ...existing, hasShiny: existing.hasShiny || isShiny }
+      : {
+          pokemonId,
+          collectedAt: new Date().toISOString(),
+          isDuplicate: false,
+          count: 1,
+          hasShiny: isShiny,
+          useShiny: false,
+        };
+    const collection = { ...prev, [pokemonId]: entry };
+    set({ collection });
+    persistLocalCollection(collection);
   },
 }));
 

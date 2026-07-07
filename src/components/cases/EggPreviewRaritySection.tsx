@@ -48,7 +48,7 @@ export function EggPreviewRaritySection({
               {meta.label}
             </h3>
             <p className="text-[10px] text-white/35">
-              {dropRate}% · {mons.length} espécies
+              {dropRate}%, {mons.length} espécies
             </p>
           </div>
         </div>

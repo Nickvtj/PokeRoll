@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Áudio de batalha — delegado ao motor procedural (battle-hit-sounds).
+ * Áudio de batalha, delegado ao motor procedural (battle-hit-sounds).
  * Mantido para compatibilidade; Mixkit removido.
  */
 

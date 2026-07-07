@@ -177,7 +177,7 @@ export function EliteFourScreen({
         <div className="glass-card p-4 text-center border border-amber-500/30 bg-amber-500/10">
           <p className="text-amber-400 font-bold flex items-center justify-center gap-2">
             <Trophy className="w-5 h-5" />
-            Hall of Fame · Campeão Kanto!
+            Hall of Fame, Campeão Kanto!
           </p>
         </div>
       )}
@@ -226,7 +226,7 @@ export function EliteFourScreen({
               <p className="font-bold text-sm" style={{ color: memberUnlocked ? elite.themeColor : undefined }}>
                 {elite.name}
               </p>
-              <p className="text-[10px] text-white/40">{elite.title} · Nv. {elite.recommendedLevel}+</p>
+              <p className="text-[10px] text-white/40">{elite.title}, Nv. {elite.recommendedLevel}+</p>
               {cleared && memberUnlocked && (
                 <p className="text-[10px] text-amber-400 mt-1 flex items-center gap-1">
                   <Check className="w-3 h-3" />

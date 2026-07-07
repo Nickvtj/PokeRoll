@@ -32,7 +32,7 @@ export default function CapturaGamePage() {
     if (bonusPokemonXp > 0 && team.length > 0) {
       const targetId = team[Math.floor(Math.random() * team.length)];
       grantPokemonXp(targetId, bonusPokemonXp);
-      bonusMsg = ` · +${bonusPokemonXp} XP em ${POKEMON_MAP[targetId]?.name ?? "time"}`;
+      bonusMsg = `, +${bonusPokemonXp} XP em ${POKEMON_MAP[targetId]?.name ?? "time"}`;
     }
 
     recordClickGame(coins);
@@ -64,7 +64,7 @@ export default function CapturaGamePage() {
       {
         coins,
         xp: accountXp,
-        message: `${headline} ${names} · +${coins} moedas${bonusMsg}`,
+        message: `${headline} ${names}, +${coins} moedas${bonusMsg}`,
         isNewRecord,
         onClosePath: "/games",
         closeLabel: "Voltar",
@@ -76,7 +76,7 @@ export default function CapturaGamePage() {
   return (
     <GamePageShell
       title="Captura Perfeita"
-      subtitle="Capture em sequência · 1 moeda por acerto (dourado ou verde)"
+      subtitle="Capture em sequência, 1 moeda por acerto (dourado ou verde)"
       icon={<Target className="w-7 h-7 text-emerald-400 shrink-0" />}
     >
       <CapturaPerfeitaGame

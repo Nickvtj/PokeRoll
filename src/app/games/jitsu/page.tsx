@@ -56,12 +56,12 @@ export default function JitsuGamePage() {
     const detail = result.won
       ? [
           comboLabel,
-          `${result.roundsPlayed} rodadas · ${result.playerTrophies.length} troféus`,
+          `${result.roundsPlayed} rodadas, ${result.playerTrophies.length} troféus`,
           beltPromoted ? "Nova faixa desbloqueada!" : null,
           isNewRecord ? "Novo recorde de pontuação!" : null,
         ]
           .filter(Boolean)
-          .join(" · ")
+          .join(", ")
       : `${result.roundsPlayed} rodadas disputadas. Continue treinando para subir de faixa.`;
 
     showRewardPopup(
@@ -101,7 +101,7 @@ export default function JitsuGamePage() {
             <span className="truncate">Desafio Elemental</span>
           </h1>
           <p className="text-white/50 text-xs mt-0.5 leading-relaxed">
-            Card-Jitsu · Fogo, Água e Planta · {jitsuCoinRange.min}–{jitsuCoinRange.max} moedas/vitória
+            Card-Jitsu, Fogo, Água e Planta, {jitsuCoinRange.min} a {jitsuCoinRange.max} moedas/vitória
             {currentBeltBonus > 0 && ` (+${currentBeltBonus} faixa ${belt.label.replace("Faixa ", "")})`}
           </p>
         </div>

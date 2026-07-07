@@ -76,7 +76,7 @@ function TrainerReserveBalls({ team, bench }: { team: BattleFighter[]; bench: Ba
   return (
     <div
       className="flex justify-center gap-0.5 mt-1"
-      title={`${liveBench} reserva(s) · ${active} em campo`}
+      title={`${liveBench} reserva(s), ${active} em campo`}
     >
       {variants.map((v, i) => (
         <ReserveBall key={i} variant={v} />
@@ -193,7 +193,7 @@ export function BattleArena({
               className="battle-classic-gym-banner flex-1"
               style={{ color: state.gymMeta.themeColor }}
             >
-              {state.gymMeta.gymName} · {state.gymMeta.trainerName}
+              {state.gymMeta.gymName}, {state.gymMeta.trainerName}
               {state.gymMeta.stage > 0 && (
                 <span className="text-[#585858] font-normal">
                   {" "}
@@ -247,7 +247,7 @@ export function BattleArena({
         )}
       >
         <div className="relative flex items-stretch gap-1.5 sm:gap-2.5 w-full">
-          {/* Treinador jogador — fora da arena (esquerda) */}
+          {/* Treinador jogador, fora da arena (esquerda) */}
           <div className="flex flex-col justify-end shrink-0 w-14 sm:w-[4.25rem] pb-[10%] sm:pb-[14%] pointer-events-none">
             <BattleTrainerChip
               side="player"
@@ -264,7 +264,7 @@ export function BattleArena({
             {arenaContent}
           </div>
 
-          {/* Treinador rival — fora da arena (direita) */}
+          {/* Treinador rival, fora da arena (direita) */}
           <div className="flex flex-col justify-start shrink-0 w-14 sm:w-[4.25rem] pt-[4%] sm:pt-[6%] pointer-events-none">
             <BattleTrainerChip
               side="enemy"

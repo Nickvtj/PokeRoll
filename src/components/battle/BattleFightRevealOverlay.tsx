@@ -30,7 +30,7 @@ export function BattleFightRevealOverlay({
       transition={{ duration: 0.18 }}
       className="absolute inset-0 z-50 overflow-hidden rounded-md pointer-events-none flex items-center justify-center"
     >
-      {/* Fundo opaco — cobre totalmente o campo até as pokébolas caírem */}
+      {/* Fundo opaco, cobre totalmente o campo até as pokébolas caírem */}
       <div
         className="absolute inset-0"
         style={{

@@ -47,7 +47,7 @@ export default function HunterCavePage() {
             isNewRecord ? "Novo recorde de fuga!" : null,
           ]
             .filter(Boolean)
-            .join(" · "),
+            .join(", "),
           isNewRecord,
           onClosePath: "/games",
           closeLabel: "Voltar",
@@ -72,7 +72,7 @@ export default function HunterCavePage() {
   return (
     <GamePageShell
       title="Caverna dos Hunter"
-      subtitle={`Aposta ${HUNTER_ENTRY_COST} moedas · acumule moedas sem limite ou fuja antes do Haunter`}
+      subtitle={`Aposta ${HUNTER_ENTRY_COST} moedas, acumule moedas sem limite ou fuja antes do Haunter`}
       icon={<Ghost className="w-7 h-7 text-violet-400 shrink-0" />}
     >
       <HunterCaveGame

@@ -1,4 +1,4 @@
-/** Progressão individual de Pokémon — curva escalonada + level cap por insígnias */
+/** Progressão individual de Pokémon, curva escalonada + level cap por insígnias */
 
 export {
   MAX_POKEMON_BATTLE_LEVEL,

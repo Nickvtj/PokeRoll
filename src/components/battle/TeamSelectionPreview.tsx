@@ -203,8 +203,8 @@ function TeamSlotRow({
             {pokemon.name}
           </p>
           <p className="text-[10px] text-white/45 capitalize truncate">
-            Nv.{level} · {type}
-            {boost && <span className="text-emerald-300/90 font-bold"> · +{boost.bonusPercent}%</span>}
+            Nv.{level}, {type}
+            {boost && <span className="text-emerald-300/90 font-bold">, +{boost.bonusPercent}%</span>}
           </p>
         </div>
         <X className="w-4 h-4 text-white/30 group-hover:text-white/70 transition-colors shrink-0" />

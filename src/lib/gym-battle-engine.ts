@@ -165,8 +165,8 @@ export function initGymBattle(
     wave: stage,
     maxWaves: 5,
     log: [
-      log(`${gym.arenaName} — ${stageData.label}: ${stageData.trainerName}`, "info"),
-      log(`${gym.leaderName} · Tipo ${gym.type}${underMsg}`, "info"),
+      log(`${gym.arenaName}, ${stageData.label}: ${stageData.trainerName}`, "info"),
+      log(`${gym.leaderName}, Tipo ${gym.type}${underMsg}`, "info"),
     ],
     reward: null,
     mode: "gym",

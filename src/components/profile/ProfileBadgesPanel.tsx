@@ -56,7 +56,7 @@ export function ProfileBadgesPanel() {
       {championDefeated && (
         <p className="text-center text-sm text-amber-400 font-semibold pt-3 border-t border-white/10 flex items-center justify-center gap-2">
           <Trophy className="w-4 h-4" />
-          Campeão da Liga · Hall of Fame
+          Campeão da Liga, Hall of Fame
         </p>
       )}
     </ProfileSection>

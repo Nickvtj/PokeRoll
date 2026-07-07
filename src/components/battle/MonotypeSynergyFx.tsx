@@ -118,7 +118,7 @@ export function MonotypeSynergyBanner({
               Sinergia {synergy.label} ativa!
             </p>
             <p className="text-[10px] text-white/55 mt-0.5">
-              +{synergy.bonusPercent}% de dano · time monocromático
+              +{synergy.bonusPercent}% de dano, time monocromático
             </p>
           </div>
         </motion.div>

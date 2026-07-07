@@ -17,6 +17,7 @@ import { useGameStore } from "@/stores/game-store";
 import { useGymStore } from "@/stores/gym-store";
 import { PokemonGymBadges } from "@/components/gym/GymBadge";
 import { PokemonMovesTab } from "@/components/album/PokemonMovesTab";
+import { EvolutionPanel } from "@/components/album/EvolutionPanel";
 import { isLocalAsset } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import type { CollectedPokemon, Pokemon } from "@/types";
@@ -37,6 +38,7 @@ export function PokedexModal({
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "moves">("profile");
   const pokemonBattleXp = useEconomyStore((s) => s.pokemonBattleXp);
+  const isOwned = useEconomyStore((s) => s.isOwned);
   const toggleUseShiny = useGameStore((s) => s.toggleUseShiny);
   const getHallOfFameBorder = useGymStore((s) => s.getHallOfFameBorder);
 
@@ -62,6 +64,7 @@ export function PokedexModal({
   const displayImage = getPokemonDisplayImage(pokemon.id, collection);
   const usingShiny = Boolean(collection.hasShiny && collection.useShiny);
   const evolutionLabel = getEvolutionLabel(pokemon.id);
+  const owned = isOwned(pokemon.id);
 
   const modal = (
     <AnimatePresence>
@@ -91,7 +94,7 @@ export function PokedexModal({
                 boxShadow: `0 0 40px ${config.glowColor}, 0 20px 60px rgba(0,0,0,0.5)`,
               }}
             >
-              {/* Header — padrão PokéRoll */}
+              {/* Header, padrão PokéRoll */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
@@ -290,6 +293,8 @@ export function PokedexModal({
                 </div>
               </div>
 
+              {owned && <EvolutionPanel speciesId={pokemon.id} />}
+
               {/* Descrição */}
               <div className="px-4 py-3">
                 <p className="text-[11px] leading-relaxed text-white/60 line-clamp-3">
@@ -304,7 +309,7 @@ export function PokedexModal({
               {/* Footer + botão */}
               <div className="px-4 pb-4 space-y-2">
                 <p className="text-center text-[9px] font-medium uppercase tracking-wider text-white/30">
-                  Região de Kanto · PokéRoll
+                  Região de Kanto, PokéRoll
                 </p>
                 <AnimatedButton variant="secondary" size="sm" onClick={onClose} className="w-full">
                   Fechar

@@ -10,8 +10,10 @@ import { RARITY_ORDER, RARITY_CONFIG } from "@/data/rarity";
 import { TOTAL_POKEMON } from "@/data/pokemon";
 import { withGridImage } from "@/lib/pokemon-display";
 import { useGameStore } from "@/stores/game-store";
+import { useEconomyStore } from "@/stores/economy-store";
+import { useCanSpeciesEvolve } from "@/components/album/EvolutionPanel";
 import { cn } from "@/lib/utils";
-import type { Pokemon, Rarity } from "@/types";
+import type { CollectedPokemon, Pokemon, Rarity } from "@/types";
 
 const ALBUM_PAGE_SIZE = 48;
 
@@ -33,6 +35,11 @@ export function AlbumGrid() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const collection = useGameStore((s) => s.collection);
+  const owned = useEconomyStore((s) => s.owned);
+  const ownedSet = useMemo(() => new Set(owned ?? []), [owned]);
+  useEconomyStore((s) => s.pokemonBattleXp);
+  useEconomyStore((s) => s.familyCandy);
+  useEconomyStore((s) => s.items);
   const albumFilter = useGameStore((s) => s.albumFilter);
   const setAlbumFilter = useGameStore((s) => s.setAlbumFilter);
   const getFilteredPokemon = useGameStore((s) => s.getFilteredPokemon);
@@ -75,7 +82,7 @@ export function AlbumGrid() {
     <div className="space-y-6">
       <div className="glass-card p-6 space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">Progresso do Álbum</h2>
+          <h2 className="text-lg font-bold">Progresso do Pokédex</h2>
           <span className="text-2xl font-bold neon-text">
             {collected}/{TOTAL_POKEMON}
           </span>
@@ -91,7 +98,7 @@ export function AlbumGrid() {
         <p className="text-sm text-white/50">{progress}% completo</p>
       </div>
 
-      {/* Busca — somente Pokémon já coletados */}
+      {/* Busca, somente Pokémon já coletados */}
       <div className="glass-card p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -130,7 +137,7 @@ export function AlbumGrid() {
           >
             <span className="flex items-center gap-2 text-sm font-semibold text-white/80">
               <Filter className="w-4 h-4 text-indigo-400" />
-              Filtros do álbum
+              Filtros do Pokédex
             </span>
             <ChevronDown className={cn("w-4 h-4 text-white/40 transition-transform", filtersOpen && "rotate-180")} />
           </button>
@@ -238,21 +245,13 @@ export function AlbumGrid() {
           const entry = collection[pokemon.id];
           const displayPokemon = withGridImage(pokemon, entry);
           return (
-            <div key={pokemon.id} className="album-card-slot">
-              <PokemonCard
-                pokemon={displayPokemon}
-                collected={!!entry}
-                duplicateCount={entry?.count}
-                hasShiny={entry?.hasShiny}
-                size="sm"
-                animate={false}
-                onClick={
-                  entry
-                    ? () => setSelectedPokemon(pokemon)
-                    : undefined
-                }
-              />
-            </div>
+            <EvolveReadyCard
+              key={pokemon.id}
+              pokemon={displayPokemon}
+              entry={entry}
+              isOwned={ownedSet.has(pokemon.id)}
+              onClick={entry ? () => setSelectedPokemon(pokemon) : undefined}
+            />
           );
         })}
       </div>
@@ -281,6 +280,36 @@ export function AlbumGrid() {
         collection={selectedPokemon ? collection[selectedPokemon.id] ?? null : null}
         show={!!selectedPokemon}
         onClose={() => setSelectedPokemon(null)}
+      />
+    </div>
+  );
+}
+
+function EvolveReadyCard({
+  pokemon,
+  entry,
+  isOwned,
+  onClick,
+}: {
+  pokemon: Pokemon;
+  entry: CollectedPokemon | undefined;
+  isOwned: boolean;
+  onClick?: () => void;
+}) {
+  const canEvolve = useCanSpeciesEvolve(pokemon.id);
+  const evolveReady = isOwned && canEvolve;
+
+  return (
+    <div className="album-card-slot">
+      <PokemonCard
+        pokemon={pokemon}
+        collected={!!entry}
+        duplicateCount={entry?.count}
+        hasShiny={entry?.hasShiny}
+        evolveReady={evolveReady}
+        size="sm"
+        animate={false}
+        onClick={onClick}
       />
     </div>
   );

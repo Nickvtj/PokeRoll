@@ -4,6 +4,11 @@ import {
   pickCapsulePokemon,
   rollCapsuleRarity,
 } from "@/data/capsules";
+import {
+  getEggHatchFamilyCandyBonus,
+  rollMasterEggEvoItem,
+} from "@/data/capsule-balance";
+import { getFamilyId } from "@/data/evolution-lines";
 import { rollEggShiny } from "@/lib/spin-algorithm";
 import { getSpinResultImage } from "@/lib/pokemon-display";
 import {
@@ -21,11 +26,14 @@ const TILES_AFTER_WINNER = 6;
 export const CAPSULE_WINNER_INDEX = TILES_BEFORE_WINNER * TILE_SIZE;
 
 export function rollCapsule(capsuleId: CapsuleId): CapsuleRollResult {
-  const capsule = getCapsuleById(capsuleId);
   const pool = getCapsulePoolPokemon(capsuleId);
+  const capsule = getCapsuleById(capsuleId);
   const rarity = rollCapsuleRarity(capsule.dropRates, pool);
   const pokemon = pickCapsulePokemon(capsuleId, rarity);
   const isShiny = rollEggShiny();
+  const hatchFamilyCandy = getEggHatchFamilyCandyBonus(capsuleId);
+  const bonusEvoItem =
+    capsuleId === "mestra" ? rollMasterEggEvoItem() ?? undefined : undefined;
 
   return {
     pokemon,
@@ -34,7 +42,25 @@ export function rollCapsule(capsuleId: CapsuleId): CapsuleRollResult {
     isDuplicate: false,
     isNewShinyUnlock: false,
     capsuleId,
+    hatchFamilyCandy,
+    bonusEvoItem,
   };
+}
+
+/** Aplica recompensas fixas de chocagem (doces + item bônus). */
+export function applyCapsuleHatchRewards(
+  roll: CapsuleRollResult,
+  economy: {
+    addFamilyCandy: (familyId: number, amount: number) => void;
+    addItem: (itemId: import("@/types/instance").ItemId, amount?: number) => void;
+  }
+): void {
+  if (roll.hatchFamilyCandy && roll.hatchFamilyCandy > 0) {
+    economy.addFamilyCandy(getFamilyId(roll.pokemon.id), roll.hatchFamilyCandy);
+  }
+  if (roll.bonusEvoItem) {
+    economy.addItem(roll.bonusEvoItem as import("@/types/instance").ItemId);
+  }
 }
 
 export function resolveCapsuleCollection(

@@ -13,6 +13,8 @@ interface PokemonCardProps {
   collected?: boolean;
   duplicateCount?: number;
   hasShiny?: boolean;
+  /** Brilho quando o Pokémon possuído pode evoluir agora. */
+  evolveReady?: boolean;
   onClick?: () => void;
   size?: "sm" | "md" | "lg";
   animate?: boolean;
@@ -29,6 +31,7 @@ export const PokemonCard = memo(function PokemonCard({
   collected = false,
   duplicateCount = 0,
   hasShiny = false,
+  evolveReady = false,
   onClick,
   size = "md",
   animate = true,
@@ -41,19 +44,29 @@ export const PokemonCard = memo(function PokemonCard({
   const cardClassName = cn(
     "glass-card relative overflow-hidden group",
     sizes.card,
-    collected && !showShinyBorder && `rarity-glow-${pokemon.rarity}`,
-    collected && showShinyBorder && "shiny-rainbow-border",
+    collected && evolveReady && "evolve-ready-glow",
+    collected && !evolveReady && !showShinyBorder && `rarity-glow-${pokemon.rarity}`,
+    collected && !evolveReady && showShinyBorder && "shiny-rainbow-border",
     !collected && "opacity-80",
     onClick && collected && "cursor-pointer",
     animate && collected && "transition-transform duration-300 hover:scale-[1.03] hover:-translate-y-1"
   );
 
   const cardStyle =
-    collected && !showShinyBorder ? { borderColor: `${config.color}30` } : undefined;
+    collected && !showShinyBorder && !evolveReady
+      ? { borderColor: `${config.color}30` }
+      : undefined;
 
   return (
     <div onClick={onClick} className={cardClassName} style={cardStyle}>
-      {duplicateCount > 1 && (
+      {evolveReady && (
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-500/80 text-[9px] font-bold text-white shadow-[0_0_12px_rgba(99,102,241,0.7)]">
+          <Sparkles className="w-3 h-3" />
+          Evoluir
+        </div>
+      )}
+
+      {duplicateCount > 1 && !evolveReady && (
         <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-xs text-amber-400">
           x{duplicateCount}
         </div>

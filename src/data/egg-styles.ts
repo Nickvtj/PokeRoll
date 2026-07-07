@@ -3,7 +3,7 @@ import type { CapsuleId } from "@/types/capsule";
 /** Tipos oficiais do Pokémon GO (sprites PokeMiners/pogo_assets) */
 export type PokemonGoEggType = "2km" | "5km" | "7km" | "10km" | "12km";
 
-/** Sprites extraídos do APK do Pokémon GO — PokeMiners/pogo_assets */
+/** Sprites extraídos do APK do Pokémon GO, PokeMiners/pogo_assets */
 export const EGG_SPRITES: Record<PokemonGoEggType, string> = {
   "2km": "/sprites/eggs/egg-2km.png",
   "5km": "/sprites/eggs/egg-5km.png",

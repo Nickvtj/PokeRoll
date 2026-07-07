@@ -4,6 +4,7 @@ import { getLevelCap } from "@/data/pokemon-xp-curve";
 import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
 import { getDefaultGymState, loadGymState, persistGymState, saveGymStateImmediate } from "@/lib/gym-storage";
 import { loadGymFromSupabase, syncGymToSupabase } from "@/lib/gym-supabase";
+import { ensureStorageVersion } from "@/lib/storage-version";
 import { useEconomyStore } from "@/stores/economy-store";
 import type {
   EliteId,
@@ -80,6 +81,7 @@ export const useGymStore = create<GymStore>((set, get) => ({
   ...getDefaultGymState(),
 
   initializeGym: () => {
+    ensureStorageVersion();
     const data = loadGymState();
     set({ ...data });
     void loadGymFromSupabase().then((remote) => {

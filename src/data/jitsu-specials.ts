@@ -71,15 +71,15 @@ export function describeSpecialOnPlay(
   const meta = JITSU_SPECIAL_META[card.special];
   switch (card.special) {
     case "invert-power":
-      return `${who}: ${meta.label} — no empate de elemento, menor poder vence!`;
+      return `${who}: ${meta.label}, no empate de elemento, menor poder vence!`;
     case "block-element":
-      return `${who}: ${meta.label} — ${card.blockTarget ?? "?"} bloqueado na próxima rodada!`;
+      return `${who}: ${meta.label}, ${card.blockTarget ?? "?"} bloqueado na próxima rodada!`;
     case "buff-next":
       return `${who}: próxima carta ganha +2 de poder!`;
     case "debuff-next":
       return `${who}: próxima carta do rival perde −2 de poder!`;
     case "destroy-trophy":
-      return `${who}: ${meta.label} — vitória remove um troféu rival!`;
+      return `${who}: ${meta.label}, vitória remove um troféu rival!`;
     default:
       return null;
   }

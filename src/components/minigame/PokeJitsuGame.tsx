@@ -123,7 +123,7 @@ function TrophyRow({
               meta.glow,
               pulse && "ring-2 ring-amber-400/50"
             )}
-            title={`${meta.label} · Poder ${t.power}`}
+            title={`${meta.label}, Poder ${t.power}`}
           >
             <JitsuElementIcon type={t.type} className={cn("w-3.5 h-3.5", meta.text)} />
           </motion.div>
@@ -183,10 +183,21 @@ function TimerRing({ timer, max, urgent }: { timer: number; max: number; urgent:
   );
 }
 
-const ELEMENT_TRIANGLE = [
-  { type: "FOGO" as const, icon: Flame, beats: "PLANTA" },
-  { type: "AGUA" as const, icon: Waves, beats: "FOGO" },
-  { type: "PLANTA" as const, icon: Leaf, beats: "AGUA" },
+const EMPTY_JITSU_HINT: ReturnType<typeof getWinProgressHint> = {
+  needsType: null,
+  needsSameType: null,
+  sameTypeUniqueCount: 0,
+  sameTypeTarget: null,
+};
+
+const ELEMENT_TRIANGLE: {
+  type: JitsuElement;
+  icon: typeof Flame;
+  beats: JitsuElement;
+}[] = [
+  { type: "FOGO", icon: Flame, beats: "PLANTA" },
+  { type: "AGUA", icon: Waves, beats: "FOGO" },
+  { type: "PLANTA", icon: Leaf, beats: "AGUA" },
 ];
 
 const SENSEI_PORTRAIT = {
@@ -413,9 +424,9 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
 
         const destroyNote =
           playerWon && card.special === "destroy-trophy"
-            ? " · Troféu rival destruído!"
+            ? ", Troféu rival destruído!"
             : !playerWon && botCard.special === "destroy-trophy"
-              ? " · Perdeu um troféu!"
+              ? ", Perdeu um troféu!"
               : "";
 
         const baseMsg = playerWon
@@ -500,7 +511,7 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
         accent="rose"
         icon={<Swords className="w-8 h-8" />}
         title="Desafio Elemental"
-        description="Duelo tático Fogo · Água · Planta. Cartas especiais com efeitos únicos. Vença com 3 elementos diferentes ou 3 espécies distintas do mesmo tipo."
+        description="Duelo tático Fogo, Água, Planta. Cartas especiais com efeitos únicos. Vença com 3 elementos diferentes ou 3 espécies distintas do mesmo tipo."
         buttonLabel="INICIAR DUELO"
         onStart={startMatch}
       >
@@ -594,7 +605,7 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
             <div className="flex justify-end">
               <TrophyRow
                 trophies={botTrophies}
-                hint={{ needsType: null, needsSameType: null }}
+                hint={EMPTY_JITSU_HINT}
                 side="bot"
               />
             </div>
@@ -635,7 +646,7 @@ export function PokeJitsuGame({ onComplete, onReady }: PokeJitsuGameProps) {
               <TimerRing timer={timer} max={JITSU_TIMER_SEC} urgent={timerUrgent} />
             ) : (
               <span className="flex items-center gap-1 text-xs text-white/35 font-mono">
-                <Clock className="w-3.5 h-3.5" /> —
+                <Clock className="w-3.5 h-3.5" />
               </span>
             )}
             <span className="text-[10px] text-white/30 font-mono tabular-nums">R{roundsPlayed}</span>

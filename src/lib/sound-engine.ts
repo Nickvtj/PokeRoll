@@ -1,4 +1,4 @@
-/** Motor de áudio compartilhado — leve, sem arquivos externos */
+/** Motor de áudio compartilhado, leve, sem arquivos externos */
 
 import { isSoundEnabled } from "@/lib/player-preferences";
 
@@ -100,7 +100,7 @@ export async function playBattleLoss(): Promise<void> {
   );
 }
 
-/** Pokémon desmaiou — tom descendente estilo clássico */
+/** Pokémon desmaiou, tom descendente estilo clássico */
 export async function playBattleFaint(): Promise<void> {
   await playNoteSequence(
     [
@@ -113,7 +113,7 @@ export async function playBattleFaint(): Promise<void> {
   );
 }
 
-/** Lançamento da moeda — whoosh curto para cima */
+/** Lançamento da moeda, whoosh curto para cima */
 export async function playBattleCoinToss(): Promise<void> {
   if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
@@ -138,7 +138,7 @@ export async function playBattleCoinToss(): Promise<void> {
 }
 
 /**
- * Giro da moeda no ar — “tins” metálicos que vão desacelerando até parar.
+ * Giro da moeda no ar, “tins” metálicos que vão desacelerando até parar.
  * Duração alinhada à animação (~2s).
  */
 export async function playBattleCoinSpinSequence(durationSec = 2.05): Promise<void> {
@@ -231,7 +231,7 @@ export async function playBattleCoinResultReveal(playerStarts: boolean): Promise
   }
 }
 
-/** Roleta da cápsula — ticks que desaceleram até parar */
+/** Roleta da cápsula, ticks que desaceleram até parar */
 export async function playCapsuleRollSequence(durationSec = 8.5): Promise<void> {
   if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
@@ -346,7 +346,7 @@ export async function playXpBarFill(durationSec = 1): Promise<void> {
 
   for (let i = 0; i < tickCount; i++) {
     const progress = tickCount === 1 ? 1 : i / (tickCount - 1);
-    // easeOut cúbico — alinhado com a animação da barra (rápido no início, lento no fim)
+    // easeOut cúbico, alinhado com a animação da barra (rápido no início, lento no fim)
     const eased = 1 - Math.pow(1 - progress, 3);
     const t = eased * durationSec;
 
@@ -471,7 +471,7 @@ export async function playCardFlip(): Promise<void> {
   await playTone(380, 0.04, "triangle", 0.06);
 }
 
-/** Embate VS — fanfarra de início de batalha estilo Pokémon */
+/** Embate VS, fanfarra de início de batalha estilo Pokémon */
 export async function playBattleFaceOffSequence(): Promise<void> {
   if (!isSoundEnabled()) return;
   const ctx = await getAudioContext();
@@ -617,7 +617,7 @@ export async function playCapturePerfect(): Promise<void> {
   );
 }
 
-/** Som ao acertar nota — sem BGM, só feedback no hit */
+/** Som ao acertar nota, sem BGM, só feedback no hit */
 export function playDanceHitNote(laneIndex: number, perfect: boolean): void {
   if (!isSoundEnabled()) return;
   const notes = [392, 494, 587, 740];
@@ -651,7 +651,7 @@ export async function playJitsuReveal(): Promise<void> {
   await playTone(520, 0.045, "sine", 0.05, 0.04);
 }
 
-/** Vitória na rodada — tom ascendente por elemento */
+/** Vitória na rodada, tom ascendente por elemento */
 export async function playJitsuRoundWin(element: keyof typeof JITSU_ELEMENT_NOTES = "FOGO"): Promise<void> {
   const notes = JITSU_ELEMENT_NOTES[element];
   await playNoteSequence(
@@ -676,7 +676,7 @@ export async function playJitsuRoundLoss(): Promise<void> {
   );
 }
 
-/** Empate total — dois tons iguais */
+/** Empate total, dois tons iguais */
 export async function playJitsuTie(): Promise<void> {
   await playTone(440, 0.08, "sine", 0.07);
   await playTone(440, 0.08, "sine", 0.06, 0.12);

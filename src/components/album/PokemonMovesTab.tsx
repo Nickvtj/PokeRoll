@@ -34,7 +34,7 @@ export function PokemonMovesTab({ pokemonId, level }: PokemonMovesTabProps) {
         <p className="text-xs font-bold text-white/80">Build de batalha</p>
         <p className="text-[10px] text-white/45 mt-1 leading-relaxed">
           Escolha até 2 golpes para levar à batalha. Novos golpes desbloqueiam conforme o
-          nível do Pokémon (Nv. {MOVE_UNLOCK_LEVELS.join(" · Nv. ")}).
+          nível do Pokémon (Nv. {MOVE_UNLOCK_LEVELS.join(", Nv. ")}).
         </p>
         <p className="text-[10px] text-indigo-300/80 mt-2 font-semibold">
           Equipados: {equippedCount}/2

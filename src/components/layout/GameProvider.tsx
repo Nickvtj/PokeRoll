@@ -11,6 +11,7 @@ import { useGameStore } from "@/stores/game-store";
 import { usePreferencesStore } from "@/stores/preferences-store";
 import { useEffect } from "react";
 import { prefetchAppRoutes } from "@/lib/route-prefetch";
+import { scheduleIdleWork } from "@/lib/schedule-idle";
 import { preloadPrioritySpritesDeferred } from "@/lib/sprite-preload";
 
 const WelcomeModal = dynamic(
@@ -74,13 +75,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       runPreload();
     };
 
-    if ("requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(warmRoutes, { timeout: 2000 });
-      return () => window.cancelIdleCallback(idleId);
-    }
-
-    const t = window.setTimeout(warmRoutes, 800);
-    return () => window.clearTimeout(t);
+    return scheduleIdleWork(warmRoutes, 800, 2000);
   }, [isLoading, router]);
 
   if (isLoading) {

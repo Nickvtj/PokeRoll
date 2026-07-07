@@ -28,7 +28,9 @@ import {
   generateCapsuleStrip,
   resolveCapsuleCollection,
   rollCapsule,
+  applyCapsuleHatchRewards,
 } from "@/lib/capsule-algorithm";
+import { isCapsuleUnlocked } from "@/data/capsule-balance";
 import { getCapsuleSellPrice } from "@/lib/capsule-sell";
 import { scheduleIdle } from "@/lib/route-prefetch";
 import { useEconomyStore } from "@/stores/economy-store";
@@ -45,6 +47,7 @@ export default function CasesPage() {
   const addCoins = useEconomyStore((s) => s.addCoins);
   const recordEggHatch = useEconomyStore((s) => s.recordEggHatch);
   const recordEggSellCoins = useEconomyStore((s) => s.recordEggSellCoins);
+  const trainerLevel = useEconomyStore((s) => s.level);
   const collection = useGameStore((s) => s.collection);
   const commitCapsuleCatch = useGameStore((s) => s.commitCapsuleCatch);
 
@@ -90,13 +93,15 @@ export default function CasesPage() {
   }, [phase, resetToHub]);
 
   const handleSelectEgg = useCallback((eggId: CapsuleId) => {
+    if (!isCapsuleUnlocked(eggId, trainerLevel)) return;
     setActiveEggId(eggId);
     setPhase("preview");
-  }, []);
+  }, [trainerLevel]);
 
   const handleConfirmOpen = useCallback(() => {
     if (!activeEggId || phase !== "preview") return;
     const egg = getCapsuleById(activeEggId);
+    if (!isCapsuleUnlocked(activeEggId, trainerLevel)) return;
     if (coins < egg.cost) {
       setNoCoinsMsg(true);
       window.setTimeout(() => setNoCoinsMsg(false), 2800);
@@ -114,6 +119,8 @@ export default function CasesPage() {
       existing?.hasShiny ?? false
     );
 
+    applyCapsuleHatchRewards(resolved, useEconomyStore.getState());
+
     const pool = getCapsulePoolPokemon(activeEggId);
     const reel = generateCapsuleStrip(resolved.pokemon, pool, resolved.isShiny);
 
@@ -121,7 +128,7 @@ export default function CasesPage() {
     setResult(resolved);
     setStrip(reel);
     setPhase("opening");
-  }, [activeEggId, phase, coins, spendCoins, collection, recordEggHatch]);
+  }, [activeEggId, phase, coins, spendCoins, collection, recordEggHatch, trainerLevel]);
 
   const handleOpeningComplete = useCallback(() => {
     setPhase("result");
@@ -213,8 +220,8 @@ export default function CasesPage() {
             Ovos Pokémon
           </h1>
           <p className="text-sm text-white/50 max-w-2xl leading-relaxed">
-            Escolha um ovo, veja quem pode nascer e choque quando estiver pronto. Duplicatas
-            podem ser vendidas; shiny vale{" "}
+            Escolha um ovo temático para caçar formas base. Todo ovo concede doces da família
+            ao chocar. Duplicatas podem ser vendidas; shiny vale{" "}
             <span className="text-amber-300/90">5×</span> no preço.
           </p>
         </header>
@@ -234,7 +241,7 @@ export default function CasesPage() {
             </p>
           )}
 
-          <EggHub coins={coins} onSelectEgg={handleSelectEgg} />
+          <EggHub coins={coins} trainerLevel={trainerLevel} onSelectEgg={handleSelectEgg} />
         </>
       )}
 

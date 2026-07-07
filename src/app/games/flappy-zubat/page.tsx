@@ -40,7 +40,7 @@ export default function FlappyZubatPage() {
       newSkins.length > 0
         ? newSkins
             .map((id) => `Skin ${getFlappySkin(id).label} desbloqueada!`)
-            .join(" · ")
+            .join(", ")
         : null;
 
     showRewardPopup(
@@ -54,7 +54,7 @@ export default function FlappyZubatPage() {
           isNewRecord ? "Novo recorde!" : null,
         ]
           .filter(Boolean)
-          .join(" · "),
+          .join(", "),
         isNewRecord,
         onClosePath: "/games",
         closeLabel: "Voltar",
@@ -71,7 +71,7 @@ export default function FlappyZubatPage() {
     <GamePageShell
       compact
       title="Flappy Zubat"
-      subtitle="Desbloqueie skins · até 18 moedas por partida"
+      subtitle="Desbloqueie skins, até 18 moedas por partida"
       icon={<Bird className="w-7 h-7 text-indigo-400 shrink-0" />}
     >
       <FlappyZubatGame

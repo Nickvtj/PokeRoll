@@ -1,38 +1,10 @@
 import { getPokedexInfo } from "@/data/pokedex";
-import { getEvolutionStatMult } from "@/data/pokemon-evolution";
+import { getBaseStats } from "@/data/pokemon-base-stats";
 import { POKEMON_MAP } from "@/data/pokemon";
 import { TEAM_MONOTYPE_DAMAGE_BONUS } from "@/data/economy-balance";
 import { BATTLE_TEAM_SIZE } from "@/data/battle-theme";
-import type { Pokemon, Rarity } from "@/types";
+import type { Pokemon } from "@/types";
 import type { PokemonBattleStats, PokemonAbility } from "@/types/battle";
-
-/** Multiplicadores de stats por raridade */
-const RARITY_STAT_MULT: Record<Rarity, number> = {
-  common: 1.0,
-  uncommon: 1.12,
-  rare: 1.28,
-  epic: 1.48,
-  legendary: 1.65,
-};
-
-/** Stats base por id — valores derivados + overrides para ícones */
-const STAT_OVERRIDES: Partial<
-  Record<number, Pick<PokemonBattleStats, "hp" | "attack" | "defense" | "speed">>
-> = {
-  25: { hp: 35, attack: 55, defense: 40, speed: 90 }, // Pikachu
-  6: { hp: 78, attack: 84, defense: 78, speed: 100 }, // Charizard
-  9: { hp: 79, attack: 83, defense: 100, speed: 78 }, // Blastoise
-  3: { hp: 80, attack: 82, defense: 83, speed: 80 }, // Venusaur
-  143: { hp: 160, attack: 110, defense: 65, speed: 30 }, // Snorlax
-  52: { hp: 40, attack: 45, defense: 35, speed: 90 }, // Meowth
-  113: { hp: 250, attack: 5, defense: 5, speed: 50 }, // Chansey
-  149: { hp: 91, attack: 134, defense: 95, speed: 80 }, // Dragonite
-  94: { hp: 60, attack: 65, defense: 60, speed: 110 }, // Gengar
-  150: { hp: 106, attack: 110, defense: 90, speed: 130 }, // Mewtwo
-  151: { hp: 100, attack: 100, defense: 100, speed: 100 }, // Mew
-  144: { hp: 90, attack: 85, defense: 100, speed: 85 }, // Articuno
-  145: { hp: 90, attack: 90, defense: 85, speed: 100 }, // Zapdos
-};
 
 /** Habilidades especiais por Pokémon */
 export const POKEMON_ABILITIES: Record<number, PokemonAbility> = {
@@ -47,7 +19,7 @@ export const POKEMON_ABILITIES: Record<number, PokemonAbility> = {
   6: {
     id: "flamethrower",
     name: "Lança-chamas",
-    description: "Ataque em área — atinge todos inimigos",
+    description: "Ataque em área, atinge todos inimigos",
     type: "active",
     effect: "aoe",
     value: 0.75,
@@ -111,22 +83,15 @@ export const POKEMON_ABILITIES: Record<number, PokemonAbility> = {
 };
 
 export function getPokemonBattleStats(pokemon: Pokemon): PokemonBattleStats {
-  const mult = RARITY_STAT_MULT[pokemon.rarity];
-  const evo = getEvolutionStatMult(pokemon.id);
-  const override = STAT_OVERRIDES[pokemon.id];
+  const base = getBaseStats(pokemon.id);
   const info = getPokedexInfo(pokemon.id, pokemon.name);
   const type = info.types[0].toLowerCase();
 
-  const baseHp = 40 + pokemon.id * 0.3;
-  const baseAtk = 35 + pokemon.id * 0.25;
-  const baseDef = 30 + pokemon.id * 0.2;
-  const baseSpd = 25 + (pokemon.id % 50) * 0.8;
-
   return {
-    hp: Math.round((override?.hp ?? baseHp) * mult * evo.hp),
-    attack: Math.round((override?.attack ?? baseAtk) * mult * evo.attack),
-    defense: Math.round((override?.defense ?? baseDef) * mult * evo.defense),
-    speed: Math.round((override?.speed ?? baseSpd) * mult),
+    hp: base.hp,
+    attack: base.attack,
+    defense: base.defense,
+    speed: base.speed,
     type,
     ability: POKEMON_ABILITIES[pokemon.id],
   };

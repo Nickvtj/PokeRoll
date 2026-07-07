@@ -40,6 +40,7 @@ import {
 import type { BattleMode } from "@/types/gym";
 import { POKEMON_MAP } from "@/data/pokemon";
 import { loadEconomy, getDefaultEconomy } from "@/lib/economy-storage";
+import { ensureStorageVersion } from "@/lib/storage-version";
 import { persistEconomy } from "@/lib/economy-sync-scheduler";
 import {
   loadEconomyFromSupabase,
@@ -49,11 +50,26 @@ import { useGymStore } from "@/stores/gym-store";
 import { getBeltForXp, JITSU_BELT_RANK_REWARDS } from "@/data/jitsu-belts";
 import { computeNewFlappyUnlocks } from "@/data/flappy-skins";
 import type { EconomyState, RewardPayload, RewardPlayAgainFn } from "@/types/economy";
+import type { ItemId } from "@/types/instance";
+import { getEvolutionsFrom, type EvolutionStep } from "@/data/evolution-lines";
+import { getDuplicateReward } from "@/data/duplicate-rewards";
 import type { PokemonLevelUpResult } from "@/types/battle";
 import {
   getPokemonMoveEntries,
   isMoveSlotUnlocked,
 } from "@/data/pokemon-moves";
+
+export interface EvolutionOption {
+  step: EvolutionStep;
+  toId: number;
+  toName: string;
+  hasLevel: boolean;
+  hasCandy: boolean;
+  hasItem: boolean;
+  canEvolve: boolean;
+  currentLevel: number;
+  currentCandy: number;
+}
 
 interface EconomyStore extends EconomyState {
   lastReward: RewardPayload | null;
@@ -86,6 +102,19 @@ interface EconomyStore extends EconomyState {
     reserveIds?: number[]
   ) => PokemonLevelUpResult[];
   grantPokemonXp: (pokemonId: number, amount: number) => PokemonLevelUpResult | null;
+  addFamilyCandy: (familyId: number, amount: number) => void;
+  addWildCandy: (amount: number) => void;
+  applyWildCandyToFamily: (familyId: number, amount: number) => boolean;
+  getWildCandy: () => number;
+  addRareCandy: (amount: number) => void;
+  getFamilyCandy: (familyId: number) => number;
+  addItem: (itemId: ItemId, amount?: number) => void;
+  /** Registra uma captura: cria o possuído (1 por espécie) ou dá doce se duplicata. */
+  catchSpecies: (speciesId: number, isShiny: boolean) => { duplicate: boolean };
+  isOwned: (speciesId: number) => boolean;
+  getOwned: () => number[];
+  getEvolutionOptions: (speciesId: number) => EvolutionOption[];
+  evolvePokemon: (fromId: number, toId: number) => boolean;
   getLevelCap: () => number;
   recordBattleWin: () => void;
   recordBattleLoss: () => void;
@@ -143,7 +172,7 @@ function applyDailyMissionReward(
       get().addCoins(coins);
       return {
         coins,
-        message: `Missão completa · +${coins} moedas`,
+        message: `Missão completa, +${coins} moedas`,
         short: `+${coins} moedas`,
       };
     }
@@ -152,7 +181,7 @@ function applyDailyMissionReward(
       set((s) => ({ luckyEggCount: (s.luckyEggCount ?? 0) + amount }));
       return {
         coins: 0,
-        message: `Missão completa · +${amount} Lucky Egg`,
+        message: `Missão completa, +${amount} Lucky Egg`,
         short: `+${amount} Lucky Egg`,
       };
     }
@@ -161,7 +190,7 @@ function applyDailyMissionReward(
       set((s) => ({ rareCandyCount: (s.rareCandyCount ?? 0) + amount }));
       return {
         coins: 0,
-        message: `Missão completa · +${amount} Rare Candy`,
+        message: `Missão completa, +${amount} Rare Candy`,
         short: `+${amount} Rare Candy`,
       };
     }
@@ -182,6 +211,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
     achievementToastQueue: [],
 
     initializeEconomy: () => {
+      ensureStorageVersion();
       const data = loadEconomy();
 
       if (data.pokemonBattleXp) {
@@ -204,6 +234,20 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
         }
       } else {
         set({ ...data });
+      }
+
+      // Bootstrap de "possuído": saves anteriores ao modelo v2 tratam a coleção
+      // como posse. Backfill uma única vez a partir das espécies já coletadas.
+      if (!get().ownedBootstrapped) {
+        void import("@/stores/game-store").then(({ useGameStore }) => {
+          if (get().ownedBootstrapped) return;
+          const ids = Object.keys(useGameStore.getState().collection).map(Number);
+          set((s) => ({
+            owned: [...new Set([...(s.owned ?? []), ...ids])],
+            ownedBootstrapped: true,
+          }));
+          get().sync();
+        });
       }
 
       void Promise.all([loadEconomyFromSupabase(), loadAchievementsFromSupabase()]).then(
@@ -384,6 +428,169 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
       return { xp, level, rank, rareCandyCount, luckyEggCount };
     });
     get().sync();
+  },
+
+  addFamilyCandy: (familyId, amount) => {
+    if (amount <= 0) return;
+    set((s) => ({
+      familyCandy: {
+        ...(s.familyCandy ?? {}),
+        [familyId]: (s.familyCandy?.[familyId] ?? 0) + amount,
+      },
+    }));
+    get().sync();
+  },
+
+  addWildCandy: (amount) => {
+    if (amount <= 0) return;
+    set((s) => ({ wildCandy: (s.wildCandy ?? 0) + amount }));
+    get().sync();
+  },
+
+  getWildCandy: () => get().wildCandy ?? 0,
+
+  applyWildCandyToFamily: (familyId, amount) => {
+    if (amount <= 0) return false;
+    const available = get().wildCandy ?? 0;
+    if (available <= 0) return false;
+    const transfer = Math.min(amount, available);
+    set((s) => ({
+      wildCandy: (s.wildCandy ?? 0) - transfer,
+      familyCandy: {
+        ...(s.familyCandy ?? {}),
+        [familyId]: (s.familyCandy?.[familyId] ?? 0) + transfer,
+      },
+    }));
+    get().sync();
+    return true;
+  },
+
+  addRareCandy: (amount) => {
+    if (amount <= 0) return;
+    set((s) => ({ rareCandyCount: (s.rareCandyCount ?? 0) + amount }));
+    get().sync();
+  },
+
+  getFamilyCandy: (familyId) => get().familyCandy?.[familyId] ?? 0,
+
+  addItem: (itemId, amount = 1) => {
+    if (amount <= 0) return;
+    set((s) => ({
+      items: {
+        ...(s.items ?? {}),
+        [itemId]: (s.items?.[itemId] ?? 0) + amount,
+      },
+    }));
+    get().sync();
+  },
+
+  catchSpecies: (speciesId, isShiny) => {
+    const pokemon = POKEMON_MAP[speciesId];
+    if (!pokemon) return { duplicate: false };
+
+    const alreadyOwned = (get().owned ?? []).includes(speciesId);
+    if (alreadyOwned) {
+      const reward = getDuplicateReward(pokemon);
+      if (reward.type === "family-candy") {
+        get().addFamilyCandy(reward.familyId, reward.amount);
+      }
+      return { duplicate: true };
+    }
+
+    set((s) => {
+      const key = String(speciesId);
+      const pokemonBattleXp = s.pokemonBattleXp[key]
+        ? s.pokemonBattleXp
+        : { ...s.pokemonBattleXp, [key]: { level: 1, xp: 0 } };
+      return {
+        owned: [...new Set([...(s.owned ?? []), speciesId])],
+        pokemonBattleXp,
+      };
+    });
+    get().sync();
+    return { duplicate: false };
+  },
+
+  isOwned: (speciesId) => (get().owned ?? []).includes(speciesId),
+
+  getOwned: () => get().owned ?? [],
+
+  getEvolutionOptions: (speciesId) => {
+    const steps = getEvolutionsFrom(speciesId);
+    if (steps.length === 0) return [];
+    const level = get().getPokemonProgress(speciesId).level;
+    return steps.map((step) => {
+      const currentCandy = get().getFamilyCandy(step.familyId);
+      const hasLevel = level >= step.minLevel;
+      const hasCandy = currentCandy >= step.candyCost;
+      const hasItem = step.item ? (get().items?.[step.item] ?? 0) >= 1 : true;
+      return {
+        step,
+        toId: step.toId,
+        toName: POKEMON_MAP[step.toId]?.name ?? `#${step.toId}`,
+        hasLevel,
+        hasCandy,
+        hasItem,
+        canEvolve: hasLevel && hasCandy && hasItem,
+        currentLevel: level,
+        currentCandy,
+      };
+    });
+  },
+
+  evolvePokemon: (fromId, toId) => {
+    if (!(get().owned ?? []).includes(fromId)) return false;
+    const step = getEvolutionsFrom(fromId).find((s) => s.toId === toId);
+    if (!step) return false;
+
+    const level = get().getPokemonProgress(fromId).level;
+    const currentCandy = get().getFamilyCandy(step.familyId);
+    const hasItem = step.item ? (get().items?.[step.item] ?? 0) >= 1 : true;
+    if (level < step.minLevel || currentCandy < step.candyCost || !hasItem) {
+      return false;
+    }
+
+    const fromKey = String(fromId);
+    const toKey = String(toId);
+    const wasShiny = false;
+
+    set((s) => {
+      // consome doce
+      const familyCandy = {
+        ...(s.familyCandy ?? {}),
+        [step.familyId]: (s.familyCandy?.[step.familyId] ?? 0) - step.candyCost,
+      };
+      // consome item (pedra/cabo)
+      const items = { ...(s.items ?? {}) };
+      if (step.item) items[step.item] = (items[step.item] ?? 0) - 1;
+
+      // transfere XP para a nova espécie, remove a antiga.
+      // Se já possuir a espécie de destino, mantém o maior progresso (Regra A).
+      const pokemonBattleXp = { ...s.pokemonBattleXp };
+      const fromXp = pokemonBattleXp[fromKey] ?? { level: 1, xp: 0 };
+      const existingTo = pokemonBattleXp[toKey];
+      pokemonBattleXp[toKey] =
+        existingTo && existingTo.xp >= fromXp.xp ? existingTo : fromXp;
+      delete pokemonBattleXp[fromKey];
+
+      // possuído: troca fromId por toId
+      const owned = [
+        ...new Set([...(s.owned ?? []).filter((id) => id !== fromId), toId]),
+      ];
+
+      // time: substitui a espécie no lugar
+      const team = s.team.map((id) => (id === fromId ? toId : id));
+
+      return { familyCandy, items, pokemonBattleXp, owned, team };
+    });
+
+    // registra a nova espécie como vista no Pokédex
+    void import("@/stores/game-store").then(({ useGameStore }) => {
+      useGameStore.getState().markPokedexSeen(toId, wasShiny);
+    });
+
+    get().sync();
+    return true;
   },
 
   useFreeSpin: () => {
@@ -698,7 +905,7 @@ export const useEconomyStore = create<EconomyStore>((set, get) => {
 
     get().showRewardPopup({
       coins: totalCoins || undefined,
-      message: `${toClaim.length} missão(ões): ${parts.join(" · ")}`,
+      message: `${toClaim.length} missão(ões): ${parts.join(", ")}`,
     });
     get().sync();
     return totalCoins;
@@ -871,6 +1078,8 @@ function getEconomySnapshot(state: EconomyStore): EconomyState {
     missionsClaimed: state.missionsClaimed,
     lastMissionDate: state.lastMissionDate,
     team: state.team,
+    owned: state.owned ?? [],
+    ownedBootstrapped: state.ownedBootstrapped ?? false,
     favoritePokemon: state.favoritePokemon ?? [],
     pokemonBattleXp: state.pokemonBattleXp,
     welcomeClaimed: state.welcomeClaimed ?? false,
@@ -879,6 +1088,9 @@ function getEconomySnapshot(state: EconomyStore): EconomyState {
     luckyEggExpiresAt: state.luckyEggExpiresAt ?? null,
     luckyEggCount: state.luckyEggCount ?? 0,
     rareCandyCount: state.rareCandyCount ?? 0,
+    familyCandy: state.familyCandy ?? {},
+    wildCandy: state.wildCandy ?? 0,
+    items: state.items ?? {},
     pokemonMoveLoadouts: state.pokemonMoveLoadouts ?? {},
     highScores: state.highScores,
     jitsuXp: state.jitsuXp ?? 0,

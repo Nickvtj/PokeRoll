@@ -33,7 +33,7 @@ interface ClassicBattleSceneProps {
 
 type Side = "player" | "enemy";
 
-/** Cor do brilho no impacto, por tipo do golpe (sem halo quadrado — só no sprite) */
+/** Cor do brilho no impacto, por tipo do golpe (sem halo quadrado, só no sprite) */
 const TYPE_FLASH_COLORS: Record<string, string> = {
   fire: "#fb923c",
   water: "#38bdf8",
@@ -109,7 +109,7 @@ function hpFillColor(pct: number): string {
 }
 
 function genderSymbol(id: number): { char: string; className: string } | null {
-  // Cosmético estilo GBA — determinístico por id (jogo não rastreia gênero)
+  // Cosmético estilo GBA, determinístico por id (jogo não rastreia gênero)
   const genderless = new Set([81, 82, 100, 101, 120, 121, 132, 137, 144, 145, 146, 150, 151]);
   if (genderless.has(id)) return null;
   return id % 2 === 0
@@ -471,7 +471,7 @@ export function ClassicBattleScene({
       className={cn("battle-scene", gymAccent && "battle-scene-gym")}
       style={gymAccent ? ({ "--gym-accent": gymAccent } as React.CSSProperties) : undefined}
     >
-      {/* Caixas de status inimigas — canto superior esquerdo (estilo FRLG) */}
+      {/* Caixas de status inimigas, canto superior esquerdo (estilo FRLG) */}
       <div className="battle-scene-enemy-boxes">
         {enemyViews.map((view) => (
           <ClassicStatusBox
@@ -482,7 +482,7 @@ export function ClassicBattleScene({
         ))}
       </div>
 
-      {/* Sprites inimigos — campo superior direito */}
+      {/* Sprites inimigos, campo superior direito */}
       <div className="battle-scene-enemy-field">
         {enemyViews.map((view) => (
           <ClassicFighterSprite
@@ -495,7 +495,7 @@ export function ClassicBattleScene({
         ))}
       </div>
 
-      {/* Sprites do jogador (de costas) — campo inferior esquerdo */}
+      {/* Sprites do jogador (de costas), campo inferior esquerdo */}
       <div className="battle-scene-player-field">
         {playerViews.map((view) => (
           <ClassicFighterSprite
@@ -508,7 +508,7 @@ export function ClassicBattleScene({
         ))}
       </div>
 
-      {/* Caixas de status do jogador — canto inferior direito */}
+      {/* Caixas de status do jogador, canto inferior direito */}
       <div className="battle-scene-player-boxes">
         {playerViews.map((view) => (
           <ClassicStatusBox

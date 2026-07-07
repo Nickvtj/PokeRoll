@@ -11,23 +11,34 @@ import { cn } from "@/lib/utils";
 interface EggHubCardProps {
   egg: CapsuleDefinition;
   canAfford: boolean;
+  isUnlocked: boolean;
+  minTrainerLevel: number;
   onSelect: () => void;
 }
 
-export function EggHubCard({ egg, canAfford, onSelect }: EggHubCardProps) {
+export function EggHubCard({
+  egg,
+  canAfford,
+  isUnlocked,
+  minTrainerLevel,
+  onSelect,
+}: EggHubCardProps) {
   const cardTheme = getEggCardTheme(egg.id);
+  const locked = !isUnlocked;
 
   return (
     <motion.button
       type="button"
-      onClick={onSelect}
-      whileHover={{ y: -4, scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
+      onClick={locked ? undefined : onSelect}
+      disabled={locked}
+      whileHover={locked ? undefined : { y: -4, scale: 1.02 }}
+      whileTap={locked ? undefined : { scale: 0.97 }}
       className={cn(
-        "group relative w-full flex flex-col items-center rounded-2xl border px-3 pt-5 pb-4 overflow-hidden cursor-pointer",
+        "group relative w-full flex flex-col items-center rounded-2xl border px-3 pt-5 pb-4 overflow-hidden",
         "bg-gradient-to-b transition-shadow",
         cardTheme.gradient,
-        !canAfford && "opacity-80"
+        !canAfford && !locked && "opacity-80",
+        locked && "opacity-55 cursor-not-allowed"
       )}
       style={{
         borderColor: cardTheme.borderColor,
@@ -50,13 +61,29 @@ export function EggHubCard({ egg, canAfford, onSelect }: EggHubCardProps) {
       <span
         className={cn(
           "relative mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold tabular-nums px-2.5 py-1 rounded-full",
-          canAfford
-            ? "bg-amber-500/20 text-amber-200 border border-amber-400/30"
-            : "bg-red-500/15 text-red-300/90 border border-red-400/25"
+          locked
+            ? "bg-slate-500/20 text-slate-300 border border-slate-400/30"
+            : canAfford
+              ? "bg-amber-500/20 text-amber-200 border border-amber-400/30"
+              : "bg-red-500/15 text-red-300/90 border border-red-400/25"
         )}
       >
-        {canAfford ? <Coins className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-        {egg.cost}
+        {locked ? (
+          <>
+            <Lock className="w-3 h-3" />
+            Nv.{minTrainerLevel}
+          </>
+        ) : canAfford ? (
+          <>
+            <Coins className="w-3 h-3" />
+            {egg.cost}
+          </>
+        ) : (
+          <>
+            <Lock className="w-3 h-3" />
+            {egg.cost}
+          </>
+        )}
       </span>
 
       <div className="relative mt-2 flex flex-wrap justify-center gap-0.5">

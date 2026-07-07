@@ -28,6 +28,8 @@ export interface CapsuleDefinition {
   description: string;
   poolIds: number[];
   dropRates: CapsuleDropRates;
+  /** Nível mínimo do treinador para desbloquear. */
+  minTrainerLevel?: number;
   theme: {
     gradient: string;
     border: string;
@@ -44,12 +46,16 @@ export interface CapsuleRollResult {
   isDuplicate: boolean;
   isNewShinyUnlock: boolean;
   capsuleId: CapsuleId;
+  /** Doces da família bônus ao chocar (sempre concedido). */
+  hatchFamilyCandy?: number;
+  /** Item de evolução bônus (Ovo Mestre). */
+  bonusEvoItem?: string;
 }
 
 export interface CapsuleStripItem {
   pokemon: Pokemon;
   isShiny: boolean;
-  /** Slot dourado estilo CS — teaser ou shiny real */
+  /** Slot dourado estilo CS, teaser ou shiny real */
   isGoldSlot?: boolean;
 }
 
@@ -63,5 +69,5 @@ export const CAPSULE_SELL_PRICES: Record<Rarity, number> = {
 
 export const CAPSULE_SHINY_SELL_MULTIPLIER = 5;
 
-/** Chance de slot dourado (teaser) na fita — não é o shiny real */
+/** Chance de slot dourado (teaser) na fita, não é o shiny real */
 export const CAPSULE_GOLD_TEASER_CHANCE = 0.045;

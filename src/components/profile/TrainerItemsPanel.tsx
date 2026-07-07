@@ -5,7 +5,7 @@ import { useEconomyStore } from "@/stores/economy-store";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { ItemSprite } from "@/components/ui/ItemSprite";
 
-/** Resumo no perfil — ações ficam no header (TrainerItemsBar). */
+/** Resumo no perfil, ações ficam no header (TrainerItemsBar). */
 export function TrainerItemsPanel() {
   const luckyEggCount = useEconomyStore((s) => s.luckyEggCount ?? 0);
   const rareCandyCount = useEconomyStore((s) => s.rareCandyCount ?? 0);

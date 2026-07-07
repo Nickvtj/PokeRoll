@@ -1,3 +1,5 @@
+import type { FamilyCandy, ItemInventory } from "@/types/instance";
+
 export interface EconomyState {
   coins: number;
   xp: number;
@@ -15,7 +17,11 @@ export interface EconomyState {
   missionProgress: Record<string, number>;
   missionsClaimed: string[];
   lastMissionDate: string;
-  team: number[]; // 3 pokemon ids
+  team: number[]; // ids de espécie possuída (identidade por espécie, Regra A)
+  /** Espécies atualmente possuídas (Mochila). Separado de "visto" (Pokédex). */
+  owned?: number[];
+  /** Flag interna: owned já foi populado a partir da coleção legada. */
+  ownedBootstrapped?: boolean;
   favoritePokemon: number[];
   pokemonBattleXp: Record<string, { level: number; xp: number }>;
   /** IDs dos golpes equipados por Pokémon (máx. 2) */
@@ -28,6 +34,12 @@ export interface EconomyState {
   /** Lucky Eggs no inventário (ativar no header) */
   luckyEggCount?: number;
   rareCandyCount?: number;
+  /** Doces da família (v2): familyId → quantidade. Material de evolução. */
+  familyCandy?: FamilyCandy;
+  /** Doces Coringa: fungíveis, aplicáveis a qualquer família no Pokédex. */
+  wildCandy?: number;
+  /** Inventário de itens de evolução (pedras, cabo de ligação, etc). */
+  items?: ItemInventory;
   highScores?: {
     clickRush?: number;
     perfectCapture?: number;
@@ -38,7 +50,7 @@ export interface EconomyState {
   };
   /** Moedas ganhas ao longo da conta (desbloqueios) */
   lifetimeCoinsEarned?: number;
-  /** Flappy Zubat — skins e selecao */
+  /** Flappy Zubat, skins e selecao */
   flappyZubat?: {
     selectedSkin: string;
     unlockedSkins: string[];
@@ -67,9 +79,9 @@ export interface RewardPayload {
   onClosePath?: string;
   /** Dispara confete de recorde ao abrir o modal */
   isNewRecord?: boolean;
-  /** Vitória/derrota — estilo do modal de batalha; omitido = recompensa neutra */
+  /** Vitória/derrota, estilo do modal de batalha; omitido = recompensa neutra */
   outcome?: "win" | "loss";
 }
 
-/** Callback efêmero — não persiste no storage */
+/** Callback efêmero, não persiste no storage */
 export type RewardPlayAgainFn = () => void;

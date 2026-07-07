@@ -1,4 +1,4 @@
-/** Estágio evolutivo Gen 1 — bônus moderado de combate (bases continuam viáveis com nível). */
+/** Estágio evolutivo Gen 1, bônus moderado de combate (bases continuam viáveis com nível). */
 
 export type EvolutionStage = 0 | 1 | 2;
 
@@ -8,7 +8,7 @@ export interface EvolutionStatMult {
   defense: number;
 }
 
-/** Bônus por estágio — aplicado após raridade, antes do nível de batalha */
+/** Bônus por estágio, aplicado após raridade, antes do nível de batalha */
 export const EVOLUTION_STAT_MULT: Record<EvolutionStage, EvolutionStatMult> = {
   0: { hp: 1, attack: 1, defense: 1 },
   1: { hp: 1.06, attack: 1.08, defense: 1.06 },
@@ -99,7 +99,7 @@ export function getEvolutionStatMult(pokemonId: number): EvolutionStatMult {
   return EVOLUTION_STAT_MULT[getEvolutionStage(pokemonId)];
 }
 
-/** Rótulo para UI — null se Pokémon sem linha evolutiva */
+/** Rótulo para UI, null se Pokémon sem linha evolutiva */
 export function getEvolutionLabel(pokemonId: number): string | null {
   const max = getEvolutionMaxStage(pokemonId);
   if (max === 0) return null;

@@ -54,7 +54,7 @@ export function BadgeRewardAnimation({
           <div>
             <h2 className="text-2xl font-black text-amber-400">Insígnia Conquistada!</h2>
             <p className="text-sm text-white/60 mt-1">{gym.badgeName}</p>
-            <p className="text-xs text-white/40">{gym.leaderName} · {gym.arenaName}</p>
+            <p className="text-xs text-white/40">{gym.leaderName}, {gym.arenaName}</p>
           </div>
 
           <div className="space-y-2">
@@ -97,7 +97,7 @@ export function BadgeRewardAnimation({
           </div>
 
           <p className="text-sm font-bold text-indigo-300">
-            Rank {bonus.rank} · {"★".repeat(bonus.stars)}
+            Rank {bonus.rank}, {"★".repeat(bonus.stars)}
           </p>
           <p className="text-[10px] text-amber-400/80 flex items-center justify-center gap-1">
             <Coins className="w-3 h-3" />

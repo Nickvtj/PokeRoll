@@ -496,7 +496,7 @@ export function executeBattleTurn(
     };
   }
 
-  let logEntries = [...state.log];
+  const logEntries = [...state.log];
   let turnIndex = state.currentTurnIndex;
   let engagement = state.battleEngagement ?? null;
 
@@ -892,24 +892,25 @@ export function getBattleCombatRoles(state: BattleState): BattleCombatRoles {
   const champion = all[eng.championFlatIndex];
   const target =
     eng.targetFlatIndex != null ? all[eng.targetFlatIndex] : undefined;
+  const targetHp = target?.currentHp ?? 0;
+  const championHp = champion?.currentHp ?? 0;
 
-  if (eng.counterTurn && target?.currentHp > 0 && champion?.currentHp > 0) {
+  if (eng.counterTurn && targetHp > 0 && championHp > 0) {
     return {
       attackerFlat: eng.targetFlatIndex!,
       defenderFlat: eng.championFlatIndex,
     };
   }
 
-  if (champion?.currentHp > 0) {
-    const defenderFlat =
-      target?.currentHp > 0 ? eng.targetFlatIndex : null;
+  if (championHp > 0) {
+    const defenderFlat = targetHp > 0 ? eng.targetFlatIndex : null;
     return {
       attackerFlat: eng.championFlatIndex,
       defenderFlat: defenderFlat ?? null,
     };
   }
 
-  if (target?.currentHp > 0) {
+  if (targetHp > 0) {
     return { attackerFlat: eng.targetFlatIndex!, defenderFlat: null };
   }
 

@@ -29,7 +29,7 @@ export interface SpinPersistPayload {
   spins: SpinRecord[];
 }
 
-/** Persistência local (debounced) + fila remota — não bloqueia gameplay. */
+/** Persistência local (debounced) + fila remota, não bloqueia gameplay. */
 export function queueSpinPersistence(payload: SpinPersistPayload): void {
   persistLocalCollection(payload.collection);
   persistLocalProfile(payload.profile);

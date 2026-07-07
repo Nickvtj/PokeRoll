@@ -36,7 +36,7 @@ export function flushGymState(): void {
   gymPersist.flush();
 }
 
-/** Grava imediatamente — uso ao receber dados remotos no boot. */
+/** Grava imediatamente, uso ao receber dados remotos no boot. */
 export function saveGymStateImmediate(state: GymState): void {
   gymPersist.writeImmediate(state);
 }

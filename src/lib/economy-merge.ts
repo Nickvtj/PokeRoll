@@ -13,6 +13,21 @@ function maxNum(a: number, b: number): number {
   return Math.max(safeA, safeB);
 }
 
+/** Mescla dicionários de contadores (doces/itens) preferindo o maior por chave. */
+function mergeCounters(
+  local: Record<string, number> | undefined,
+  remote: Record<string, number> | undefined
+): Record<string, number> {
+  const merged: Record<string, number> = {};
+  for (const [key, value] of Object.entries(remote ?? {})) {
+    merged[key] = value ?? 0;
+  }
+  for (const [key, value] of Object.entries(local ?? {})) {
+    merged[key] = maxNum(value ?? 0, merged[key] ?? 0);
+  }
+  return merged;
+}
+
 function mergePokemonBattleXp(
   local: Record<string, { level: number; xp: number }>,
   remote: Record<string, { level: number; xp: number }>
@@ -77,6 +92,8 @@ export function mergeEconomyState(
     missionsClaimed,
     lastMissionDate: local.lastMissionDate || remote.lastMissionDate,
     team: (local.team?.length ?? 0) > 0 ? local.team : remote.team,
+    owned: [...new Set([...(local.owned ?? []), ...(remote.owned ?? [])])],
+    ownedBootstrapped: local.ownedBootstrapped || remote.ownedBootstrapped,
     favoritePokemon:
       (local.favoritePokemon?.length ?? 0) > 0
         ? local.favoritePokemon
@@ -101,6 +118,15 @@ export function mergeEconomyState(
         : remote.luckyEggExpiresAt ?? null,
     luckyEggCount: maxNum(local.luckyEggCount ?? 0, remote.luckyEggCount ?? 0),
     rareCandyCount: maxNum(local.rareCandyCount ?? 0, remote.rareCandyCount ?? 0),
+    familyCandy: mergeCounters(
+      local.familyCandy as Record<string, number> | undefined,
+      remote.familyCandy as Record<string, number> | undefined
+    ),
+    wildCandy: maxNum(local.wildCandy ?? 0, remote.wildCandy ?? 0),
+    items: mergeCounters(
+      local.items as Record<string, number> | undefined,
+      remote.items as Record<string, number> | undefined
+    ),
     eggsHatched: maxNum(local.eggsHatched ?? 0, remote.eggsHatched ?? 0),
     eggSellCoins: maxNum(local.eggSellCoins ?? 0, remote.eggSellCoins ?? 0),
     lifetimeCoinsEarned: maxNum(

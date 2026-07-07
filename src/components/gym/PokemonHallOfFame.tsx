@@ -5,7 +5,6 @@ import Image from "next/image";
 import { POKEMON_MAP, TOTAL_POKEMON } from "@/data/pokemon";
 import { useGymStore } from "@/stores/gym-store";
 import { isLocalAsset } from "@/lib/image-utils";
-import { cn } from "@/lib/utils";
 import type { GymId } from "@/types/gym";
 
 interface PokemonHallOfFameProps {
@@ -43,14 +42,10 @@ export function PokemonHallOfFame({ gymId, themeColor }: PokemonHallOfFameProps)
             <div
               key={id}
               title={p.name}
-              className={cn(
-                "w-10 h-10 rounded-lg border p-0.5 relative",
-                "ring-1 ring-offset-1 ring-offset-transparent"
-              )}
+              className="w-10 h-10 rounded-lg border p-0.5 relative"
               style={{
                 borderColor: `${themeColor}60`,
-                boxShadow: `0 0 10px ${themeColor}30`,
-                ringColor: themeColor,
+                boxShadow: `0 0 0 1px ${themeColor}80, 0 0 10px ${themeColor}30`,
               }}
             >
               <Image

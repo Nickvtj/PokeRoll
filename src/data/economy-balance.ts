@@ -1,8 +1,9 @@
-/** Balanceamento central da economia PokéRoll — spins são escassos, mas jogável */
+/** Balanceamento central da economia PokéRoll, spins são escassos, mas jogável */
 
 export const SPIN_COST_PER_REEL = 10;
 export const STARTING_COINS = 0;
-export const WELCOME_PACKAGE_COINS = 15;
+// v2: pacote de boas-vindas dá 50 moedas (capital inicial p/ girar/abrir ovos).
+export const WELCOME_PACKAGE_COINS = 50;
 export const DUPLICATE_COIN_REWARD = 2;
 
 /** Moedas por duplicata na roleta (por raridade) */
@@ -14,16 +15,16 @@ export const DUPLICATE_COINS_BY_RARITY = {
   legendary: 5,
 } as const;
 
-/** Minigames — sem teto diário; recompensas menores que batalha (4–7) */
+/** Minigames, sem teto diário; recompensas menores que batalha (4 a 7) */
 export const CAPTURE_SHAKE_MS = 700;
-/** Moedas por acerto — 1 moeda na zona verde ou no centro dourado */
+/** Moedas por acerto, 1 moeda na zona verde ou no centro dourado */
 export const CAPTURE_COINS_PER_CATCH = 1;
 export const CAPTURE_PERFECT_COIN_BONUS = 0;
 export const CAPTURE_COINS_MIN = CAPTURE_COINS_PER_CATCH;
 export const CAPTURE_COINS_MAX = CAPTURE_COINS_PER_CATCH;
 
 export const CLICK_GAME_DURATION_SEC = 30;
-/** Click Rush — moedas por desempenho (pontos + combo) */
+/** Click Rush, moedas por desempenho (pontos + combo) */
 export const CLICK_BASE_COINS_MIN = 5;
 export const CLICK_BASE_COINS_MAX = 28;
 /** Limites de pontos para cada faixa de moeda base */
@@ -51,13 +52,13 @@ export const JITSU_XP_LOSS = 4;
 /** Apresentacao dos duelistas antes da primeira rodada */
 export const JITSU_FACE_OFF_MS = 2800;
 
-/** Caverna dos Hunter — push-your-luck com entrada */
+/** Caverna dos Hunter, push-your-luck com entrada */
 export const HUNTER_ENTRY_COST = 12;
 export const HUNTER_ROUND_REWARDS = [6, 8, 10, 14, 18, 22] as const;
 export const HUNTER_EXTRA_ROUND_REWARD = 22;
 export const HUNTER_BALL_COUNT = 4;
 
-/** Flappy Zubat — moedas por faixa de pontuacao */
+/** Flappy Zubat, moedas por faixa de pontuacao */
 export const FLAPPY_COINS_TIERS = [
   { minScore: 50, coins: 18 },
   { minScore: 30, coins: 14 },
@@ -67,7 +68,7 @@ export const FLAPPY_COINS_TIERS = [
 ] as const;
 export const FLAPPY_CHARIZARD_LIFETIME_COINS = 5000;
 
-/** @deprecated mantido por compat — sem teto/fadiga ativos */
+/** @deprecated mantido por compat, sem teto/fadiga ativos */
 export const MINIGAME_DAILY_SOFT_CAP = 9999;
 export const MINIGAME_FATIGUE_START = 9999;
 export const MINIGAME_FATIGUE_MULTIPLIER = 1;
@@ -75,7 +76,7 @@ export const CLICK_DAILY_SOFT_CAP = MINIGAME_DAILY_SOFT_CAP;
 export const CLICK_FATIGUE_START = MINIGAME_FATIGUE_START;
 export const CLICK_FATIGUE_MULTIPLIER = MINIGAME_FATIGUE_MULTIPLIER;
 
-/** Auto Battle — moedas por desempenho (teto BATTLE_COINS_MAX) */
+/** Auto Battle, moedas por desempenho (teto BATTLE_COINS_MAX) */
 export const BATTLE_COINS_MIN = 4;
 export const BATTLE_COINS_MAX = 15;
 /** @deprecated use BATTLE_COINS_MIN */
@@ -86,13 +87,13 @@ export const BATTLE_FREE_SPIN_CHANCE = 0.04;
 export const BATTLE_XP_BASE = 14;
 export const BATTLE_DURATION_BASE_MS = 18000;
 export const BATTLE_DURATION_PER_WAVE_MS = 4000;
-/** Pausa entre golpes — tempo para animação estilo clássico */
+/** Pausa entre golpes, tempo para animação estilo clássico */
 export const BATTLE_STRIKE_MS = 280;
 export const BATTLE_FLASH_MS = 620;
 export const BATTLE_TURN_INTERVAL_MS = 2200;
-/** Embate VS — apresentação dos treinadores antes da moeda */
+/** Embate VS, apresentação dos treinadores antes da moeda */
 export const BATTLE_FACE_OFF_MS = 3000;
-/** Moeda — giro, revelação e pausa antes do 1º ataque */
+/** Moeda, giro, revelação e pausa antes do 1º ataque */
 export const BATTLE_COIN_FLIP_MS = 3200;
 export const BATTLE_COIN_REVEAL_MS = 2600;
 export const BATTLE_POST_COIN_PAUSE_MS = 1100;
@@ -105,10 +106,10 @@ export const BATTLE_INTRO_SETTLE_MS = 2000;
  */
 export const BATTLE_SPRITE_INTRO_MS = 1050;
 
-/** Boost de dano por tipo: 2+ Pokémon do mesmo tipo no roster */
-export const TEAM_MONOTYPE_DAMAGE_BONUS = 0.12;
-/** Boost maior quando os 4 escolhidos compartilham o mesmo tipo */
-export const TEAM_QUAD_MONOTYPE_DAMAGE_BONUS = 0.25;
+/** Boost de dano por tipo: 2+ Pokémon do mesmo tipo no roster (v2: reduzido) */
+export const TEAM_MONOTYPE_DAMAGE_BONUS = 0.06;
+/** Boost maior quando os 4 escolhidos compartilham o mesmo tipo (v2: reduzido) */
+export const TEAM_QUAD_MONOTYPE_DAMAGE_BONUS = 0.12;
 export const XP_PER_LEVEL = 260;
 export const MAX_LEVEL = 50;
 
@@ -120,7 +121,7 @@ export const LUCKY_EGG_DURATION_MS = 300_000;
 export const LUCKY_EGG_XP_MULTIPLIER = 2;
 export const LUCKY_EGG_PER_MILESTONE = 1;
 
-/** Poké-Memory: moedas só ao completar — 2 por par */
+/** Poké-Memory: moedas só ao completar, 2 por par */
 export const MEMORY_COINS_PER_PAIR = 2;
 /** Rare Candy: a cada 5 níveis de treinador */
 export const RARE_CANDY_PER_MILESTONE = 3;

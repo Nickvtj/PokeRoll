@@ -115,7 +115,7 @@ export function MissionsPanel() {
               <div
                 key={dayNum}
                 className="flex flex-col items-center gap-1 flex-1 min-w-0"
-                title={`Dia ${dayNum} · ${coins} moedas`}
+                title={`Dia ${dayNum}, ${coins} moedas`}
               >
                 <div
                   className={cn(

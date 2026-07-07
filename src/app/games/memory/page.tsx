@@ -43,7 +43,7 @@ export default function MemoryGamePage() {
     const label = result.completed
       ? `Completo em ${result.moves} jogadas`
       : result.timedOut
-        ? `Tempo esgotado · ${result.pairsFound}/${result.totalPairs} pares`
+        ? `Tempo esgotado, ${result.pairsFound}/${result.totalPairs} pares`
         : `${result.pairsFound} pares`;
 
     showRewardPopup(
@@ -51,8 +51,8 @@ export default function MemoryGamePage() {
         coins,
         xp: accountXp,
         message: isNewRecord
-          ? `NOVO RECORDE! ${label} · +${coins} moedas`
-          : `Poké Memory: ${label} · +${coins} moedas`,
+          ? `NOVO RECORDE! ${label}, +${coins} moedas`
+          : `Poké Memory: ${label}, +${coins} moedas`,
         isNewRecord,
         onClosePath: "/games",
         closeLabel: "Voltar",
@@ -64,7 +64,7 @@ export default function MemoryGamePage() {
   return (
     <GamePageShell
       title="Poké Memory"
-      subtitle={`${MEMORY_PAIR_COUNT} pares · ${MEMORY_GAME_DURATION_SEC}s · ${MEMORY_COINS_PER_PAIR} moeda/par ao completar`}
+      subtitle={`${MEMORY_PAIR_COUNT} pares, ${MEMORY_GAME_DURATION_SEC}s, ${MEMORY_COINS_PER_PAIR} moeda/par ao completar`}
       icon={<Brain className="w-7 h-7 text-violet-400 shrink-0" />}
     >
       <PokeMemoryGame

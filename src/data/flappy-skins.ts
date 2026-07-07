@@ -43,7 +43,7 @@ export const FLAPPY_SKINS: FlappySkinConfig[] = [
     unlockType: "default",
     accent: "#a78bfa",
     scene: {
-      location: "Caverna Noturna · Mt. Moon",
+      location: "Caverna Noturna, Mt. Moon",
       skyTop: "#0c0a1a",
       skyMid: "#1e1b4b",
       skyBot: "#312e81",
@@ -70,7 +70,7 @@ export const FLAPPY_SKINS: FlappySkinConfig[] = [
     unlockValue: 15,
     accent: "#fcd34d",
     scene: {
-      location: "Rota 1 · Campo ensolarado",
+      location: "Rota 1, Campo ensolarado",
       skyTop: "#0c4a6e",
       skyMid: "#0284c7",
       skyBot: "#38bdf8",
@@ -97,7 +97,7 @@ export const FLAPPY_SKINS: FlappySkinConfig[] = [
     unlockValue: 50,
     accent: "#93c5fd",
     scene: {
-      location: "Floresta Viridian · Névoa matinal",
+      location: "Floresta Viridian, Névoa matinal",
       skyTop: "#134e4a",
       skyMid: "#0d9488",
       skyBot: "#5eead4",
@@ -124,7 +124,7 @@ export const FLAPPY_SKINS: FlappySkinConfig[] = [
     unlockValue: FLAPPY_CHARIZARD_LIFETIME_COINS,
     accent: "#fb923c",
     scene: {
-      location: "Vulcão · Céu em chamas",
+      location: "Vulcão, Céu em chamas",
       skyTop: "#450a0a",
       skyMid: "#c2410c",
       skyBot: "#fb923c",

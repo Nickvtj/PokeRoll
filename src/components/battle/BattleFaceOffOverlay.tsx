@@ -172,7 +172,7 @@ export function BattleFaceOffOverlay({
       transition={{ duration: 0.3 }}
       className="absolute inset-0 z-40 overflow-hidden rounded-xl pointer-events-none flex flex-col"
     >
-      {/* Rival — zona superior (sem invadir a faixa central) */}
+      {/* Rival, zona superior (sem invadir a faixa central) */}
       <motion.div
         initial={{ y: "-100%" }}
         animate={{ y: 0 }}
@@ -185,7 +185,7 @@ export function BattleFaceOffOverlay({
           delay={0.22}
           accentColor={accentColor}
         />
-        <FaceOffBubble tail="down">{greetings.opponent}</FaceOffBubble>
+        <FaceOffBubble tail="up">{greetings.opponent}</FaceOffBubble>
       </motion.div>
 
       {/* Faixa central exclusiva do VS */}
@@ -208,14 +208,14 @@ export function BattleFaceOffOverlay({
         </motion.div>
       </div>
 
-      {/* Jogador — zona inferior */}
+      {/* Jogador, zona inferior */}
       <motion.div
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="flex-[0_0_42%] bg-gradient-to-r from-blue-800 via-sky-500 to-cyan-400 flex flex-col items-center justify-center gap-1.5 px-3"
       >
-        <FaceOffBubble tail="up">{greetings.player}</FaceOffBubble>
+        <FaceOffBubble tail="down">{greetings.player}</FaceOffBubble>
         <FaceOffPortrait portrait={player} side="player" delay={0.28} fallbackLetter={playerFallbackLetter} />
       </motion.div>
     </motion.div>

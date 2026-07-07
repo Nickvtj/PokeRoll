@@ -5,7 +5,7 @@ interface BallIconProps {
   size?: number;
 }
 
-/** Great Ball — topo azul, base branca, faixa azul */
+/** Great Ball, topo azul, base branca, faixa azul */
 export function GreatBallIcon({ className, size = 40 }: BallIconProps) {
   return (
     <svg
@@ -28,7 +28,7 @@ export function GreatBallIcon({ className, size = 40 }: BallIconProps) {
   );
 }
 
-/** Ultra Ball — topo amarelo/preto, base branca */
+/** Ultra Ball, topo amarelo/preto, base branca */
 export function UltraBallIcon({ className, size = 40 }: BallIconProps) {
   return (
     <svg
@@ -52,7 +52,7 @@ export function UltraBallIcon({ className, size = 40 }: BallIconProps) {
   );
 }
 
-/** Master Ball — roxo/rosa com detalhes */
+/** Master Ball, roxo/rosa com detalhes */
 export function MasterBallIcon({ className, size = 40 }: BallIconProps) {
   return (
     <svg

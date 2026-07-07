@@ -337,7 +337,7 @@ export function ClickMinigame({ onComplete, onReady }: ClickMinigameProps) {
         title="Click Rush"
         description={
           <>
-            Pokébolas surgem na arena — clique o máximo em {CLICK_GAME_DURATION_SEC}s. Você tem{" "}
+            Pokébolas surgem na arena, clique o máximo em {CLICK_GAME_DURATION_SEC}s. Você tem{" "}
             {CLICK_STARTING_LIVES} vidas; evite a bomba! Combos, congelamento, dobro de pontos e
             Frenesi Master te esperam. Recompensa: {CLICK_BASE_COINS_MIN}~{CLICK_BASE_COINS_MAX}{" "}
             moedas.

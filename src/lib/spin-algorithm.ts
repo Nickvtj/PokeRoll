@@ -1,7 +1,14 @@
 import { RARITY_CHANCES } from "@/data/rarity";
 import { EGG_SHINY_CHANCE, SHINY_CHANCE } from "@/data/pokemon-sprites";
-import { getPokemonByRarity, POKEMON_LIST, getPokemonById, MEW_ID } from "@/data/pokemon";
+import {
+  getSpinEligibleByRarity,
+  getSpinEligiblePokemon,
+  getPokemonById,
+  MEW_ID,
+} from "@/data/pokemon";
+import { isDropEligible } from "@/data/evolution-lines";
 import { getSpinResultImage } from "@/lib/pokemon-display";
+import type { SpinJackpot } from "@/data/spin-jackpot";
 import type { Pokemon, Rarity, SpinResult } from "@/types";
 
 /** 0,2% de chance de shiny por giro da roleta */
@@ -9,14 +16,14 @@ export function rollShiny(): boolean {
   return Math.random() < SHINY_CHANCE;
 }
 
-/** Shiny em ovos — taxa maior que a roleta */
+/** Shiny em ovos, taxa maior que a roleta */
 export function rollEggShiny(): boolean {
   return Math.random() < EGG_SHINY_CHANCE;
 }
 
 /**
  * Sorteia uma raridade com base nas porcentagens configuráveis.
- * Usa roleta cumulativa: ex. 0–45 = comum, 45–75 = incomum, etc.
+ * Usa roleta cumulativa: ex. 0 a 45 = comum, 45 a 75 = incomum, etc.
  */
 export function rollRarity(): Rarity {
   const roll = Math.random() * 100;
@@ -34,16 +41,10 @@ export function rollRarity(): Rarity {
   return "common";
 }
 
-/**
- * Seleciona um Pokémon aleatório dentro da raridade sorteada.
- * Suporta pesos individuais (weight) para fine-tuning futuro.
- */
-export function pickPokemonFromRarity(rarity: Rarity): Pokemon {
-  const pool = getPokemonByRarity(rarity);
-
+function pickFromPool(pool: Pokemon[]): Pokemon {
   if (pool.length === 0) {
-    // Fallback: qualquer Pokémon da lista
-    return POKEMON_LIST[Math.floor(Math.random() * POKEMON_LIST.length)];
+    const fallback = getSpinEligiblePokemon();
+    return fallback[Math.floor(Math.random() * fallback.length)];
   }
 
   const totalWeight = pool.reduce((sum, p) => sum + p.weight, 0);
@@ -59,11 +60,19 @@ export function pickPokemonFromRarity(rarity: Rarity): Pokemon {
   return pool[pool.length - 1];
 }
 
-/** Executa um spin completo: raridade, depois Pokémon */
+/**
+ * Seleciona um Pokémon aleatório dentro da raridade sorteada.
+ * Modelo Elite: apenas formas base ou single-stage.
+ */
+export function pickPokemonFromRarity(rarity: Rarity): Pokemon {
+  return pickFromPool(getSpinEligibleByRarity(rarity));
+}
+
+/** Executa um spin completo: raridade, depois Pokémon (só base/single-stage). */
 export function executeSpin(options?: { mewUnlocked?: boolean }): Pokemon {
   if (options?.mewUnlocked && Math.random() < 0.12) {
     const mew = getPokemonById(MEW_ID);
-    if (mew) return mew;
+    if (mew && isDropEligible(MEW_ID)) return mew;
   }
   const rarity = rollRarity();
   return pickPokemonFromRarity(rarity);
@@ -74,7 +83,8 @@ export function processSpinResult(
   pokemon: Pokemon,
   collectedIds: Set<number>,
   isShiny: boolean,
-  alreadyHasShiny: boolean
+  alreadyHasShiny: boolean,
+  jackpot?: SpinJackpot | null
 ): SpinResult {
   const isDuplicate = collectedIds.has(pokemon.id);
   const isNewShinyUnlock = isShiny && !alreadyHasShiny;
@@ -87,6 +97,7 @@ export function processSpinResult(
     rarity: pokemon.rarity,
     isShiny,
     isNewShinyUnlock,
+    jackpot: jackpot ?? undefined,
   };
 }
 

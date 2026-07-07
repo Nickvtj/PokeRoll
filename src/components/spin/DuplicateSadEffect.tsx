@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { CloudRain, Frown } from "lucide-react";
 
-/** Efeito visual "triste" para duplicatas — chuva, tom acinzentado, shake */
+/** Efeito visual "triste" para duplicatas, chuva, tom acinzentado, shake */
 export function DuplicateSadEffect() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl z-20">

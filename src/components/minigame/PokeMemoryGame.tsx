@@ -280,7 +280,7 @@ function MemoryCardTile({
       >
         <CardBackFace className="[backface-visibility:hidden]" />
 
-        {/* Frente — Pokémon */}
+        {/* Frente, Pokémon */}
         <div
           className={cn(
             "absolute inset-0 rounded-xl border flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)]",

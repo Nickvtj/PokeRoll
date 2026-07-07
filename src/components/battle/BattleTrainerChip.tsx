@@ -11,7 +11,7 @@ interface BattleTrainerChipProps {
   side: "player" | "enemy";
   accentColor?: string;
   className?: string;
-  /** Imagem do perfil (Pokémon/avatar) — object-contain em ambos os lados */
+  /** Imagem do perfil (Pokémon/avatar), object-contain em ambos os lados */
   avatarStyle?: boolean;
 }
 

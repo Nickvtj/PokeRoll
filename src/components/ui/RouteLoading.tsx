@@ -22,7 +22,7 @@ export function PanelSkeleton({ label = "Carregando..." }: RouteLoadingProps) {
   );
 }
 
-/** Placeholder leve — evita spinner duplo na navegação */
+/** Placeholder leve, evita spinner duplo na navegação */
 export function RouteLoadingMinimal() {
   return <div className="min-h-[1px]" aria-hidden />;
 }

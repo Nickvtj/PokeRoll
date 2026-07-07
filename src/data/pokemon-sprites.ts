@@ -3,7 +3,7 @@ export interface GbaSpriteVariant {
   shiny?: boolean;
 }
 
-/** Sprite GBA local (public/sprites/gba) — FireRed/LeafGreen */
+/** Sprite GBA local (public/sprites/gba), FireRed/LeafGreen */
 export function getPokemonGbaSpriteUrl(
   id: number,
   { back = false, shiny = false }: GbaSpriteVariant = {}
@@ -17,13 +17,13 @@ export const SHINY_CHANCE = 0.002;
 /** Chance de shiny ao chocar ovos (0,8%) */
 export const EGG_SHINY_CHANCE = 0.008;
 
-/** Sprite padrão do jogo — pixel art GBA. */
+/** Sprite padrão do jogo, pixel art GBA. */
 export function getPokemonSpriteUrl(id: number): string {
   return getPokemonGbaSpriteUrl(id);
 }
 
 /**
- * Sprite GBA normalizado (public/sprites/gba/norm) — recortado e recentralizado
+ * Sprite GBA normalizado (public/sprites/gba/norm), recortado e recentralizado
  * para que todos os Pokémon ocupem o mesmo tamanho no álbum/seleção de time.
  * Gerado por scripts/normalize-gba-sprites.ps1.
  */
@@ -34,7 +34,7 @@ export function getPokemonNormalizedSpriteUrl(
   return `/sprites/gba/norm/${shiny ? "shiny/" : ""}${id}.png`;
 }
 
-/** Sprite shiny padrão do jogo — pixel art GBA. */
+/** Sprite shiny padrão do jogo, pixel art GBA. */
 export function getPokemonShinySpriteUrl(id: number): string {
   return getPokemonGbaSpriteUrl(id, { shiny: true });
 }

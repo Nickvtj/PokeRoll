@@ -117,7 +117,7 @@ export function GymCard({ gym, unlocked, hasBadge, onChallenge }: GymCardProps) 
           </p>
         ) : unlocked && teamReadiness.teamComplete && teamReadiness.underleveled ? (
           <p className="relative mt-2.5 text-[10px] text-orange-300/90 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10 border border-orange-400/20">
-            Time Nv. {teamReadiness.avgLevel} · abaixo do recomendado (pode tentar)
+            Time Nv. {teamReadiness.avgLevel}, abaixo do recomendado (pode tentar)
           </p>
         ) : null}
       </div>

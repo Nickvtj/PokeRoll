@@ -19,7 +19,7 @@ function shinyDurationMs(): number {
   return 4500;
 }
 
-/** Confetti épico dourado — desbloqueio shiny */
+/** Confetti épico dourado, desbloqueio shiny */
 export function fireShinyConfetti() {
   const scale = confettiScale();
   const base = { zIndex: CONFETTI_Z, disableForReducedMotion: true };
@@ -90,7 +90,7 @@ export function fireNewPokemonConfetti(rarity: Rarity) {
   });
 }
 
-/** Confetti de coleção — apenas épico e lendário novos */
+/** Confetti de coleção, apenas épico e lendário novos */
 export function fireCelebrationConfetti(rarity: Rarity, isNew: boolean) {
   if (!isNew) return;
   if (rarity !== "legendary" && rarity !== "epic") return;

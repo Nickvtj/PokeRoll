@@ -24,7 +24,7 @@ export function RareCandyModal({ open, onClose }: RareCandyModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const collection = useGameStore((s) => s.collection);
   const rareCandyCount = useEconomyStore((s) => s.rareCandyCount ?? 0);
-  const useRareCandyOnPokemon = useEconomyStore((s) => s.useRareCandyOnPokemon);
+  const applyRareCandy = useEconomyStore((s) => s.useRareCandyOnPokemon);
   const getPokemonProgress = useEconomyStore((s) => s.getPokemonProgress);
   const getLevelCap = useEconomyStore((s) => s.getLevelCap);
 
@@ -105,7 +105,7 @@ export function RareCandyModal({ open, onClose }: RareCandyModalProps) {
                       </span>
                     </h3>
                     <p className="text-[11px] text-white/45 mt-0.5">
-                      +1 nível por doce · teto Nv.{levelCap}
+                      +1 nível por doce, teto Nv.{levelCap}
                     </p>
                   </div>
                 </div>
@@ -159,7 +159,7 @@ export function RareCandyModal({ open, onClose }: RareCandyModalProps) {
                         disabled={disabled}
                         onClick={() => {
                           playUiConfirm();
-                          useRareCandyOnPokemon(p.id, 1);
+                          applyRareCandy(p.id, 1);
                         }}
                         className={cn(
                           "rounded-xl border p-2.5 text-center transition-all",
@@ -187,7 +187,7 @@ export function RareCandyModal({ open, onClose }: RareCandyModalProps) {
                           )}
                         >
                           Nv.{progress.level}
-                          {atCap && " · max"}
+                          {atCap && ", max"}
                         </p>
                       </button>
                     );

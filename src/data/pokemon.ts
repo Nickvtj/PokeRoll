@@ -1,5 +1,6 @@
 import type { Pokemon, Rarity } from "@/types";
 import { getPokemonSpriteUrl } from "@/data/pokemon-sprites";
+import { isDropEligible } from "@/data/evolution-lines";
 
 const GEN1_NAMES: Record<number, string> = {
   1: "Bulbasaur", 2: "Ivysaur", 3: "Venusaur", 4: "Charmander", 5: "Charmeleon",
@@ -35,18 +36,23 @@ const GEN1_NAMES: Record<number, string> = {
   151: "Mew",
 };
 
-/** Atribuição manual de raridade — finais fortes sobem; rotas fracas ficam comuns */
+/** Raridades: bases/singles para drops + tiers de display em formas evoluídas. */
 const RARITY_MAP: Record<number, Rarity> = {
-  // Lendários (4)
+  // Lendários
   144: "legendary",
   145: "legendary",
   146: "legendary",
   150: "legendary",
-
-  // Secreto — só na roleta com todas as conquistas
   151: "legendary",
 
-  // Épicos — finais icônicos, pseudo-lendários e singles raríssimos
+  // Épicos — singles late-game + Dratini (base)
+  113: "epic",
+  131: "epic",
+  142: "epic",
+  143: "epic",
+  147: "epic",
+
+  // Finais (display ao evoluir; não entram na roleta)
   3: "epic",
   6: "epic",
   9: "epic",
@@ -60,15 +66,25 @@ const RARITY_MAP: Record<number, Rarity> = {
   94: "epic",
   103: "epic",
   112: "epic",
-  113: "epic",
   121: "epic",
   130: "epic",
-  131: "epic",
-  142: "epic",
-  143: "epic",
   149: "epic",
 
-  // Raros — finais sólidos, evoluções difíceis e singles valiosos
+  // Raros — singles valiosos
+  106: "rare",
+  107: "rare",
+  115: "rare",
+  122: "rare",
+  123: "rare",
+  124: "rare",
+  125: "rare",
+  126: "rare",
+  127: "rare",
+  128: "rare",
+  132: "rare",
+  137: "rare",
+
+  // Intermediários/finais (display)
   5: "rare",
   8: "rare",
   15: "rare",
@@ -89,47 +105,69 @@ const RARITY_MAP: Record<number, Rarity> = {
   73: "rare",
   76: "rare",
   91: "rare",
-  106: "rare",
-  107: "rare",
-  115: "rare",
-  122: "rare",
-  123: "rare",
-  124: "rare",
-  125: "rare",
-  126: "rare",
-  127: "rare",
-  128: "rare",
-  132: "rare",
   134: "rare",
   135: "rare",
   136: "rare",
-  137: "rare",
   139: "rare",
   141: "rare",
 
-  // Incomuns — intermediários e populares (rotas iniciais ficam comuns por padrão)
-  2: "uncommon",
-  11: "uncommon",
-  12: "uncommon",
-  14: "uncommon",
-  17: "uncommon",
+  // Incomuns — iniciais + bases de rota
+  1: "uncommon",
+  4: "uncommon",
+  7: "uncommon",
   25: "uncommon",
-  30: "uncommon",
-  33: "uncommon",
   35: "uncommon",
   37: "uncommon",
+  39: "uncommon",
+  43: "uncommon",
+  46: "uncommon",
+  48: "uncommon",
+  50: "uncommon",
+  52: "uncommon",
+  54: "uncommon",
+  56: "uncommon",
+  58: "uncommon",
+  60: "uncommon",
+  63: "uncommon",
+  66: "uncommon",
+  69: "uncommon",
+  72: "uncommon",
+  74: "uncommon",
+  77: "uncommon",
+  79: "uncommon",
+  81: "uncommon",
+  84: "uncommon",
+  86: "uncommon",
+  88: "uncommon",
+  90: "uncommon",
+  92: "uncommon",
+  96: "uncommon",
+  98: "uncommon",
+  102: "uncommon",
+  109: "uncommon",
+  111: "uncommon",
+  116: "uncommon",
+  118: "uncommon",
+  120: "uncommon",
+  133: "uncommon",
+  138: "uncommon",
+  140: "uncommon",
+
+  // Intermediários (display)
+  2: "uncommon",
+  11: "uncommon",
+  14: "uncommon",
+  17: "uncommon",
+  30: "uncommon",
+  33: "uncommon",
   42: "uncommon",
   44: "uncommon",
   61: "uncommon",
-  63: "uncommon",
   64: "uncommon",
-  66: "uncommon",
   67: "uncommon",
   70: "uncommon",
   75: "uncommon",
   78: "uncommon",
-  80: "uncommon",
-  81: "uncommon",
   82: "uncommon",
   83: "uncommon",
   85: "uncommon",
@@ -142,19 +180,12 @@ const RARITY_MAP: Record<number, Rarity> = {
   101: "uncommon",
   105: "uncommon",
   108: "uncommon",
-  109: "uncommon",
   110: "uncommon",
   114: "uncommon",
-  116: "uncommon",
   117: "uncommon",
   119: "uncommon",
-  120: "uncommon",
-  129: "uncommon",
-  133: "uncommon",
-  138: "uncommon",
-  140: "uncommon",
-  147: "uncommon",
   148: "uncommon",
+  // Magikarp (129) permanece comum por padrão
 };
 
 function getRarity(id: number): Rarity {
@@ -178,7 +209,7 @@ function createPokemon(id: number): Pokemon {
 
 export const MEW_ID = 151;
 
-/** 150 Pokémon da 1ª geração (IDs 1–150) + Mew secreto */
+/** 150 Pokémon da 1ª geração (IDs 1 a 150) + Mew secreto */
 export const POKEMON_LIST: Pokemon[] = Array.from({ length: 150 }, (_, i) =>
   createPokemon(i + 1)
 );
@@ -201,4 +232,13 @@ export function getPokemonById(id: number): Pokemon | undefined {
 
 export function getPokemonByRarity(rarity: Rarity): Pokemon[] {
   return POKEMON_LIST.filter((p) => p.rarity === rarity);
+}
+
+/** Pool da roleta/ovos: só bases + single-stage (Modelo Elite). */
+export function getSpinEligibleByRarity(rarity: Rarity): Pokemon[] {
+  return getPokemonByRarity(rarity).filter((p) => isDropEligible(p.id));
+}
+
+export function getSpinEligiblePokemon(): Pokemon[] {
+  return POKEMON_LIST.filter((p) => isDropEligible(p.id));
 }

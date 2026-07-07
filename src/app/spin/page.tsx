@@ -167,7 +167,7 @@ export default function SpinPage() {
           Roleta
         </h1>
         <p className="text-white/50 text-sm">
-          Gire e complete seu álbum · {profile.totalSpins} giros realizados
+          Gire e complete seu álbum, {profile.totalSpins} giros realizados
         </p>
       </div>
 

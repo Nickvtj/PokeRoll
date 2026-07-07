@@ -1,5 +1,7 @@
 import { getPokedexInfo } from "@/data/pokedex";
 import { MEW_ID, POKEMON_LIST, getPokemonById } from "@/data/pokemon";
+import { isDropEligible } from "@/data/evolution-lines";
+import { CAPSULE_MIN_TRAINER_LEVEL } from "@/data/capsule-balance";
 import { RARITY_ORDER } from "@/data/rarity";
 import type { CapsuleDefinition, CapsuleDropRates, CapsuleId } from "@/types/capsule";
 import type { Pokemon, Rarity } from "@/types";
@@ -16,20 +18,25 @@ function buildPool(
   extraIds: number[] = [],
   onlyIds?: number[]
 ): number[] {
+  let ids: number[];
   if (onlyIds) {
-    return onlyIds.filter((id) => id !== MEW_ID && id >= 1 && id <= 150);
+    ids = onlyIds.filter((id) => id !== MEW_ID && id >= 1 && id <= 150);
+  } else {
+    const set = new Set<number>(extraIds.filter((id) => id !== MEW_ID));
+    for (const p of POKEMON_LIST) {
+      if (p.id === MEW_ID) continue;
+      if (hasType(p.id, types)) set.add(p.id);
+    }
+    ids = [...set];
   }
-  const set = new Set<number>(extraIds.filter((id) => id !== MEW_ID));
-  for (const p of POKEMON_LIST) {
-    if (p.id === MEW_ID) continue;
-    if (hasType(p.id, types)) set.add(p.id);
-  }
-  return [...set].sort((a, b) => a - b);
+  return ids.filter(isDropEligible).sort((a, b) => a - b);
 }
 
-function epicLegendaryPool(): number[] {
+/** Pool do Ovo Mestre: só bases raras/épicas (Modelo Elite). */
+function masterEggPool(): number[] {
   return POKEMON_LIST.filter(
-    (p) => p.rarity === "epic" || p.rarity === "legendary"
+    (p) =>
+      isDropEligible(p.id) && (p.rarity === "rare" || p.rarity === "epic")
   ).map((p) => p.id);
 }
 
@@ -39,7 +46,7 @@ export const CAPSULE_DEFINITIONS: CapsuleDefinition[] = [
     name: "Ovo Rota 1",
     cost: 10,
     focus: "Inseto, Normal, Voador & Iniciais",
-    description: "Um ovo comum de Kanto — ideal para iniciar sua coleção.",
+    description: "Um ovo comum de Kanto, ideal para iniciar sua coleção.",
     poolIds: buildPool(["bug", "normal", "flying"], STARTER_IDS),
     dropRates: { common: 70, uncommon: 25, rare: 5, epic: 0, legendary: 0 },
     theme: {
@@ -55,7 +62,7 @@ export const CAPSULE_DEFINITIONS: CapsuleDefinition[] = [
     name: "Ovo Viridian",
     cost: 15,
     focus: "Planta & Inseto",
-    description: "Floresta e matinho — o espírito da primeira rota verde.",
+    description: "Floresta e matinho, o espírito da primeira rota verde.",
     poolIds: buildPool(["grass", "bug"]),
     dropRates: { common: 60, uncommon: 30, rare: 10, epic: 0, legendary: 0 },
     theme: {
@@ -72,7 +79,7 @@ export const CAPSULE_DEFINITIONS: CapsuleDefinition[] = [
     cost: 25,
     focus: "Pedra, Terra, Veneno & Fada",
     description: "Cavernas brilhantes e Pokémon místicos das cavernas.",
-    poolIds: buildPool(["rock", "ground", "poison"], [35, 36, 39, 40, 122]),
+    poolIds: buildPool(["rock", "ground", "poison"], [35, 39, 122]),
     dropRates: { common: 40, uncommon: 40, rare: 15, epic: 5, legendary: 0 },
     theme: {
       gradient: "from-stone-500/25 via-violet-900/25 to-slate-900/40",
@@ -120,7 +127,7 @@ export const CAPSULE_DEFINITIONS: CapsuleDefinition[] = [
     cost: 50,
     focus: "Lutador & Pesados",
     description: "Snorlax, Tauros e lutadores de peso pesado.",
-    poolIds: buildPool(["fighting", "normal"], [56, 57, 62, 66, 67, 68, 106, 107, 128, 143]),
+    poolIds: buildPool(["fighting", "normal"], [56, 57, 66, 106, 107, 128, 143]),
     dropRates: { common: 10, uncommon: 40, rare: 35, epic: 15, legendary: 0 },
     theme: {
       gradient: "from-orange-600/25 via-red-950/30 to-slate-900/40",
@@ -135,7 +142,7 @@ export const CAPSULE_DEFINITIONS: CapsuleDefinition[] = [
     name: "Ovo do Safári",
     cost: 65,
     focus: "Exclusivos do Safári",
-    description: "Kangaskhan, Scyther, Pinsir e Tauros — só no parque.",
+    description: "Kangaskhan, Scyther, Pinsir e Tauros, só no parque.",
     poolIds: buildPool([], [], [115, 123, 127, 128]),
     dropRates: { common: 0, uncommon: 40, rare: 40, epic: 20, legendary: 0 },
     theme: {
@@ -182,10 +189,12 @@ export const CAPSULE_DEFINITIONS: CapsuleDefinition[] = [
     id: "mestra",
     name: "Ovo Mestre",
     cost: 150,
-    focus: "Épicos & Lendários",
-    description: "O ovo mais raro — pode nascer um lendário de Kanto.",
-    poolIds: epicLegendaryPool(),
-    dropRates: { common: 0, uncommon: 0, rare: 0, epic: 85, legendary: 15 },
+    focus: "Bases raras e épicas",
+    description:
+      "Garante um Pokémon raro ou épico de estágio base. Chance de pedra evolutiva.",
+    poolIds: masterEggPool(),
+    dropRates: { common: 0, uncommon: 0, rare: 55, epic: 45, legendary: 0 },
+    minTrainerLevel: CAPSULE_MIN_TRAINER_LEVEL.mestra,
     theme: {
       gradient: "from-amber-400/30 via-rose-900/35 to-violet-950/50",
       border: "border-amber-300/45",
@@ -208,7 +217,7 @@ export function getCapsulePoolPokemon(capsuleId: CapsuleId): Pokemon[] {
   const def = getCapsuleById(capsuleId);
   return def.poolIds
     .map((id) => getPokemonById(id))
-    .filter((p): p is Pokemon => p != null && p.id !== MEW_ID);
+    .filter((p): p is Pokemon => p != null && p.id !== MEW_ID && isDropEligible(p.id));
 }
 
 function availableRaritiesInPool(pool: Pokemon[]): Rarity[] {

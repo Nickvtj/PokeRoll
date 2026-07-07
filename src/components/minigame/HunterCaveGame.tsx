@@ -150,7 +150,7 @@ export function HunterCaveGame({
         accent="violet"
         icon={<Ghost className="w-8 h-8" />}
         title="Caverna dos Hunter"
-        description="Pokébolas misteriosas escondem moedas — ou um Haunter faminto. Fuja a tempo ou perca tudo."
+        description="Pokébolas misteriosas escondem moedas, ou um Haunter faminto. Fuja a tempo ou perca tudo."
         buttonLabel={canAfford ? "ENTRAR NA CAVERNA" : "Moedas insuficientes"}
         onStart={startRun}
         disabled={!canAfford}
@@ -358,7 +358,7 @@ export function HunterCaveGame({
                 icon={<Shield className="w-4 h-4" />}
                 className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 border-emerald-400/30"
               >
-                FUGIR DA CAVERNA · Levar {pot} moedas
+                FUGIR DA CAVERNA, Levar {pot} moedas
               </AnimatedButton>
             </div>
         </>

@@ -1,6 +1,6 @@
 import type { GymId } from "@/types/gym";
 
-/** Insígnias de Kanto no estilo GBA (FireRed/LeafGreen) — sprites locais em /public */
+/** Insígnias de Kanto no estilo GBA (FireRed/LeafGreen), sprites locais em /public */
 export const GYM_BADGE_IMAGES: Record<GymId, string> = {
   brock: "/sprites/badges/brock.png",
   misty: "/sprites/badges/misty.png",

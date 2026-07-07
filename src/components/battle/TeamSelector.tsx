@@ -55,15 +55,10 @@ function getPrimaryType(id: number, name: string): string {
   return getPokedexInfo(id, name).types[0].toLowerCase();
 }
 
-function getOwnedCount(collection: Record<number, { count?: number }>, id: number): number {
-  const entry = collection[id];
-  if (!entry) return 0;
-  return Math.max(1, entry.count ?? 1);
-}
-
 export function TeamSelector({ maxTeam = BATTLE_TEAM_SIZE, className }: TeamSelectorProps) {
   const collection = useGameStore((s) => s.collection);
   const team = useEconomyStore((s) => s.team);
+  const owned = useEconomyStore((s) => s.owned);
   const setTeam = useEconomyStore((s) => s.setTeam);
   const pokemonBattleXp = useEconomyStore((s) => s.pokemonBattleXp);
   const favoritePokemon = useEconomyStore((s) => s.favoritePokemon);
@@ -83,9 +78,11 @@ export function TeamSelector({ maxTeam = BATTLE_TEAM_SIZE, className }: TeamSele
     [favoritePokemon]
   );
 
+  const ownedSet = useMemo(() => new Set(owned ?? []), [owned]);
+
   const collected = useMemo(
-    () => POKEMON_LIST.filter((p) => collection[p.id]),
-    [collection]
+    () => POKEMON_LIST.filter((p) => ownedSet.has(p.id)),
+    [ownedSet]
   );
 
   const availableTypes = useMemo(() => {
@@ -127,17 +124,16 @@ export function TeamSelector({ maxTeam = BATTLE_TEAM_SIZE, className }: TeamSele
 
   const toggle = useCallback((id: number) => {
     const currentTeam = useEconomyStore.getState().team;
-    const countInTeam = currentTeam.filter((t) => t === id).length;
-    const owned = getOwnedCount(useGameStore.getState().collection, id);
+    const inTeam = currentTeam.includes(id);
 
-    if (countInTeam < owned && currentTeam.length < maxTeam) {
+    // Regra A: 1 indivíduo por espécie, no máximo 1 no time.
+    if (!inTeam && currentTeam.length < maxTeam) {
       setTeam([...currentTeam, id]);
       playUiSelect();
       return;
     }
-    if (countInTeam > 0) {
-      const idx = currentTeam.lastIndexOf(id);
-      setTeam([...currentTeam.slice(0, idx), ...currentTeam.slice(idx + 1)]);
+    if (inTeam) {
+      setTeam(currentTeam.filter((t) => t !== id));
       playUiDeselect();
     }
   }, [maxTeam, setTeam]);
@@ -191,7 +187,7 @@ export function TeamSelector({ maxTeam = BATTLE_TEAM_SIZE, className }: TeamSele
           </h3>
         )}
         <span className="text-[10px] text-amber-400/80">
-          Cap Nv.{getLevelCap()} · {badgeCount} insígnias
+          Cap Nv.{getLevelCap()}, {badgeCount} insígnias
         </span>
         <div className="flex gap-2">
           <AnimatedButton variant="ghost" size="sm" onClick={clearTeam} icon={<X className="w-3.5 h-3.5" />}>
@@ -301,10 +297,9 @@ export function TeamSelector({ maxTeam = BATTLE_TEAM_SIZE, className }: TeamSele
 
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 auto-rows-min flex-1 min-h-0 overflow-y-auto overscroll-contain p-1 pb-4 pr-2">
         {filtered.map((pokemon) => {
-          const countInTeam = team.filter((t) => t === pokemon.id).length;
-          const selected = countInTeam > 0;
-          const owned = getOwnedCount(collection, pokemon.id);
-          const canAddMore = countInTeam < owned && team.length < maxTeam;
+          const selected = team.includes(pokemon.id);
+          const countInTeam = selected ? 1 : 0;
+          const canAddMore = !selected && team.length < maxTeam;
           const disabled = !selected && !canAddMore;
           const type = getPrimaryType(pokemon.id, pokemon.name);
           const displayPokemon = withGridImage(pokemon, collection[pokemon.id]);
@@ -317,7 +312,7 @@ export function TeamSelector({ maxTeam = BATTLE_TEAM_SIZE, className }: TeamSele
               rarity={pokemon.rarity}
               selected={selected}
               countInTeam={countInTeam}
-              owned={owned}
+              owned={1}
               isFavorite={favoriteSet.has(pokemon.id)}
               level={pokemonBattleXp[String(pokemon.id)]?.level ?? 1}
               type={type}

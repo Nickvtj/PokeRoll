@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 import type { JitsuBeltConfig } from "@/types/jitsu";
 
 const JITSU_FACE_OFF_LINES = [
-  "Fogo, Agua e Planta — escolha com sabedoria!",
+  "Fogo, Agua e Planta, escolha com sabedoria!",
   "O dojo aguarda seu proximo movimento.",
   "Tres elementos, uma vitoria.",
   "Mostre dominio sobre o triangulo elemental!",
-  "Sensei Bot nunca recua — prepare-se!",
+  "Sensei Bot nunca recua, prepare-se!",
 ];
 
 interface JitsuFaceOffOverlayProps {

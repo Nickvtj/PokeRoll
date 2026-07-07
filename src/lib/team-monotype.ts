@@ -20,13 +20,13 @@ export interface MonotypeBoost {
 export interface TeamMonotypeSynergy {
   active: boolean;
   boosts: MonotypeBoost[];
-  /** compat. — melhor boost do time (usado por UIs antigas) */
+  /** compat., melhor boost do time (usado por UIs antigas) */
   type: string | null;
   label: string;
   bonusPercent: number;
 }
 
-/** Regra por tipo: 4 iguais = boost maior; 2–3 iguais = boost padrão */
+/** Regra por tipo: 4 iguais = boost maior; 2 a 3 iguais = boost padrão */
 export function monotypeBonusForCount(count: number): number {
   if (count >= BATTLE_ROSTER_SIZE) return TEAM_QUAD_MONOTYPE_DAMAGE_BONUS;
   if (count >= 2) return TEAM_MONOTYPE_DAMAGE_BONUS;

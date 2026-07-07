@@ -1,6 +1,6 @@
 import { playTone } from "@/lib/sound-engine";
 
-/** Clique leve — botões e tabs */
+/** Clique leve, botões e tabs */
 export function playUiClick(): void {
   void playTone(784, 0.04, "sine", 0.042);
 }

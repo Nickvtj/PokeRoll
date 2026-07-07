@@ -1,4 +1,4 @@
-/** Chart de efetividade Pokémon — tipos em minúsculas */
+/** Chart de efetividade Pokémon, tipos em minúsculas */
 
 import { getPokedexInfo } from "@/data/pokedex";
 

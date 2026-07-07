@@ -78,7 +78,7 @@ export function EggPreviewView({ egg, coins, collectedIds, onOpen }: EggPreviewV
             icon={canAfford ? <Coins className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
             onClick={onOpen}
           >
-            Chocar ovo · {egg.cost}
+            Chocar ovo, {egg.cost}
           </AnimatedButton>
         </div>
       </div>
@@ -119,7 +119,7 @@ export function EggPreviewView({ egg, coins, collectedIds, onOpen }: EggPreviewV
                   Shiny secreto
                 </h3>
                 <p className="text-[10px] text-white/35">
-                  ~{(EGG_SHINY_CHANCE * 100).toFixed(1)}% · qualquer espécie do ovo
+                  ~{(EGG_SHINY_CHANCE * 100).toFixed(1)}%, qualquer espécie do ovo
                 </p>
               </div>
             </div>

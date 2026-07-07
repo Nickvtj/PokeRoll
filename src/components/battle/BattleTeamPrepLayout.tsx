@@ -8,11 +8,11 @@ interface BattleTeamPrepLayoutProps {
   children: React.ReactNode;
   action: React.ReactNode;
   maxTeam?: number;
-  /** @deprecated Mantido por compatibilidade — layout usa dock flutuante em todos os modos */
+  /** @deprecated Mantido por compatibilidade, layout usa dock flutuante em todos os modos */
   previewLayout?: "responsive" | "bar-only";
 }
 
-/** Montagem de time — grid em tela cheia + dock flutuante do time */
+/** Montagem de time, grid em tela cheia + dock flutuante do time */
 export function BattleTeamPrepLayout({
   children,
   action,
@@ -20,7 +20,7 @@ export function BattleTeamPrepLayout({
 }: BattleTeamPrepLayoutProps) {
   return (
     <div className="relative flex flex-1 min-h-0 h-full gap-3">
-      {/* Grade de seleção — dock flutuante só aparece no mobile */}
+      {/* Grade de seleção, dock flutuante só aparece no mobile */}
       <div className="relative flex flex-col flex-1 min-w-0 min-h-0 h-full">
         <div
           className={cn(
@@ -36,7 +36,7 @@ export function BattleTeamPrepLayout({
         </div>
       </div>
 
-      {/* Painel vertical fixo do time (desktop) — não sobrepõe a grade */}
+      {/* Painel vertical fixo do time (desktop), não sobrepõe a grade */}
       <aside className="hidden lg:block w-60 shrink-0 h-full">
         <TeamSelectionPreview variant="sidebar" maxTeam={maxTeam} action={action} />
       </aside>

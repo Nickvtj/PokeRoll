@@ -25,6 +25,8 @@ export function getDefaultEconomy(): EconomyState {
     missionsClaimed: [],
     lastMissionDate: "",
     team: [],
+    owned: [],
+    ownedBootstrapped: false,
     favoritePokemon: [],
     pokemonBattleXp: {},
     pokemonMoveLoadouts: {},
@@ -34,6 +36,9 @@ export function getDefaultEconomy(): EconomyState {
     luckyEggExpiresAt: null,
     luckyEggCount: 0,
     rareCandyCount: 0,
+    familyCandy: {},
+    wildCandy: 0,
+    items: {},
     eggsHatched: 0,
     eggSellCoins: 0,
     lifetimeCoinsEarned: 0,
@@ -78,7 +83,7 @@ export function flushEconomyLocal(): void {
   economyPersist.flush();
 }
 
-/** Grava imediatamente — uso em merge remoto ou flush crítico. */
+/** Grava imediatamente, uso em merge remoto ou flush crítico. */
 export function saveEconomyImmediate(economy: EconomyState): void {
   economyPersist.writeImmediate(economy);
 }

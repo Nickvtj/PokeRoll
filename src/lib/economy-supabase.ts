@@ -47,6 +47,7 @@ function mapRowToEconomy(data: EconomyRow): EconomyState {
     team: data.team ?? [],
     favoritePokemon: data.favorite_pokemon ?? [],
     pokemonBattleXp: data.pokemon_battle_xp ?? {},
+    pokemonMoveLoadouts: {},
     welcomeClaimed: data.welcome_claimed ?? false,
     unlockedAchievements: data.unlocked_achievements ?? [],
     selectedAvatarId: data.selected_avatar_id ?? "default",
@@ -75,8 +76,7 @@ export async function syncEconomyToSupabase(economy: EconomyState): Promise<void
   if (!supabase) return;
 
   const userId = getLocalUserId();
-  const payload = {
-    user_id: userId,
+  const economyRow = {
     coins: economy.coins,
     xp: economy.xp,
     level: economy.level,
@@ -109,9 +109,9 @@ export async function syncEconomyToSupabase(economy: EconomyState): Promise<void
     .single();
 
   if (existing) {
-    await supabase.from("player_economy").update(payload).eq("user_id", userId);
+    await supabase.from("player_economy").update(economyRow).eq("user_id", userId);
   } else {
-    await supabase.from("player_economy").insert(payload);
+    await supabase.from("player_economy").insert({ user_id: userId, ...economyRow });
   }
 }
 

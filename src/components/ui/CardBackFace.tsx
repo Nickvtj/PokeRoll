@@ -6,7 +6,7 @@ interface CardBackFaceProps {
   iconSize?: number;
 }
 
-/** Verso de carta — mesmo visual do Poké Memory */
+/** Verso de carta, mesmo visual do Poké Memory */
 export function CardBackFace({ className, iconSize = 38 }: CardBackFaceProps) {
   return (
     <div

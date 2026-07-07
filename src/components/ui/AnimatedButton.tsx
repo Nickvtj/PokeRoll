@@ -46,12 +46,12 @@ export function AnimatedButton({
     <motion.button
       whileHover={{ scale: disabled || loading ? 1 : 1.03 }}
       whileTap={{ scale: disabled || loading ? 1 : 0.97 }}
-      onClick={(e) => {
+      onClick={() => {
         if (!disabled && !loading) {
           if (variant === "gold" || variant === "primary") playUiConfirm();
           else playUiClick();
         }
-        onClick?.(e as React.MouseEvent<HTMLButtonElement>);
+        onClick?.();
       }}
       disabled={disabled || loading}
       className={cn(
